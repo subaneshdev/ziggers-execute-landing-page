@@ -16,7 +16,8 @@ export default function sitemap() {
     '/partners',
     '/about',
     '/careers',
-    '/contact'
+    '/contact',
+    '/dashboard'
   ];
 
   return paths.map(path => ({
