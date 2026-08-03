@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown, Activity, Globe, Compass, ArrowRight } from 'lucide-react';
 
 export default function Navigation() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -15,6 +17,10 @@ export default function Navigation() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (pathname?.startsWith('/dashboard')) {
+    return null;
+  }
 
   const menuItems = {
     solutions: {
@@ -106,6 +112,9 @@ export default function Navigation() {
           <Link href="/about" className="text-sm font-semibold text-espresso/80 hover:text-espresso transition-colors decoration-transparent">
             About
           </Link>
+          <Link href="/dashboard" className="text-sm font-semibold text-espresso/80 hover:text-espresso transition-colors decoration-transparent">
+            Dashboard
+          </Link>
         </nav>
 
         {/* CTA */}
@@ -167,6 +176,9 @@ export default function Navigation() {
             </Link>
             <Link href="/careers" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
               Careers
+            </Link>
+            <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
+              Dashboard
             </Link>
 
             <div className="flex flex-col gap-3 mt-4">
