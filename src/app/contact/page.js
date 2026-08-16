@@ -1,6 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
-import { ArrowRight, Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
+import ContactForm from '../../components/ContactForm';
 
 export const metadata = {
   title: 'Request Enterprise Demo & Pilot | Ziggers Execute',
@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="relative overflow-hidden bg-white pt-32 pb-24">
+    <div className="relative overflow-hidden bg-white pt-32 pb-24 font-sans">
       <div className="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
@@ -52,51 +52,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form Side */}
-          <div className="bg-linen/25 border border-espresso/5 rounded-3xl p-8">
-            <h2 className="text-lg font-extrabold text-espresso mb-6">Submit Campaign Brief</h2>
-            <form className="flex flex-col gap-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-espresso uppercase">Your Name</label>
-                  <input type="text" placeholder="Aditya Nair" className="bg-white border border-espresso/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold text-espresso text-xs" required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-espresso uppercase">Company Name</label>
-                  <input type="text" placeholder="FMCG Brand Ltd" className="bg-white border border-espresso/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold text-espresso text-xs" required />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-espresso uppercase">Work Email</label>
-                <input type="email" placeholder="aditya@brand.com" className="bg-white border border-espresso/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold text-espresso text-xs" required />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-espresso uppercase">Campaign Type</label>
-                <select className="bg-white border border-espresso/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold text-espresso text-xs" required>
-                  <option>Product Sampling Trial</option>
-                  <option>Retail Store Audit / POSM</option>
-                  <option>Experiential Van Roadshow</option>
-                  <option>Fintech Merchant Acquisition</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-espresso uppercase">Target Cities</label>
-                <input type="text" placeholder="Chennai, Bangalore, Mumbai" className="bg-white border border-espresso/10 rounded-xl px-4 py-3 focus:outline-none focus:border-gold text-espresso text-xs" required />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-espresso uppercase">Campaign Brief Details</label>
-                <textarea rows="4" placeholder="Describe your target headcount, timeline, and audit check parameters..." className="bg-white border border-espresso/10 rounded-xl p-4 focus:outline-none focus:border-gold text-espresso text-xs" required></textarea>
-              </div>
-
-              <button type="submit" className="flex items-center justify-center gap-1.5 bg-espresso hover:bg-muted text-white font-bold py-3.5 rounded-full shadow-md transition-all mt-2 cursor-pointer">
-                <span>Submit Campaign Brief</span>
-                <ArrowRight size={14} />
-              </button>
-            </form>
-          </div>
+          <ContactForm />
 
         </div>
       </div>
