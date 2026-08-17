@@ -260,23 +260,23 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'supervisors' && (
-              <SupervisorManager campaigns={campaigns} onLogAction={addSystemLog} />
+              <SupervisorManager campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'communication' && (
-              <CampaignCommunication campaigns={campaigns} onLogAction={addSystemLog} />
+              <CampaignCommunication campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'targetsLeads' && (
-              <TargetsAndLeads campaigns={campaigns} onLogAction={addSystemLog} />
+              <TargetsAndLeads campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'wallet' && (
-              <CampaignWallet campaigns={campaigns} onLogAction={addSystemLog} />
+              <CampaignWallet campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'billing' && (
-              <InvoiceBilling campaigns={campaigns} onLogAction={addSystemLog} />
+              <InvoiceBilling campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'agency' && (
@@ -285,11 +285,12 @@ export default function DashboardPage() {
                 isClientPortal={isClientPortal} 
                 setIsClientPortal={setIsClientPortal} 
                 onLogAction={addSystemLog}
+                onCreateClick={() => setIsCreatorOpen(true)}
               />
             )}
 
             {activeTab === 'reports' && (
-              <CampaignReportGenerator campaigns={campaigns} onLogAction={addSystemLog} />
+              <CampaignReportGenerator campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'aiPlanner' && (
