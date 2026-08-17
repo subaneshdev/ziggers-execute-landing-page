@@ -7,68 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function AttendanceGpsTracker({ campaigns = [], onLogAction }) {
-  const [attendanceRecords, setAttendanceRecords] = useState([
-    {
-      id: 'att_1',
-      workerName: 'Rohit Sharma',
-      avatar: '👨🏽',
-      location: 'Loyola College, Chennai',
-      targetGeofence: '13.0631° N, 80.2341° E',
-      actualGps: '13.0632° N, 80.2340° E',
-      distanceToleranceMeters: 18,
-      checkInTime: '09:42 AM',
-      checkOutTime: '--',
-      shiftDuration: '5h 18m (Active)',
-      gpsStatus: 'Verified Inside Geofence',
-      earlyDeparture: false,
-      status: 'On Duty'
-    },
-    {
-      id: 'att_2',
-      workerName: 'Meera Nair',
-      avatar: '👩🏽',
-      location: 'Loyola College, Chennai',
-      targetGeofence: '13.0631° N, 80.2341° E',
-      actualGps: '13.0630° N, 80.2342° E',
-      distanceToleranceMeters: 24,
-      checkInTime: '09:45 AM',
-      checkOutTime: '--',
-      shiftDuration: '5h 15m (Active)',
-      gpsStatus: 'Verified Inside Geofence',
-      earlyDeparture: false,
-      status: 'On Duty'
-    },
-    {
-      id: 'att_3',
-      workerName: 'Karthik Raja',
-      avatar: '👨🏽',
-      location: 'MCC College, Tambaram',
-      targetGeofence: '12.9229° N, 80.1275° E',
-      actualGps: '12.9228° N, 80.1274° E',
-      distanceToleranceMeters: 31,
-      checkInTime: '09:50 AM',
-      checkOutTime: '--',
-      shiftDuration: '5h 10m (Active)',
-      gpsStatus: 'Verified Inside Geofence',
-      earlyDeparture: false,
-      status: 'On Duty'
-    },
-    {
-      id: 'att_4',
-      workerName: 'Vikas Menon (Original Assignee)',
-      avatar: '👨🏽',
-      location: 'Phoenix MarketCity Hub',
-      targetGeofence: '12.9915° N, 80.2170° E',
-      actualGps: 'No GPS Ping (Away 4.8 km)',
-      distanceToleranceMeters: 4800,
-      checkInTime: 'NO SHOW',
-      checkOutTime: '--',
-      shiftDuration: '0m',
-      gpsStatus: 'Outside Geofence (>50m threshold)',
-      earlyDeparture: false,
-      status: 'Absent / No-Show'
-    }
-  ]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
 
   // Instant Replacement State
   const [replacementModalOpen, setReplacementModalOpen] = useState(false);
@@ -243,7 +182,16 @@ export default function AttendanceGpsTracker({ campaigns = [], onLogAction }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-espresso/10 font-medium">
-              {attendanceRecords.map((record) => {
+              {attendanceRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-muted">
+                    <UserCheck size={32} className="mx-auto mb-2 opacity-30 text-espresso" />
+                    <p className="font-bold text-sm text-espresso">No attendance logs found</p>
+                    <p className="text-xs text-muted mt-0.5">Live promoter check-ins and GPS verification logs will appear here when active campaigns are running.</p>
+                  </td>
+                </tr>
+              ) : (
+                attendanceRecords.map((record) => {
                 const isNoShow = record.status === 'Absent / No-Show';
                 return (
                   <tr key={record.id} className={isNoShow ? 'bg-red-50/50' : 'hover:bg-linen/10'}>
@@ -315,7 +263,7 @@ export default function AttendanceGpsTracker({ campaigns = [], onLogAction }) {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>

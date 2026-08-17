@@ -9,113 +9,10 @@ import {
 export default function DeploymentBoard({ campaigns = [], onLogAction }) {
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [activeBriefingModalWorker, setActiveBriefingModalWorker] = useState(null);
-  const [understoodWorkers, setUnderstoodWorkers] = useState(new Set(['dep_1', 'dep_2']));
+  const [understoodWorkers, setUnderstoodWorkers] = useState(new Set());
 
   // Deployment staff roster
-  const [roster, setRoster] = useState([
-    {
-      id: 'dep_1',
-      workerName: 'Rohit Sharma',
-      avatar: '👨🏽',
-      phone: '+91 98401 12345',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Brand Promoter',
-      location: 'Loyola College, Nungambakkam',
-      gpsCoords: '13.0631° N, 80.2341° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Kumar Swaminathan (+91 98401 23456)',
-      dressCode: 'Red Coca-Cola Polo T-Shirt + Blue Jeans + White Sneakers',
-      target: '120 Product Samples / Day',
-      status: 'Confirmed & Briefed',
-      briefingAcknowledged: true
-    },
-    {
-      id: 'dep_2',
-      workerName: 'Meera Nair',
-      avatar: '👩🏽',
-      phone: '+91 98402 23456',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Lead Generation Specialist',
-      location: 'Loyola College, Nungambakkam',
-      gpsCoords: '13.0631° N, 80.2341° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Kumar Swaminathan (+91 98401 23456)',
-      dressCode: 'Red Coca-Cola Polo T-Shirt + Blue Jeans',
-      target: '80 QR Registrations / Day',
-      status: 'Confirmed & Briefed',
-      briefingAcknowledged: true
-    },
-    {
-      id: 'dep_3',
-      workerName: 'Karthik Raja',
-      avatar: '👨🏽',
-      phone: '+91 98403 34567',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Brand Promoter',
-      location: 'MCC College, Tambaram',
-      gpsCoords: '12.9229° N, 80.1275° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Prakash Rao (+91 98405 56789)',
-      dressCode: 'Red Coca-Cola Polo + Jeans',
-      target: '100 Samples / Day',
-      status: 'Briefing Sent (Pending Acknowledgment)',
-      briefingAcknowledged: false
-    },
-    {
-      id: 'dep_4',
-      workerName: 'Pooja Sundaram',
-      avatar: '👩🏽',
-      phone: '+91 98404 45678',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Brand Promoter',
-      location: 'MCC College, Tambaram',
-      gpsCoords: '12.9229° N, 80.1275° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Prakash Rao (+91 98405 56789)',
-      dressCode: 'Red Coca-Cola Polo + Jeans',
-      target: '100 Samples / Day',
-      status: 'Briefing Sent (Pending Acknowledgment)',
-      briefingAcknowledged: false
-    },
-    {
-      id: 'dep_5',
-      workerName: 'Aravind Swamy',
-      avatar: '👨🏽',
-      phone: '+91 98405 56780',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Brand Promoter',
-      location: 'SRM University, Kattankulathur',
-      gpsCoords: '12.8230° N, 80.0450° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Kumar Swaminathan (+91 98401 23456)',
-      dressCode: 'Red Coca-Cola Polo + Jeans',
-      target: '150 Samples / Day',
-      status: 'Confirmed & Briefed',
-      briefingAcknowledged: true
-    },
-    {
-      id: 'dep_6',
-      workerName: 'Divya Krishnan',
-      avatar: '👩🏽',
-      phone: '+91 98406 67891',
-      campaignName: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola',
-      role: 'Brand Promoter',
-      location: 'Anna University, Guindy',
-      gpsCoords: '13.0102° N, 80.2354° E',
-      shift: '10:00 AM - 06:00 PM',
-      supervisor: 'Prakash Rao (+91 98405 56789)',
-      dressCode: 'Red Coca-Cola Polo + Jeans',
-      target: '120 Samples / Day',
-      status: 'Confirmed & Briefed',
-      briefingAcknowledged: true
-    }
-  ]);
+  const [roster, setRoster] = useState([]);
 
   const locations = ['All', 'Loyola College, Nungambakkam', 'MCC College, Tambaram', 'SRM University, Kattankulathur', 'Anna University, Guindy'];
 
@@ -239,7 +136,16 @@ export default function DeploymentBoard({ campaigns = [], onLogAction }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-espresso/10 font-medium">
-              {filteredRoster.map((item) => {
+              {filteredRoster.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-muted">
+                    <Users size={32} className="mx-auto mb-2 opacity-30 text-espresso" />
+                    <p className="font-bold text-sm text-espresso">No promoters currently deployed</p>
+                    <p className="text-xs text-muted mt-0.5">Staff roster schedules and location briefings will appear here upon deployment.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredRoster.map((item) => {
                 const isAcknowledged = item.briefingAcknowledged || understoodWorkers.has(item.id);
                 return (
                   <tr key={item.id} className="hover:bg-linen/10">
@@ -302,7 +208,7 @@ export default function DeploymentBoard({ campaigns = [], onLogAction }) {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>

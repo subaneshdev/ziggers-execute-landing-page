@@ -10,106 +10,11 @@ export default function TargetsAndLeads({ campaigns = [], onLogAction }) {
   const [activeSubTab, setActiveSubTab] = useState('targets'); // 'targets' or 'leads'
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  // Targets State as required in Feature 12
-  const [targets, setTargets] = useState([
-    {
-      id: 'tgt_1',
-      kpiName: 'Customer Interactions',
-      target: 10000,
-      achieved: 7842,
-      unit: 'Interactions',
-      icon: '🗣️',
-      color: 'bg-blue-500'
-    },
-    {
-      id: 'tgt_2',
-      kpiName: 'Cold Samples Distributed',
-      target: 5000,
-      achieved: 4210,
-      unit: 'Cans / Units',
-      icon: '🥤',
-      color: 'bg-gold'
-    },
-    {
-      id: 'tgt_3',
-      kpiName: 'Contest QR Code Scans',
-      target: 3000,
-      achieved: 2680,
-      unit: 'Scans',
-      icon: '📱',
-      color: 'bg-purple-500'
-    },
-    {
-      id: 'tgt_4',
-      kpiName: 'Verified Leads Captured',
-      target: 1500,
-      achieved: 1240,
-      unit: 'Leads',
-      icon: '📋',
-      color: 'bg-green-500'
-    },
-    {
-      id: 'tgt_5',
-      kpiName: 'App Downloads / Onboarding',
-      target: 1000,
-      achieved: 810,
-      unit: 'Installs',
-      icon: '⚡',
-      color: 'bg-amber-500'
-    }
-  ]);
+  // Targets State
+  const [targets, setTargets] = useState([]);
 
-  // Lead Collection State as required in Feature 13
-  const [leads, setLeads] = useState([
-    {
-      id: 'lead_1',
-      name: 'Aditya Swaminathan',
-      phone: '+91 98401 99881',
-      location: 'Loyola College Quadrangle',
-      promoterName: 'Rohit Sharma',
-      productInterest: 'Coca-Cola Zero Sugar (Regular Consumer)',
-      consent: true,
-      time: '10:45 AM',
-      date: '2026-08-20',
-      status: 'Verified SMS OTP'
-    },
-    {
-      id: 'lead_2',
-      name: 'Priyanka Sundar',
-      phone: '+91 98402 88772',
-      location: 'Loyola College Cafeteria',
-      promoterName: 'Meera Nair',
-      productInterest: 'Coca-Cola Zero Sugar (Subscription Trial)',
-      consent: true,
-      time: '11:12 AM',
-      date: '2026-08-20',
-      status: 'Verified SMS OTP'
-    },
-    {
-      id: 'lead_3',
-      name: 'Gautam Ramachandran',
-      phone: '+91 98403 77663',
-      location: 'MCC College, Tambaram',
-      promoterName: 'Karthik Raja',
-      productInterest: 'Youth College Campus Ambassador Program',
-      consent: true,
-      time: '11:30 AM',
-      date: '2026-08-20',
-      status: 'Verified SMS OTP'
-    },
-    {
-      id: 'lead_4',
-      name: 'Sneha Varadarajan',
-      phone: '+91 98404 66554',
-      location: 'Anna University, Guindy',
-      promoterName: 'Divya Krishnan',
-      productInterest: 'Diet Coke / Zero Sugar Bulk Supply',
-      consent: true,
-      time: '12:05 PM',
-      date: '2026-08-20',
-      status: 'Verified SMS OTP'
-    }
-  ]);
+  // Lead Collection State
+  const [leads, setLeads] = useState([]);
 
   // New Lead Form
   const [newLead, setNewLead] = useState({
