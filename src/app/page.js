@@ -164,7 +164,6 @@ export default function HomePage() {
           autoPlay
           loop
           muted
-          defaultMuted
           playsInline
           controls={false}
           disablePictureInPicture
