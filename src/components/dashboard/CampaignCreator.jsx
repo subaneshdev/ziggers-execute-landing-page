@@ -158,32 +158,86 @@ export default function CampaignCreator({ onClose, onPublish }) {
     });
   };
 
-  // Outcome Engine Calculation
-  const calculateOutcome = (budgetAmount, headcount) => {
-    const numBudget = parseInt(budgetAmount) || 35000;
-    const numWorkers = parseInt(headcount) || 15;
+  // Dynamic Meta Ads-Style Audience Calculation Engine
+  const calculateOutcome = (data) => {
+    const numBudget = parseInt(data.budget, 10) || 35000;
+    const numWorkers = parseInt(data.workersRequired, 10) || 15;
+    const radius = parseInt(data.radiusKm, 10) || 3;
+    const geo = geoIntelligenceDb[data.targetArea] || geoIntelligenceDb['T. Nagar & Ranganathan Street'];
+
+    // 1. Base Gross Footfall Pool in Selected Area Node & Radius
+    const rawFootfallBase = parseInt((geo.footfallDaily || '80000').replace(/[^0-9]/g, ''), 10) || 80000;
+    const radiusMultiplier = 1 + (radius - 1) * 0.25; // 1km = 1.0x, 3km = 1.5x, 5km = 2.0x, 10km = 3.25x
+    const grossFootfallPool = Math.round(rawFootfallBase * radiusMultiplier);
+
+    // 2. Demographic Filters (Age, Gender, SEC, Occupation, Life Stage, Interests)
+    const ageSpan = Math.max(5, (data.ageRange[1] - data.ageRange[0]));
+    const ageRatio = Math.min(1.0, ageSpan / 45);
+
+    const genderRatio = data.gender === 'All' ? 1.0 : 0.49;
+
+    let secRatio = 0.55;
+    if (data.secCategory.includes('SEC A+')) secRatio = 0.18;
+    else if (data.secCategory.includes('SEC A/B')) secRatio = 0.52;
+    else secRatio = 0.85;
+
+    const interestCount = data.selectedInterests ? data.selectedInterests.length : 3;
+    const interestSpecificity = Math.max(0.20, 1.0 - (interestCount * 0.05));
+
+    // Addressable Targeted Consumer Audience Match
+    const targetedAudienceMatch = Math.round(grossFootfallPool * ageRatio * genderRatio * secRatio * interestSpecificity);
+
+    // 3. Physical Promoter Execution Capacity
+    const shiftHours = data.shiftTiming.includes('Full Day') ? 8 : 5;
+    const hourlyEngagementsPerPromoter = 42;
+    const maxPhysicalCapacity = numWorkers * shiftHours * hourlyEngagementsPerPromoter;
+
+    const estimatedEngagements = Math.min(maxPhysicalCapacity, Math.max(200, Math.round(targetedAudienceMatch * 0.35)));
+
+    // Conversion rate to Verified Leads
+    let conversionRate = 0.14;
+    if (data.objective === 'Lead generation') conversionRate = 0.26;
+    if (data.objective === 'App downloads') conversionRate = 0.18;
+    if (data.objective === 'Store opening') conversionRate = 0.22;
+    if (data.objective === 'Flyer distribution') conversionRate = 0.08;
+
+    const estimatedLeads = Math.round(estimatedEngagements * conversionRate);
+    const costPerLead = estimatedLeads > 0 ? Math.round(numBudget / estimatedLeads) : 0;
+    const costPerEngagement = estimatedEngagements > 0 ? Math.round(numBudget / estimatedEngagements) : 0;
+
+    let reachGauge = 'Optimal Target';
+    let reachGaugeColor = 'text-green-700 bg-green-100 border-green-300';
+    if (targetedAudienceMatch < 10000) {
+      reachGauge = 'Too Narrow / Specific';
+      reachGaugeColor = 'text-amber-800 bg-amber-100 border-amber-300';
+    } else if (targetedAudienceMatch > 160000) {
+      reachGauge = 'Broad Mass Reach';
+      reachGaugeColor = 'text-blue-800 bg-blue-100 border-blue-300';
+    }
+
     const workerDailyPayoutRate = 800;
-    
-    const estimatedInteractions = numWorkers * 380;
-    const estimatedLeads = Math.round(estimatedInteractions * 0.14);
     const workerPayoutTotal = numWorkers * workerDailyPayoutRate;
     const platformEscrowFee = Math.round(numBudget * 0.10);
     const logisticsAudit = Math.max(0, numBudget - workerPayoutTotal - platformEscrowFee);
-    const costPerLead = estimatedLeads > 0 ? Math.round(numBudget / estimatedLeads) : 0;
 
     return {
-      estimatedReach: `${(estimatedInteractions * 3.2).toLocaleString('en-IN')} Impressions`,
-      estimatedInteractions: `${estimatedInteractions.toLocaleString('en-IN')} People Engaged`,
+      grossFootfallPool: `${grossFootfallPool.toLocaleString('en-IN')} Footfall/Day`,
+      targetedAudienceMatch: targetedAudienceMatch.toLocaleString('en-IN'),
+      estimatedReach: `${(targetedAudienceMatch * 2.5).toLocaleString('en-IN')} Impressions`,
+      estimatedInteractions: `${estimatedEngagements.toLocaleString('en-IN')} Engagements`,
       estimatedLeads: `${estimatedLeads.toLocaleString('en-IN')} Verified Leads`,
       costPerLead: `₹${costPerLead}`,
+      costPerEngagement: `₹${costPerEngagement}`,
+      reachGauge,
+      reachGaugeColor,
       workerPayout: `₹${workerPayoutTotal.toLocaleString('en-IN')}`,
       platformFee: `₹${platformEscrowFee.toLocaleString('en-IN')}`,
-      logisticsAudit: `₹${logisticsAndAudit.toLocaleString('en-IN')}`,
+      logisticsAudit: `₹${logisticsAudit.toLocaleString('en-IN')}`,
       totalCost: `₹${numBudget.toLocaleString('en-IN')}`
     };
   };
 
-  const outcome = calculateOutcome(formData.budget, formData.workersRequired);
+  const outcome = calculateOutcome(formData);
 
   const handleLaunch = () => {
     onPublish({
@@ -759,8 +813,8 @@ export default function CampaignCreator({ onClose, onPublish }) {
                   <span className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-1">
                     <Target size={12} className="text-gold" /> Audience Reach Gauge
                   </span>
-                  <span className="text-[9px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                    Optimal Reach
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${outcome.reachGaugeColor}`}>
+                    {outcome.reachGauge}
                   </span>
                 </div>
 
@@ -772,9 +826,21 @@ export default function CampaignCreator({ onClose, onPublish }) {
                     <div className="w-1/4 bg-blue-500"></div>
                   </div>
                   <div className="flex justify-between text-[9px] font-mono text-muted">
-                    <span>Broad</span>
-                    <span className="text-green-700 font-bold">Optimal Target</span>
                     <span>Specific</span>
+                    <span className="text-green-700 font-bold">Optimal Target</span>
+                    <span>Broad Mass</span>
+                  </div>
+                </div>
+
+                {/* Target Audience Numbers Box */}
+                <div className="pt-2 border-t border-espresso/10 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="text-[9px] text-muted font-mono uppercase block font-bold">Matched Audience Pool</span>
+                    <strong className="text-espresso font-mono text-sm font-black">{outcome.targetedAudienceMatch} Consumers</strong>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-muted font-mono uppercase block font-bold">Daily Footfall</span>
+                    <span className="text-[10px] text-gold font-mono font-bold">{outcome.grossFootfallPool.split(' ')[0]}</span>
                   </div>
                 </div>
               </div>
@@ -788,7 +854,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
                 <div className="space-y-1.5 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-muted">Target Area:</span>
-                    <span className="font-bold text-espresso">{formData.targetArea.split(' &')[0]}</span>
+                    <span className="font-bold text-espresso">{formData.targetArea.split(' &')[0]} ({formData.radiusKm}km)</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted">Age Bracket:</span>
@@ -811,8 +877,8 @@ export default function CampaignCreator({ onClose, onPublish }) {
                     <span className="font-bold text-espresso text-[10px]">{formData.lifeStage.split(' /')[0]}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted">Language:</span>
-                    <span className="font-bold text-espresso text-[10px]">{formData.promoterLanguage.split(' (')[0]}</span>
+                    <span className="text-muted">Interests Selected:</span>
+                    <span className="font-bold font-mono text-gold text-[10px]">{formData.selectedInterests.length} Categories</span>
                   </div>
                 </div>
               </div>
@@ -825,12 +891,12 @@ export default function CampaignCreator({ onClose, onPublish }) {
 
                 <div className="space-y-2 font-mono">
                   <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
-                    <span className="text-[10px] text-linen/70">Est. Reach:</span>
-                    <strong className="text-white text-xs">{outcome.estimatedReach}</strong>
+                    <span className="text-[10px] text-linen/70">Est. Engagements:</span>
+                    <strong className="text-white text-xs">{outcome.estimatedInteractions}</strong>
                   </div>
 
                   <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
-                    <span className="text-[10px] text-linen/70">Est. Leads:</span>
+                    <span className="text-[10px] text-linen/70">Est. Verified Leads:</span>
                     <strong className="text-gold text-xs">{outcome.estimatedLeads}</strong>
                   </div>
 
