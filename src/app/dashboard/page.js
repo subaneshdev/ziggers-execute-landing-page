@@ -240,23 +240,23 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'liveDashboard' && (
-              <LiveCampaignDashboard campaigns={campaigns} onLogAction={addSystemLog} />
+              <LiveCampaignDashboard campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'locationHiring' && (
-              <LocationHiring campaigns={campaigns} onLogAction={addSystemLog} />
+              <LocationHiring campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'deployment' && (
-              <DeploymentBoard campaigns={campaigns} onLogAction={addSystemLog} />
+              <DeploymentBoard campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'attendance' && (
-              <AttendanceGpsTracker campaigns={campaigns} onLogAction={addSystemLog} />
+              <AttendanceGpsTracker campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'proof' && (
-              <ProofCenter campaigns={campaigns} onLogAction={addSystemLog} />
+              <ProofCenter campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
             )}
 
             {activeTab === 'supervisors' && (
