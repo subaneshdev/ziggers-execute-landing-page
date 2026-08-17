@@ -35,105 +35,8 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
     'Short Videos'
   ];
 
-  // Evidence dataset with automatic metadata tags: Worker + Time + GPS + Campaign + Location
-  const [proofs, setProofs] = useState([
-    {
-      id: 'prf_1',
-      category: 'Check-in Selfie',
-      workerName: 'Rohit Sharma',
-      avatar: '👨🏽',
-      time: '09:42:15 AM',
-      date: '2026-08-20',
-      gps: '13.0631° N, 80.2341° E',
-      location: 'Loyola College Gate 1',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Approved',
-      type: 'image',
-      icon: '🤳',
-      caption: 'Checked in wearing red Coca-Cola polo and ID badge at main entrance.'
-    },
-    {
-      id: 'prf_2',
-      category: 'Branding Setup Photo',
-      workerName: 'Kumar Swaminathan (Supervisor)',
-      avatar: '👨🏽',
-      time: '09:55:00 AM',
-      date: '2026-08-20',
-      gps: '13.0631° N, 80.2341° E',
-      location: 'Loyola College Quadrangle',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Approved',
-      type: 'image',
-      icon: '🎪',
-      caption: 'Branded 8x6 backdrop standee, ice tubs, and sampling canopy fully erected.'
-    },
-    {
-      id: 'prf_3',
-      category: 'Product Distribution Proof',
-      workerName: 'Meera Nair',
-      avatar: '👩🏽',
-      time: '11:15:30 AM',
-      date: '2026-08-20',
-      gps: '13.0631° N, 80.2341° E',
-      location: 'Loyola College Cafeteria',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Approved',
-      type: 'image',
-      icon: '🥤',
-      caption: 'Direct sampling handoff to college sports team with QR lead capture.'
-    },
-    {
-      id: 'prf_4',
-      category: 'Crowd Photo',
-      workerName: 'Karthik Raja',
-      avatar: '👨🏽',
-      time: '01:30:22 PM',
-      date: '2026-08-20',
-      gps: '12.9229° N, 80.1275° E',
-      location: 'MCC College, Tambaram',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Approved',
-      type: 'image',
-      icon: '👥',
-      caption: 'High-density student queue at sampling counter during lunch recess.'
-    },
-    {
-      id: 'prf_5',
-      category: 'Short Videos',
-      workerName: 'Divya Krishnan',
-      avatar: '👩🏽',
-      time: '02:45:10 PM',
-      date: '2026-08-20',
-      gps: '13.0102° N, 80.2354° E',
-      location: 'Anna University, Guindy',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Pending Review',
-      type: 'video',
-      icon: '🎥',
-      caption: '15-sec video showing lively student interaction and slogan quiz engagement.'
-    },
-    {
-      id: 'prf_6',
-      category: 'Check-out Photo',
-      workerName: 'Pooja Sundaram',
-      avatar: '👩🏽',
-      time: '06:05:44 PM',
-      date: '2026-08-20',
-      gps: '12.9229° N, 80.1275° E',
-      location: 'MCC College, Tambaram',
-      campaign: 'Coca-Cola College Activation',
-      brand: 'Coca-Cola India',
-      status: 'Approved',
-      type: 'image',
-      icon: '🏁',
-      caption: 'Shift completion selfie with packed booth inventory and clean premises.'
-    }
-  ]);
+  // Evidence dataset
+  const [proofs, setProofs] = useState([]);
 
   const filteredProofs = proofs.filter(p => {
     if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
@@ -230,8 +133,15 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
       </div>
 
       {/* Proof Gallery Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProofs.map((item) => (
+      {filteredProofs.length === 0 ? (
+        <div className="bg-white border border-espresso/10 rounded-2xl p-12 text-center text-muted">
+          <Camera size={36} className="mx-auto mb-2 opacity-30 text-espresso" />
+          <p className="font-bold text-sm text-espresso">No verified field evidence photos found</p>
+          <p className="text-xs text-muted mt-0.5">Live promoter check-ins, setup photos, and crowd proof uploads will appear here in real-time.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProofs.map((item) => (
           <div
             key={item.id}
             className="bg-white border border-espresso/10 rounded-2xl shadow-xs overflow-hidden flex flex-col justify-between hover:border-gold transition-all"
@@ -309,7 +219,8 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
 
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Upload Field Proof Modal */}
       {isUploadModalOpen && (

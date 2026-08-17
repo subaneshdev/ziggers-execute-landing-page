@@ -20,48 +20,7 @@ export default function CampaignWallet({ campaigns = [], onLogAction }) {
     approvedSupervisorsCount: 2
   });
 
-  const [payoutLogs, setPayoutLogs] = useState([
-    {
-      id: 'tx_1',
-      recipient: 'Rohit Sharma (Promoter)',
-      role: 'Brand Promoter',
-      amount: '₹4,000',
-      status: 'Escrow Locked (Pending Final Shift Audit)',
-      bankRef: 'HDFC Bank (UPI: rohit@oksbi)',
-      attendanceVerified: true,
-      supervisorApproved: true
-    },
-    {
-      id: 'tx_2',
-      recipient: 'Meera Nair (Promoter)',
-      role: 'Lead Generation Specialist',
-      amount: '₹4,000',
-      status: 'Escrow Locked (Pending Final Shift Audit)',
-      bankRef: 'ICICI Bank (UPI: meera@icici)',
-      attendanceVerified: true,
-      supervisorApproved: true
-    },
-    {
-      id: 'tx_3',
-      recipient: 'Kumar Swaminathan (Supervisor)',
-      role: 'Senior Field Supervisor',
-      amount: '₹10,000',
-      status: 'Escrow Locked (Pending Final Shift Audit)',
-      bankRef: 'SBI (UPI: kumar.ops@sbi)',
-      attendanceVerified: true,
-      supervisorApproved: true
-    },
-    {
-      id: 'tx_4',
-      recipient: 'Prakash Rao (Supervisor)',
-      role: 'Field Supervisor',
-      amount: '₹10,000',
-      status: 'Escrow Locked (Pending Final Shift Audit)',
-      bankRef: 'Axis Bank (UPI: prakash@axis)',
-      attendanceVerified: true,
-      supervisorApproved: true
-    }
-  ]);
+  const [payoutLogs, setPayoutLogs] = useState([]);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -216,7 +175,16 @@ export default function CampaignWallet({ campaigns = [], onLogAction }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-espresso/10 font-medium">
-              {payoutLogs.map((p) => (
+              {payoutLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-muted">
+                    <Wallet size={32} className="mx-auto mb-2 opacity-30 text-espresso" />
+                    <p className="font-bold text-sm text-espresso">No payout disbursements recorded</p>
+                    <p className="text-xs text-muted mt-0.5">Escrow wage allocations and bank payout transactions will be logged here automatically.</p>
+                  </td>
+                </tr>
+              ) : (
+                payoutLogs.map((p) => (
                 <tr key={p.id} className="hover:bg-linen/10">
                   <td className="py-3.5 px-4 font-bold text-espresso">
                     {p.recipient}
@@ -245,7 +213,7 @@ export default function CampaignWallet({ campaigns = [], onLogAction }) {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

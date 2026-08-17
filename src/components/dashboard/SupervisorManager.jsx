@@ -47,52 +47,7 @@ export default function SupervisorManager({ campaigns = [], onLogAction }) {
   ];
 
   // Workers under current supervisor
-  const [supervisorWorkers, setSupervisorWorkers] = useState([
-    {
-      id: 'sw_1',
-      name: 'Rohit Sharma',
-      avatar: '👨🏽',
-      location: 'Loyola College Gate 1',
-      attendance: 'Present (GPS Verified)',
-      workApproved: true,
-      samplesDistributed: 110,
-      targetQuota: 120,
-      phone: '+91 98401 12345'
-    },
-    {
-      id: 'sw_2',
-      name: 'Meera Nair',
-      avatar: '👩🏽',
-      location: 'Loyola College Cafeteria',
-      attendance: 'Present (GPS Verified)',
-      workApproved: true,
-      samplesDistributed: 75,
-      targetQuota: 80,
-      phone: '+91 98402 23456'
-    },
-    {
-      id: 'sw_3',
-      name: 'Aravind Swamy',
-      avatar: '👨🏽',
-      location: 'SRM University Tech Park',
-      attendance: 'Present (GPS Verified)',
-      workApproved: false,
-      samplesDistributed: 130,
-      targetQuota: 150,
-      phone: '+91 98405 56780'
-    },
-    {
-      id: 'sw_4',
-      name: 'Vikas Menon',
-      avatar: '👨🏽',
-      location: 'Velachery Hub',
-      attendance: 'Absent (Replaced by Venkatesh Babu)',
-      workApproved: true,
-      samplesDistributed: 85,
-      targetQuota: 100,
-      phone: '+91 98409 88776'
-    }
-  ]);
+  const [supervisorWorkers, setSupervisorWorkers] = useState([]);
 
   const currentSupervisor = supervisors.find(s => s.id === selectedSupervisorId) || supervisors[0];
 
@@ -238,49 +193,59 @@ export default function SupervisorManager({ campaigns = [], onLogAction }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-espresso/10 font-medium">
-                {supervisorWorkers.map((w) => (
-                  <tr key={w.id} className="hover:bg-linen/10">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{w.avatar}</span>
-                        <div>
-                          <strong className="text-espresso font-extrabold block text-xs">{w.name}</strong>
-                          <span className="text-[9px] text-muted font-mono">{w.phone}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 font-semibold text-espresso">
-                      {w.location}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded-md ${
-                        w.attendance.includes('Present') ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {w.attendance}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono font-bold text-espresso">
-                      {w.samplesDistributed} / {w.targetQuota}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleToggleApproveWork(w.id)}
-                        className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ml-auto ${
-                          w.workApproved 
-                            ? 'bg-green-600 text-white shadow-xs' 
-                            : 'bg-linen/40 text-espresso hover:bg-gold border border-espresso/10'
-                        }`}
-                      >
-                        <Check size={11} />
-                        <span>{w.workApproved ? 'Wage Approved ✅' : 'Approve Payout'}</span>
-                      </button>
+                {supervisorWorkers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-muted">
+                      <UserCheck size={28} className="mx-auto mb-1.5 opacity-30 text-espresso" />
+                      <p className="font-bold text-xs text-espresso">No team members assigned</p>
+                      <p className="text-[11px] text-muted">Promoter assignments for this supervisor node will appear here.</p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  supervisorWorkers.map((w) => (
+                    <tr key={w.id} className="hover:bg-linen/10">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{w.avatar}</span>
+                          <div>
+                            <strong className="text-espresso font-extrabold block text-xs">{w.name}</strong>
+                            <span className="text-[9px] text-muted font-mono">{w.phone}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 font-semibold text-espresso">
+                        {w.location}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <span className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded-md ${
+                          w.attendance.includes('Present') ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {w.attendance}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono font-bold text-espresso">
+                        {w.samplesDistributed} / {w.targetQuota}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handleToggleApproveWork(w.id)}
+                          className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ml-auto ${
+                            w.workApproved 
+                              ? 'bg-green-600 text-white shadow-xs' 
+                              : 'bg-linen/40 text-espresso hover:bg-gold border border-espresso/10'
+                          }`}
+                        >
+                          <Check size={11} />
+                          <span>{w.workApproved ? 'Wage Approved ✅' : 'Approve Payout'}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
