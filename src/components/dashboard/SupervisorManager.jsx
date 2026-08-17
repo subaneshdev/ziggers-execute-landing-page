@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   Users, ShieldCheck, MapPin, CheckCircle, AlertTriangle, 
   Send, FileText, Upload, RefreshCw, Zap, MessageSquare, 
-  Check, Phone, AlertCircle, ArrowRight
+  Check, Phone, AlertCircle, ArrowRight, UserCheck
 } from 'lucide-react';
 
 export default function SupervisorManager({ campaigns = [], onLogAction }) {
