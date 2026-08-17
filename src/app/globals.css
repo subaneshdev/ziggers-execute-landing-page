@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -28,6 +29,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Hero Serif Class */
+.font-hero-serif {
+  font-family: 'Instrument Serif', Georgia, serif !important;
+}
+
 /* Global Geist Typography Specs */
 body {
   background-color: var(--background);
@@ -41,6 +47,11 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-geist-sans), sans-serif;
   letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+h1.font-hero-serif, .font-hero-serif {
+  font-family: 'Instrument Serif', Georgia, serif !important;
   font-weight: 400;
 }
 

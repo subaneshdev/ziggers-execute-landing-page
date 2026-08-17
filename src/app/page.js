@@ -215,7 +215,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-[5rem] leading-[0.95] tracking-tight text-espresso max-w-4xl mb-6"
+            className="font-hero-serif text-4xl md:text-6xl lg:text-[5rem] leading-[0.95] tracking-tight text-espresso max-w-4xl mb-6"
             style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}
           >
             Launch{' '}
