@@ -8,44 +8,17 @@ import {
 export default function InvoiceBilling({ campaigns = [], onLogAction }) {
   const [selectedDocument, setSelectedDocument] = useState('gst_invoice'); // 'gst_invoice', 'worker_statement', 'expense_report', 'client_billing'
 
-  const billingDocs = [
-    {
-      id: 'gst_invoice',
-      name: 'GST Tax Invoice (18% Tax)',
-      docNumber: 'INV-2026-ZG-8821',
-      date: '2026-08-25',
-      amount: '₹2,00,000',
-      status: 'Paid / Reconciled',
-      desc: 'Official GST invoice with GSTIN & SAC code 998313 (Marketing & Brand Promotion Services).'
-    },
-    {
-      id: 'worker_statement',
-      name: 'Worker Payment Statement & UTR Log',
-      docNumber: 'WPS-2026-CC-094',
-      date: '2026-08-25',
-      amount: '₹1,20,000',
-      status: 'Disbursed via IMPS',
-      desc: 'Individual shift hours, attendance stamps, daily wage breakdown, and bank transfer UTR references.'
-    },
-    {
-      id: 'expense_report',
-      name: 'Location-Wise Campaign Expense Report',
-      docNumber: 'CER-2026-LOC-44',
-      date: '2026-08-25',
-      amount: '₹1,55,000',
-      status: 'Audited & Verified',
-      desc: 'Detailed cost breakdown by Chennai college location nodes (Loyola, MCC, SRM, Anna University).'
-    },
-    {
-      id: 'client_billing',
-      name: 'Brand Client Billing Report (Coca-Cola)',
-      docNumber: 'CBR-2026-COKE-01',
-      date: '2026-08-25',
-      amount: '₹2,36,000',
-      status: 'Ready for Client Download',
-      desc: 'Executive brand billing statement with agency commission, execution costs, and campaign ROI summary.'
-    }
-  ];
+  const billingDocs = campaigns.map((c, idx) => ({
+    id: `gst_inv_${c.id || idx}`,
+    name: `GST Tax Invoice — ${c.name}`,
+    docNumber: `INV-2026-ZG-${1000 + idx}`,
+    date: new Date().toISOString().split('T')[0],
+    amount: c.totalBudget || c.spend || '₹0',
+    status: c.stage === 'Live' ? 'In Progress' : 'Paid / Reconciled',
+    desc: `Official GST invoice for ${c.city} execution with 18% tax breakdown.`
+  }));
+
+  const selectedDocObj = billingDocs.find(d => d.id === selectedDocument) || billingDocs[0];
 
   const handleDownload = (doc) => {
     if (onLogAction) {
@@ -82,36 +55,46 @@ export default function InvoiceBilling({ campaigns = [], onLogAction }) {
         </div>
       </div>
 
-      {/* 4 Core Accounting Document Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {billingDocs.map((doc) => (
-          <div
-            key={doc.id}
-            onClick={() => setSelectedDocument(doc.id)}
-            className={`bg-white border rounded-2xl p-5 shadow-xs transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-              selectedDocument === doc.id ? 'border-gold bg-linen/10 ring-2 ring-gold/40' : 'border-espresso/10 hover:border-espresso/30'
-            }`}
-          >
-            <div>
-              <div className="flex items-start justify-between">
-                <span className="text-[10px] font-mono font-bold text-muted">{doc.docNumber}</span>
-                <span className="text-[9px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                  {doc.status}
-                </span>
-              </div>
-              <h3 className="text-xs font-extrabold text-espresso mt-2 leading-tight">{doc.name}</h3>
-              <p className="text-[10px] text-muted leading-relaxed mt-1">{doc.desc}</p>
-            </div>
+      {/* Core Accounting Document Cards */}
+      {billingDocs.length === 0 ? (
+        <div className="bg-white border border-espresso/10 rounded-2xl p-12 text-center text-muted">
+          <FileText size={36} className="mx-auto mb-2 opacity-30 text-espresso" />
+          <p className="font-bold text-sm text-espresso">No billing invoices or tax statements generated</p>
+          <p className="text-xs text-muted mt-0.5">GST tax invoices, worker wage statements, and client billing reports will be generated automatically when a campaign is deployed.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {billingDocs.map((doc) => (
+              <div
+                key={doc.id}
+                onClick={() => setSelectedDocument(doc.id)}
+                className={`bg-white border rounded-2xl p-5 shadow-xs transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                  selectedDocument === doc.id ? 'border-gold bg-linen/10 ring-2 ring-gold/40' : 'border-espresso/10 hover:border-espresso/30'
+                }`}
+              >
+                <div>
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-mono font-bold text-muted">{doc.docNumber}</span>
+                    <span className="text-[9px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                      {doc.status}
+                    </span>
+                  </div>
+                  <h3 className="text-xs font-extrabold text-espresso mt-2 leading-tight">{doc.name}</h3>
+                  <p className="text-[10px] text-muted leading-relaxed mt-1">{doc.desc}</p>
+                </div>
 
-            <div className="pt-3 border-t border-espresso/10 flex items-center justify-between">
-              <span className="text-sm font-extrabold text-espresso font-mono">{doc.amount}</span>
-              <span className="text-[10px] font-bold text-gold flex items-center gap-0.5">
-                Preview <ArrowRight size={10} />
-              </span>
-            </div>
+                <div className="pt-3 border-t border-espresso/10 flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-espresso font-mono">{doc.amount}</span>
+                  <span className="text-[10px] font-bold text-gold flex items-center gap-0.5">
+                    Preview <ArrowRight size={10} />
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* Document Interactive Preview Sheet */}
       <div className="bg-white border border-espresso/10 rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-6">

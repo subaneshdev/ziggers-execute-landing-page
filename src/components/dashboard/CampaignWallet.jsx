@@ -6,19 +6,27 @@ import {
 } from 'lucide-react';
 
 export default function CampaignWallet({ campaigns = [], onLogAction }) {
-  // Campaign Budget & Escrow Breakdown as specified in Feature 14
-  const [walletData, setWalletData] = useState({
-    campaignName: 'Coca-Cola College Activation',
-    brand: 'Coca-Cola India',
-    campaignBudget: 200000,
-    workerWages: 120000,
-    supervisorCost: 20000,
-    platformFee: 15000,
-    remainingEscrow: 45000,
+  const activeCampaign = campaigns[0] || null;
+
+  const totalSpend = campaigns.reduce((acc, c) => {
+    const raw = (c.spend || c.totalBudget || '0').replace(/[^0-9]/g, '');
+    return acc + (parseInt(raw, 10) || 0);
+  }, 0);
+
+  const totalWorkersCount = campaigns.reduce((acc, c) => acc + (parseInt(c.workers, 10) || 0), 0);
+
+  const walletData = {
+    campaignName: activeCampaign ? activeCampaign.name : 'No Active Campaign Selected',
+    brand: activeCampaign ? (activeCampaign.brand || 'Enterprise Client') : 'N/A',
+    campaignBudget: totalSpend,
+    workerWages: Math.round(totalSpend * 0.6),
+    supervisorCost: Math.round(totalSpend * 0.1),
+    platformFee: Math.round(totalSpend * 0.08),
+    remainingEscrow: activeCampaign ? Math.round(totalSpend * 0.22) : 0,
     payoutsReleased: false,
-    verifiedWorkersCount: 20,
-    approvedSupervisorsCount: 2
-  });
+    verifiedWorkersCount: totalWorkersCount,
+    approvedSupervisorsCount: Math.ceil(totalWorkersCount / 10)
+  };
 
   const [payoutLogs, setPayoutLogs] = useState([]);
 
