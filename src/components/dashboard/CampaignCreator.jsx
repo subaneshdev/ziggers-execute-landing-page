@@ -3,134 +3,195 @@ import React, { useState } from 'react';
 import { 
   X, ArrowRight, ArrowLeft, Check, Upload, MapPin, Calculator, 
   Calendar, ShieldCheck, FileText, Image as ImageIcon, Video, 
-  User, Phone, Sparkles, AlertCircle, Clock, DollarSign, Users, Briefcase, Zap
+  User, Phone, Sparkles, AlertCircle, Clock, DollarSign, Users, Briefcase, Zap,
+  Target, Sliders, Layers, Award, Building, School, ShoppingBag, Eye, TrendingUp
 } from 'lucide-react';
 
 export default function CampaignCreator({ onClose, onPublish }) {
   const [step, setStep] = useState(1);
+
+  // Form Data State
   const [formData, setFormData] = useState({
-    name: 'Chennai Store Opening & Sampling',
+    name: 'T. Nagar Store Launch & Product Sampling',
     brand: 'Artisan Cafe & Bakery',
-    objective: 'Store opening',
-    targetArea: 'OMR IT Corridor & Tidel Park',
-    radiusKm: 5,
-    startDate: '2026-08-25',
-    endDate: '2026-08-25',
-    shiftTiming: 'Full Day (10:00 AM - 06:00 PM)',
-    peopleType: 'Friendly Brand Promoters & Flyer Distributors',
-    workersRequired: 20,
-    budget: 25000,
-    instructions: 'Engage pedestrians, hand out sample drink vouchers and flyer menus with a warm greeting. Log verified QR scan leads and check in with GPS selfie.',
-    briefingFile: 'Store_Opening_Flyer_Voucher.pdf',
-    contactPerson: {
-      name: 'Priya Narayanan (Store Owner)',
-      phone: '+91 98401 55443',
-      email: 'priya@artisancafe.in'
-    }
+    objective: 'Sampling',
+    targetArea: 'T. Nagar & Ranganathan Street',
+    city: 'Chennai',
+    radiusKm: 3,
+    ageRange: [18, 35],
+    gender: 'All',
+    secCategory: 'SEC A/B (Mid-High Income)',
+    selectedInterests: ['Foodies & Coffee Lovers', 'College & Student Youth', 'Fashion & Shopping'],
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    shiftTiming: 'Evening Prime (04:00 PM - 09:00 PM)',
+    peopleType: 'Energetic Brand Promoters & Sampling Specialists',
+    workersRequired: 15,
+    budget: 35000,
+    instructions: 'Engage shoppers near high-street entries. Hand out sample iced coffee vouchers with live phone OTP lead capture.',
+    briefingFile: 'T_Nagar_Activation_Brief.pdf',
   });
 
-  // The 11 Objectives specified for Ziggers
+  // Meta/FB-style 11 Campaign Objectives
   const objectives = [
-    { id: 'Brand awareness', title: 'Brand Awareness', desc: 'Maximize high-visibility on-ground presence in high-traffic footfall zones.', icon: '📢' },
-    { id: 'Product promotion', title: 'Product Promotion', desc: 'Promote new SKU launches with branded merchandise and live demonstrations.', icon: '🏷️' },
-    { id: 'Store opening', title: 'Store Opening', desc: 'Drive neighborhood foot traffic and queue buzz for a new retail/restaurant outlet.', icon: '🎉' },
-    { id: 'Sampling', title: 'Sampling', desc: 'Distribute cold beverages, food trials, or cosmetics with photo evidence.', icon: '🥤' },
-    { id: 'Flyer distribution', title: 'Flyer Distribution', desc: 'Hand to hand pamphlet and coupon distribution in a geofenced radius.', icon: '📄' },
-    { id: 'Lead generation', title: 'Lead Generation', desc: 'Capture customer names, phone numbers, and survey responses with SMS OTP.', icon: '📋' },
-    { id: 'Event promotion', title: 'Event Promotion', desc: 'Promote college fests, marathon registrations, concerts, or regional exhibitions.', icon: '🎟️' },
-    { id: 'App downloads', title: 'App Downloads', desc: 'On-ground assistants guide customers through app installs and KYC verification.', icon: '📱' },
-    { id: 'Survey', title: 'Market Survey', desc: 'Collect structured consumer feedback and competitor price intelligence.', icon: '📊' },
-    { id: 'Sales promotion', title: 'Sales Promotion', desc: 'Direct on-field sales incentives, merchant onboarding, and discount drives.', icon: '🛍️' },
-    { id: 'On-ground activation', title: 'On-Ground Activation', desc: 'Full experiential kiosks, mascot engagement, flash mobs, and trade setups.', icon: '🎪' }
+    { id: 'Sampling', title: 'Product Sampling', desc: 'Distribute FMCG, beverage, or food trials with instant photo evidence.', icon: '🥤', category: 'Conversions' },
+    { id: 'Store opening', title: 'Store Opening Launch', desc: 'Drive neighborhood foot traffic and queue hype for new retail outlets.', icon: '🎉', category: 'Awareness' },
+    { id: 'Brand awareness', title: 'High-Traffic Visibility', desc: 'Maximize on-ground brand presence in high-density metro hubs.', icon: '📢', category: 'Awareness' },
+    { id: 'Lead generation', title: 'Lead & Contact Capture', desc: 'Capture verified names, phone numbers, and survey responses via OTP.', icon: '📋', category: 'Leads' },
+    { id: 'Product promotion', title: 'SKU Demo & Promotion', desc: 'Promote new product lines with live demos and branded merchandise.', icon: '🏷️', category: 'Consideration' },
+    { id: 'App downloads', title: 'App Installs & Onboarding', desc: 'Guided app installs, promo code redemptions, and user onboarding.', icon: '📱', category: 'App Growth' },
+    { id: 'Flyer distribution', title: 'Geofenced Pamphlets', desc: 'Hand-to-hand coupon and flyer distribution within strict 50m radius.', icon: '📄', category: 'Awareness' },
+    { id: 'Event promotion', title: 'Event & Fest Buzz', desc: 'Promote college expos, marathons, concerts, and regional trade shows.', icon: '🎟️', category: 'Awareness' },
+    { id: 'Survey', title: 'Market Intelligence', desc: 'Collect structured consumer feedback and competitor price intelligence.', icon: '📊', category: 'Research' },
+    { id: 'Sales promotion', title: 'On-Field Sales Drives', desc: 'Direct merchant onboarding, discount distribution, and instant sales.', icon: '🛍️', category: 'Conversions' },
+    { id: 'On-ground activation', title: 'Experiential Kiosks', desc: 'Pop-up booths, mascot engagement, flash mobs, and interactive setups.', icon: '🎪', category: 'Experiential' }
   ];
 
-  // Quick Preset Templates for Small Businesses, D2C Brands & Agencies
-  const presets = [
-    {
-      name: 'Small Restaurant Store Opening',
-      brand: 'Artisan Cafe & Bakery',
-      objective: 'Store opening',
-      targetArea: 'OMR Food Street Hub',
-      radiusKm: 3,
-      workers: 5,
-      budget: 10000,
-      timing: 'Full Day (10 AM - 6 PM)',
-      type: 'Flyer Distributors & Samplers'
+  // Hyper-Local POI & Demographic Database (e.g. T. Nagar, Velachery, OMR, Indiranagar, Bandra, etc.)
+  const geoIntelligenceDb = {
+    'T. Nagar & Ranganathan Street': {
+      city: 'Chennai',
+      secRating: 'SEC A/B (Mid-to-High Household Income ₹55k–₹1.4L/mo)',
+      footfallDaily: '95,000+ Footfall/Day',
+      matchScore: 98,
+      schoolsAndColleges: ['Loyola College (1.8 km)', 'Sacred Heart Matriculation', 'MOP Vaishnav College'],
+      mallsAndHighStreets: ['Express Avenue Mall', 'Ranganathan St Arcades', 'Saravana Stores Hub'],
+      economicProfile: 'High Footfall Commercial Arcade, Dense Retail Shoppers & Youth',
+      peakHours: '04:30 PM – 09:00 PM (Peak Shopping Hours)',
+      recommendedPromoters: 15
     },
-    {
-      name: 'D2C Beverage Mega Sampling',
-      brand: 'Pulse Energy Drink',
-      objective: 'Sampling',
-      targetArea: 'Indiranagar & Koramangala',
-      radiusKm: 5,
-      workers: 20,
-      budget: 25000,
-      timing: 'Full Day (10 AM - 6 PM)',
-      type: 'Sampling Promoters'
+    'OMR IT Corridor & Tidel Park': {
+      city: 'Chennai',
+      secRating: 'SEC A/A+ (IT Professionals & Tech Executives ₹75k–₹2.5L/mo)',
+      footfallDaily: '70,000+ Tech Professionals/Day',
+      matchScore: 96,
+      schoolsAndColleges: ['Sathyabama University', 'SSN College of Engineering', 'Hindustan University'],
+      mallsAndHighStreets: ['RMZ Millenia Tech Park', 'Vivira Mall', 'OMR Food Street Hub'],
+      economicProfile: 'Tech Park Campus, High Disposable Income, D2C & FinTech Ideal',
+      peakHours: '08:30 AM – 10:30 AM (Entry) & 05:30 PM – 08:00 PM (Exit)',
+      recommendedPromoters: 20
     },
-    {
-      name: 'Regional Multi-City Metro Tour',
-      brand: 'NeoBank Mobile App',
-      objective: 'App downloads',
-      targetArea: 'Chennai Central + Bangalore Indiranagar',
-      radiusKm: 10,
-      workers: 50,
-      budget: 75000,
-      timing: 'Full Day (10 AM - 6 PM)',
-      type: 'Onboarding Agents'
+    'Velachery & Phoenix MarketCity': {
+      city: 'Chennai',
+      secRating: 'SEC A/B (Young Professionals, College Youth & Families)',
+      footfallDaily: '80,000+ Shoppers/Day',
+      matchScore: 95,
+      schoolsAndColleges: ['IIT Madras (3.2 km)', 'Guru Nanak College', 'AMET Campus'],
+      mallsAndHighStreets: ['Phoenix Marketcity Mall', 'Grand Square Mall', 'Velachery Main Rd Corridor'],
+      economicProfile: 'Premium Mall Arcade, Moviegoers, Weekend Family Crowds',
+      peakHours: '01:00 PM – 09:30 PM (Weekend High Density)',
+      recommendedPromoters: 18
+    },
+    'Anna Nagar Commercial Hub': {
+      city: 'Chennai',
+      secRating: 'SEC A+ (Upper Residential & High Street Boutique Buyers)',
+      footfallDaily: '55,000+ Footfall/Day',
+      matchScore: 94,
+      schoolsAndColleges: ['SBOA School', 'Anna Adarsh College for Women', 'Valliammal College'],
+      mallsAndHighStreets: ['VR Chennai Mall', '2nd Avenue High Street', 'Shanti Colony Food Strip'],
+      economicProfile: 'Affluent Residential Pocket, Premium D2C & Gourmet Dining Focus',
+      peakHours: '05:00 PM – 09:30 PM',
+      recommendedPromoters: 12
+    },
+    'Indiranagar & 100ft Road': {
+      city: 'Bangalore',
+      secRating: 'SEC A+ (Tech Founders, Urban Youth & Lifestyle Consumers)',
+      footfallDaily: '65,000+ Footfall/Day',
+      matchScore: 97,
+      schoolsAndColleges: ['National Public School', 'Ebenezer International', 'New Horizon'],
+      mallsAndHighStreets: ['100ft Road High Street', '12th Main Food Hub', 'CMH Road Arcades'],
+      economicProfile: 'Bangalore Pub & Craft Beverage Hub, Premium Lifestyle & App Downloads',
+      peakHours: '12:30 PM – 03:00 PM & 06:30 PM – 10:00 PM',
+      recommendedPromoters: 16
+    },
+    'Koramangala 80ft Road Corridor': {
+      city: 'Bangalore',
+      secRating: 'SEC A/B (Startup Employees, College Students & Foodies)',
+      footfallDaily: '75,000+ Footfall/Day',
+      matchScore: 96,
+      schoolsAndColleges: ['Christ University', 'Jyoti Nivas College', 'St. John’s Campus'],
+      mallsAndHighStreets: ['Nexus Koramangala Mall', '80ft Road Food Street', 'Forum Mall Strip'],
+      economicProfile: 'Dense Student & Startup Corridor, High Engagement for Beverage & Apps',
+      peakHours: '11:00 AM – 09:00 PM',
+      recommendedPromoters: 20
+    },
+    'Bandra Bandstand & Linking Road': {
+      city: 'Mumbai',
+      secRating: 'SEC A+ (Bollywood, Fashion & Elite Urban Shoppers)',
+      footfallDaily: '90,000+ Footfall/Day',
+      matchScore: 97,
+      schoolsAndColleges: ['St. Andrew’s College', 'Rizvi College', 'National College Bandra'],
+      mallsAndHighStreets: ['Linking Road Shopping Strip', 'Hill Road Boutique Arcades', 'Carter Road Promenade'],
+      economicProfile: 'High Fashion & Luxury Retail Hub, Influencer & Sampling High Response',
+      peakHours: '04:00 PM – 09:30 PM',
+      recommendedPromoters: 18
     }
-  ];
-
-  const applyPreset = (p) => {
-    setFormData(prev => ({
-      ...prev,
-      name: p.name,
-      brand: p.brand,
-      objective: p.objective,
-      targetArea: p.targetArea,
-      radiusKm: p.radiusKm,
-      workersRequired: p.workers,
-      budget: p.budget,
-      shiftTiming: p.timing,
-      peopleType: p.type
-    }));
   };
 
-  // Outcome Calculation Engine
-  const calculateOutcome = (budgetAmount) => {
-    const numBudget = parseInt(budgetAmount) || 25000;
-    const workerDailyPayoutRate = 750;
-    const estimatedWorkers = Math.max(1, Math.floor((numBudget * 0.60) / workerDailyPayoutRate));
-    const estimatedReachMin = estimatedWorkers * 400;
-    const estimatedReachMax = estimatedWorkers * 650;
-    const workerPayoutTotal = estimatedWorkers * workerDailyPayoutRate;
-    const platformFee = Math.round(numBudget * 0.10);
-    const logisticsAndAudit = numBudget - workerPayoutTotal - platformFee;
+  const currentGeoInfo = geoIntelligenceDb[formData.targetArea] || geoIntelligenceDb['T. Nagar & Ranganathan Street'];
+
+  // Interest Categories for FB-style Audience Targeting
+  const interestOptions = [
+    'Foodies & Coffee Lovers',
+    'College & Student Youth',
+    'Fashion & Shopping',
+    'Fitness & Wellness',
+    'Tech & IT Professionals',
+    'Young Families & Parents',
+    'Auto & Mobility',
+    'D2C Brand Enthusiasts',
+    'Music & Festival Outings'
+  ];
+
+  const toggleInterest = (interest) => {
+    setFormData(prev => {
+      const exists = prev.selectedInterests.includes(interest);
+      if (exists) {
+        return { ...prev, selectedInterests: prev.selectedInterests.filter(i => i !== interest) };
+      } else {
+        return { ...prev, selectedInterests: [...prev.selectedInterests, interest] };
+      }
+    });
+  };
+
+  // Outcome Engine Calculation
+  const calculateOutcome = (budgetAmount, headcount) => {
+    const numBudget = parseInt(budgetAmount) || 35000;
+    const numWorkers = parseInt(headcount) || 15;
+    const workerDailyPayoutRate = 800;
+    
+    const estimatedInteractions = numWorkers * 380;
+    const estimatedLeads = Math.round(estimatedInteractions * 0.14);
+    const workerPayoutTotal = numWorkers * workerDailyPayoutRate;
+    const platformEscrowFee = Math.round(numBudget * 0.10);
+    const logisticsAudit = Math.max(0, numBudget - workerPayoutTotal - platformEscrowFee);
+    const costPerLead = estimatedLeads > 0 ? Math.round(numBudget / estimatedLeads) : 0;
 
     return {
-      estimatedReach: `${estimatedReachMin.toLocaleString('en-IN')} – ${estimatedReachMax.toLocaleString('en-IN')} people`,
-      workersRequired: estimatedWorkers,
+      estimatedReach: `${(estimatedInteractions * 3.2).toLocaleString('en-IN')} Impressions`,
+      estimatedInteractions: `${estimatedInteractions.toLocaleString('en-IN')} People Engaged`,
+      estimatedLeads: `${estimatedLeads.toLocaleString('en-IN')} Verified Leads`,
+      costPerLead: `₹${costPerLead}`,
       workerPayout: `₹${workerPayoutTotal.toLocaleString('en-IN')}`,
-      platformFee: `₹${platformFee.toLocaleString('en-IN')}`,
+      platformFee: `₹${platformEscrowFee.toLocaleString('en-IN')}`,
       logisticsAudit: `₹${logisticsAndAudit.toLocaleString('en-IN')}`,
-      totalCost: `₹${numBudget.toLocaleString('en-IN')}`,
-      duration: '1 Day'
+      totalCost: `₹${numBudget.toLocaleString('en-IN')}`
     };
   };
 
-  const outcome = calculateOutcome(formData.budget);
+  const outcome = calculateOutcome(formData.budget, formData.workersRequired);
 
   const handleLaunch = () => {
     onPublish({
       name: formData.name,
       brand: formData.brand,
       objective: formData.objective,
-      city: formData.targetArea.split(' ')[0] || 'Chennai',
+      city: currentGeoInfo.city || 'Chennai',
       budget: `₹${parseInt(formData.budget).toLocaleString('en-IN')}`,
-      workers: outcome.workersRequired,
+      workers: formData.workersRequired,
       locations: 1,
-      targetCpl: '₹75',
-      actualCpl: '₹62',
+      targetCpl: outcome.costPerLead,
+      actualCpl: outcome.costPerLead,
       status: true,
       stage: 'Live'
     });
@@ -138,315 +199,570 @@ export default function CampaignCreator({ onClose, onPublish }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-espresso/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-150">
-      <div className="bg-white text-espresso border border-espresso/15 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col justify-between max-h-[90vh] font-sans">
+    <div className="fixed inset-0 bg-espresso/70 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-white text-espresso border border-espresso/15 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col justify-between max-h-[92vh] font-sans">
         
-        {/* Header */}
+        {/* Top Header — Meta Ads Manager Style */}
         <div className="p-4 px-6 border-b border-espresso/10 flex items-center justify-between bg-espresso text-white">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gold text-espresso flex items-center justify-center font-black text-xs shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-gold text-espresso flex items-center justify-center font-black text-sm shadow-md">
               Z
             </div>
             <div>
-              <h2 className="text-sm font-extrabold tracking-tight text-white uppercase">
-                Create Offline Campaign
-              </h2>
-              <span className="text-[10px] text-gold font-bold block">
-                Step {step} of 3 — {
-                  step === 1 ? '1. Choose Campaign Objective' :
-                  step === 2 ? '2. Define Audience & Geofence' :
-                  '3. Set Budget & Instant Launch'
-                }
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold bg-gold/20 text-gold px-2 py-0.5 rounded border border-gold/30 uppercase">
+                  Meta Ads Style Console
+                </span>
+                <h2 className="text-sm font-extrabold tracking-tight text-white uppercase">
+                  Campaign Studio
+                </h2>
+              </div>
+              <p className="text-[11px] text-linen/70 mt-0.5">
+                Demographic & Geofence Intelligence Engine for Offline Deployments
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-linen/70 hover:text-white p-1 cursor-pointer">
-            <X size={18} />
+
+          {/* Stepper Dots */}
+          <div className="hidden md:flex items-center gap-2 bg-white/10 px-4 py-1.5 rounded-full border border-white/10 text-xs">
+            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${step === 1 ? 'bg-gold text-espresso' : 'text-linen/70'}`}>
+              1. Objective
+            </span>
+            <span className="text-linen/40">→</span>
+            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${step === 2 ? 'bg-gold text-espresso' : 'text-linen/70'}`}>
+              2. Demographics & Interests
+            </span>
+            <span className="text-linen/40">→</span>
+            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${step === 3 ? 'bg-gold text-espresso' : 'text-linen/70'}`}>
+              3. Geofence & POI Intelligence
+            </span>
+            <span className="text-linen/40">→</span>
+            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${step === 4 ? 'bg-gold text-espresso' : 'text-linen/70'}`}>
+              4. Launch
+            </span>
+          </div>
+
+          <button onClick={onClose} className="text-linen/70 hover:text-white p-1.5 rounded-lg transition-colors cursor-pointer">
+            <X size={20} />
           </button>
         </div>
 
-        {/* Quick Presets Bar */}
-        {step === 1 && (
-          <div className="bg-linen/30 px-6 py-2.5 border-b border-espresso/10 flex items-center gap-2 overflow-x-auto text-xs">
-            <span className="text-[10px] font-bold text-muted uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
-              <Sparkles size={11} className="text-gold" /> Quick Templates:
-            </span>
-            {presets.map((p, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => applyPreset(p)}
-                className="text-[10px] font-bold bg-white hover:bg-gold hover:text-espresso text-espresso border border-espresso/10 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer shadow-2xs"
-              >
-                {p.name} (₹{p.budget.toLocaleString('en-IN')})
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Form Body */}
-        <div className="p-6 flex-grow overflow-y-auto text-xs text-espresso">
+        {/* Main 2-Column Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 flex-grow overflow-y-auto">
           
-          {/* STEP 1: Choose Campaign Objective (11 Objectives) */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Campaign Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-linen/25 border border-espresso/15 rounded-xl px-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
-                    placeholder="e.g. Chennai Store Opening & Sampling"
-                  />
+          {/* Left Main Form Column (8 cols) */}
+          <div className="lg:col-span-8 p-6 space-y-6 text-xs text-espresso border-b lg:border-b-0 lg:border-r border-espresso/10">
+            
+            {/* STEP 1: Campaign Objective & Core Details */}
+            {step === 1 && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 space-y-1">
+                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
+                    Step 1: Campaign Objective Setup
+                  </span>
+                  <p className="text-xs text-muted font-medium">
+                    Select your core marketing outcome. Ziggers configures promoter briefings, geofence parameters, and lead capture methods to match your goal.
+                  </p>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Business / Brand Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-linen/25 border border-espresso/15 rounded-xl px-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
-                    placeholder="e.g. Artisan Cafe, D2C Brand, Local Shop"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-2">
-                  Select Campaign Objective *
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                  {objectives.map((obj) => (
-                    <button
-                      key={obj.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, objective: obj.id })}
-                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                        formData.objective === obj.id
-                          ? 'border-gold bg-gold/15 text-espresso ring-1 ring-gold shadow-2xs font-bold'
-                          : 'border-espresso/10 bg-white text-muted hover:border-gold hover:text-espresso'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-lg">{obj.icon}</span>
-                          {formData.objective === obj.id && (
-                            <span className="w-4 h-4 bg-gold text-espresso rounded-full flex items-center justify-center text-[10px] font-bold">✓</span>
-                          )}
-                        </div>
-                        <h4 className="font-extrabold text-xs text-espresso">{obj.title}</h4>
-                        <p className="text-[10px] text-muted leading-tight mt-0.5">{obj.desc}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: Define Audience (Location -> Radius -> Date -> Time -> Type of people) */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="p-3.5 bg-linen/40 rounded-2xl border border-espresso/10 space-y-1">
-                <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
-                  🎯 Meta-Style Audience Abstraction
-                </span>
-                <p className="text-[11px] text-muted font-medium">
-                  Instead of Meta's Age → Gender → Interests, Ziggers targets <strong>Location → Radius → Date → Time → Type of People Needed</strong>.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Target Location Area *
-                  </label>
-                  <div className="relative">
-                    <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Campaign Name *
+                    </label>
                     <input
                       type="text"
-                      value={formData.targetArea}
-                      onChange={(e) => setFormData({ ...formData, targetArea: e.target.value })}
-                      className="w-full bg-linen/20 border border-espresso/15 rounded-xl pl-9 pr-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
-                      placeholder="e.g. OMR IT Corridor / Anna Nagar / Indiranagar"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
+                      placeholder="e.g. T. Nagar Store Launch & Product Sampling"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-[10px] font-bold text-muted mb-1 uppercase tracking-wider">
-                    <span>Geofence Radius</span>
-                    <span className="text-gold font-mono font-extrabold">{formData.radiusKm} KM Radius</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="15"
-                    step="1"
-                    value={formData.radiusKm}
-                    onChange={(e) => setFormData({ ...formData, radiusKm: parseInt(e.target.value) })}
-                    className="w-full accent-gold cursor-pointer mt-1"
-                  />
-                  <div className="flex justify-between text-[9px] text-muted font-mono mt-0.5">
-                    <span>1 KM (Hyper Local Store)</span>
-                    <span>5 KM (Metro Zone)</span>
-                    <span>15 KM (Wide Hub)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Activation Date
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value, endDate: e.target.value })}
-                    className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Shift Timings
-                  </label>
-                  <select
-                    value={formData.shiftTiming}
-                    onChange={(e) => setFormData({ ...formData, shiftTiming: e.target.value })}
-                    className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold"
-                  >
-                    <option value="Full Day (10:00 AM - 06:00 PM)">Full Day (10 AM - 6 PM)</option>
-                    <option value="Morning Rush (08:00 AM - 01:00 PM)">Morning Rush (8 AM - 1 PM)</option>
-                    <option value="Evening Prime (04:00 PM - 09:00 PM)">Evening Prime (4 PM - 9 PM)</option>
-                    <option value="Weekend Special (11:00 AM - 08:00 PM)">Weekend Special (11 AM - 8 PM)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                    Type of People Needed
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.peopleType}
-                    onChange={(e) => setFormData({ ...formData, peopleType: e.target.value })}
-                    className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs text-espresso focus:outline-none focus:border-gold"
-                    placeholder="e.g. Promoters, Samplers, Hosts"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                  Brief Instructions for Workers
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.instructions}
-                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                  className="w-full bg-linen/20 border border-espresso/15 rounded-xl p-2.5 text-xs text-espresso focus:outline-none focus:border-gold"
-                  placeholder="What should the Ziggers say or do on-field?"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Set Budget & Live Outcome Forecast */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
-                  Set Your Campaign Budget *
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-grow">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-muted text-sm">₹</span>
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Business / Brand Name *
+                    </label>
                     <input
-                      type="number"
-                      step="1000"
-                      value={formData.budget}
-                      onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                      className="w-full bg-linen/25 border border-espresso/15 rounded-xl pl-8 pr-3 py-2.5 text-sm font-extrabold text-espresso focus:outline-none focus:border-gold font-mono"
-                      placeholder="25000"
+                      type="text"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
+                      placeholder="e.g. Artisan Cafe, D2C Beverage, Fashion Brand"
                     />
                   </div>
-                  <div className="flex gap-1.5">
-                    {[10000, 25000, 50000, 100000].map(amt => (
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-2">
+                    Choose Primary Objective (Structured Meta Ads Categories) *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {objectives.map((obj) => (
                       <button
-                        key={amt}
+                        key={obj.id}
                         type="button"
-                        onClick={() => setFormData({ ...formData, budget: amt })}
-                        className="px-2.5 py-1 bg-white hover:bg-gold hover:text-espresso border border-espresso/15 rounded-xl text-[10px] font-mono font-bold text-espresso cursor-pointer transition-colors shadow-2xs"
+                        onClick={() => setFormData({ ...formData, objective: obj.id })}
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
+                          formData.objective === obj.id
+                            ? 'border-gold bg-gold/15 text-espresso ring-2 ring-gold/40 shadow-xs font-bold'
+                            : 'border-espresso/10 bg-white text-muted hover:border-gold hover:text-espresso'
+                        }`}
                       >
-                        ₹{(amt/1000)}k
+                        <span className="text-2xl p-2 rounded-xl bg-linen/50 shrink-0">{obj.icon}</span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-extrabold text-xs text-espresso">{obj.title}</h4>
+                            <span className="text-[8px] font-mono font-bold bg-espresso/5 px-1.5 py-0.5 rounded text-muted">
+                              {obj.category}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-muted leading-relaxed">{obj.desc}</p>
+                        </div>
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Instant Outcome Box */}
-              <div className="bg-linen/30 border border-gold/40 rounded-3xl p-5 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-espresso/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={16} className="text-gold" />
-                    <h3 className="font-extrabold text-sm text-espresso">Estimated Campaign Outcome</h3>
+            {/* STEP 2: Demographics & Target Audience Profile (FB Ads Ergonomics) */}
+            {step === 2 && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 space-y-1">
+                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
+                    Step 2: Target Demographics & Interest Affinity
+                  </span>
+                  <p className="text-xs text-muted font-medium">
+                    Configure target consumer demographics. Ziggers uses this profile to select promoter profiles and recommend high-density venue POIs.
+                  </p>
+                </div>
+
+                {/* Age & Gender Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Age Range Slider */}
+                  <div className="bg-white border border-espresso/10 p-4 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-muted">
+                      <span className="flex items-center gap-1"><Users size={12} className="text-gold" /> Target Age Bracket</span>
+                      <span className="text-espresso font-mono font-extrabold">{formData.ageRange[0]} – {formData.ageRange[1]} Years</span>
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <input
+                        type="range"
+                        min="16"
+                        max="60"
+                        value={formData.ageRange[1]}
+                        onChange={(e) => setFormData({ ...formData, ageRange: [formData.ageRange[0], parseInt(e.target.value)] })}
+                        className="w-full accent-gold cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex justify-between text-[9px] font-mono text-muted">
+                      <span>16 (Youth/Gen-Z)</span>
+                      <span>35 (Working Pros)</span>
+                      <span>60+ (Senior)</span>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono bg-gold/20 text-espresso px-2.5 py-0.5 rounded-full font-bold">
-                    Algorithmic Forecast
+
+                  {/* Gender Selector */}
+                  <div className="bg-white border border-espresso/10 p-4 rounded-2xl space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                      Gender Targeting
+                    </span>
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      {['All', 'Male', 'Female'].map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, gender: g })}
+                          className={`py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                            formData.gender === g
+                              ? 'bg-espresso text-white border-espresso shadow-xs'
+                              : 'bg-linen/20 text-espresso border-espresso/15 hover:border-gold'
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* SEC Economic Classification */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                    Economic SEC Bracket (Purchasing Power & Income) *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {[
+                      { id: 'SEC A+ (Ultra-High Income > ₹1.5L/mo)', name: 'SEC A+ Ultra-High', desc: 'Luxury, Premium D2C, High Ticket > ₹1.5L/mo' },
+                      { id: 'SEC A/B (Mid-High Income ₹55k–₹1.4L/mo)', name: 'SEC A/B Mid-to-High', desc: 'Working Pros, College Youth ₹55k–₹1.4L/mo' },
+                      { id: 'SEC B/C (Mass Market)', name: 'SEC B/C Mass Market', desc: 'General Trade, Daily Essentials & Retail' }
+                    ].map((sec) => (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, secCategory: sec.id })}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                          formData.secCategory === sec.id
+                            ? 'border-gold bg-gold/15 text-espresso font-bold ring-2 ring-gold/30'
+                            : 'border-espresso/10 bg-white text-muted hover:border-gold'
+                        }`}
+                      >
+                        <h5 className="font-extrabold text-xs text-espresso">{sec.name}</h5>
+                        <p className="text-[9px] text-muted mt-1 leading-tight">{sec.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Audience Interest Affinities */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                    Audience Interest & Affinity Pill Select (Meta Style)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {interestOptions.map((interest) => {
+                      const selected = formData.selectedInterests.includes(interest);
+                      return (
+                        <button
+                          key={interest}
+                          type="button"
+                          onClick={() => toggleInterest(interest)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                            selected
+                              ? 'bg-gold text-espresso border-gold shadow-2xs font-extrabold'
+                              : 'bg-white text-espresso border-espresso/15 hover:border-gold'
+                          }`}
+                        >
+                          {selected ? '✓ ' : '+ '}
+                          {interest}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* STEP 3: Hyper-Local Geofence & POI Intelligence Mapping (T. Nagar, OMR, etc.) */}
+            {step === 3 && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 space-y-1">
+                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
+                    Step 3: Geofence & POI Infrastructure Intelligence
+                  </span>
+                  <p className="text-xs text-muted font-medium">
+                    Map your target area to view nearby schools, malls, economic ratings, and peak engagement hours.
+                  </p>
+                </div>
+
+                {/* Target Area Dropdown & Radius */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Select Target Area / Hotspot Node *
+                    </label>
+                    <select
+                      value={formData.targetArea}
+                      onChange={(e) => setFormData({ ...formData, targetArea: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs text-espresso font-extrabold focus:outline-none focus:border-gold"
+                    >
+                      {Object.keys(geoIntelligenceDb).map((area) => (
+                        <option key={area} value={area}>
+                          📍 {area} ({geoIntelligenceDb[area].city})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[10px] font-bold text-muted mb-1 uppercase tracking-wider">
+                      <span>Geofence Radius Limit</span>
+                      <span className="text-gold font-mono font-extrabold">{formData.radiusKm} KM Radius</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={formData.radiusKm}
+                      onChange={(e) => setFormData({ ...formData, radiusKm: parseInt(e.target.value) })}
+                      className="w-full accent-gold cursor-pointer mt-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Hyper-Local POI & Demographic Intelligence Dashboard Card */}
+                <div className="bg-espresso text-white rounded-3xl p-5 space-y-4 shadow-xl border border-white/10 relative overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="text-gold" size={18} />
+                      <h3 className="font-extrabold text-sm text-white">
+                        POI Intelligence: {formData.targetArea}
+                      </h3>
+                    </div>
+                    <span className="bg-green-500/20 text-green-400 border border-green-500/30 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full">
+                      {currentGeoInfo.matchScore}% Audience Match
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                    
+                    {/* Schools & Colleges */}
+                    <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1">
+                        <School size={12} /> Nearby Schools & Colleges
+                      </span>
+                      <ul className="text-[11px] text-linen/90 space-y-1 pt-1 font-medium">
+                        {currentGeoInfo.schoolsAndColleges.map((s, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <span className="text-gold">•</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Malls & Shopping Streets */}
+                    <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1">
+                        <ShoppingBag size={12} /> Malls & High Streets
+                      </span>
+                      <ul className="text-[11px] text-linen/90 space-y-1 pt-1 font-medium">
+                        {currentGeoInfo.mallsAndHighStreets.map((m, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <span className="text-gold">•</span> {m}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Economic Rating & Footfall */}
+                    <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl space-y-1 sm:col-span-2 lg:col-span-1">
+                      <span className="text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1">
+                        <Building size={12} /> Economic Profile & Peak Hours
+                      </span>
+                      <p className="text-[10px] text-linen/80 leading-relaxed pt-1">
+                        {currentGeoInfo.secRating}
+                      </p>
+                      <div className="pt-2 flex items-center justify-between text-[10px] font-mono text-gold font-bold">
+                        <span>🔥 {currentGeoInfo.footfallDaily}</span>
+                        <span>⏰ {currentGeoInfo.peakHours.split(' (')[0]}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Shift Timing & Instructions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Recommended Shift Timing
+                    </label>
+                    <select
+                      value={formData.shiftTiming}
+                      onChange={(e) => setFormData({ ...formData, shiftTiming: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2 text-xs text-espresso font-semibold"
+                    >
+                      <option value="Evening Prime (04:00 PM - 09:00 PM)">Evening Prime (04:00 PM - 09:00 PM)</option>
+                      <option value="Lunch Rush (11:30 AM - 03:00 PM)">Lunch Rush (11:30 AM - 03:00 PM)</option>
+                      <option value="Full Day (10:00 AM - 06:00 PM)">Full Day (10:00 AM - 06:00 PM)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Field Promoter Brief & Guidelines
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.instructions}
+                      onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2 text-xs text-espresso"
+                      placeholder="e.g. Hand out sample drink vouchers and capture phone OTP..."
+                    />
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* STEP 4: Staffing, Budget & Instant Dispatch */}
+            {step === 4 && (
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 space-y-1">
+                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
+                    Step 4: Promoter Staffing, Budget & Verification Rules
+                  </span>
+                  <p className="text-xs text-muted font-medium">
+                    Configure promoter headcount, campaign budget, and biometric GPS verification rules.
+                  </p>
+                </div>
+
+                {/* Promoters Required & Budget Slider */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex justify-between text-[10px] font-bold text-muted mb-1 uppercase tracking-wider">
+                      <span>Promoter Headcount Required</span>
+                      <span className="text-gold font-mono font-extrabold">{formData.workersRequired} Promoters</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      step="5"
+                      value={formData.workersRequired}
+                      onChange={(e) => setFormData({ ...formData, workersRequired: parseInt(e.target.value) })}
+                      className="w-full accent-gold cursor-pointer mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Total Campaign Budget *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-muted text-xs">₹</span>
+                      <input
+                        type="number"
+                        step="5000"
+                        value={formData.budget}
+                        onChange={(e) => setFormData({ ...formData, budget: parseInt(e.target.value) || 35000 })}
+                        className="w-full bg-white border border-espresso/15 rounded-xl pl-8 pr-3 py-2 text-xs font-extrabold text-espresso font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audit & Security Guarantees */}
+                <div className="bg-white border border-espresso/10 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-bold text-espresso uppercase tracking-wider block flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-green-600" /> Automated Execution & Audit Protocol
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px] text-muted font-medium">
+                    <div className="p-2.5 bg-linen/20 rounded-xl border border-espresso/5 flex items-center gap-2">
+                      <span className="text-green-600 font-bold">✓</span> GPS 50m Radius Geofencing
+                    </div>
+                    <div className="p-2.5 bg-linen/20 rounded-xl border border-espresso/5 flex items-center gap-2">
+                      <span className="text-green-600 font-bold">✓</span> Watermarked Photos & Videos
+                    </div>
+                    <div className="p-2.5 bg-linen/20 rounded-xl border border-espresso/5 flex items-center gap-2">
+                      <span className="text-green-600 font-bold">✓</span> Instant Standby Replacements
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+          {/* Right Column: Meta-Style Live Forecast & Estimate Sidebar (4 cols) */}
+          <div className="lg:col-span-4 p-6 bg-linen/20 space-y-5 text-xs text-espresso flex flex-col justify-between">
+            
+            <div className="space-y-4">
+              
+              {/* Audience Reach Gauge Header */}
+              <div className="bg-white p-4 rounded-2xl border border-espresso/10 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-1">
+                    <Target size={12} className="text-gold" /> Audience Reach Gauge
+                  </span>
+                  <span className="text-[9px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                    Optimal Reach
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
-                  <div className="bg-white p-3 rounded-2xl border border-espresso/10">
-                    <span className="text-[9px] text-muted uppercase font-bold block">Estimated Reach</span>
-                    <strong className="text-espresso text-sm block mt-0.5">{outcome.estimatedReach}</strong>
+                {/* Meter Visual */}
+                <div className="space-y-1">
+                  <div className="h-2 w-full bg-linen/60 rounded-full overflow-hidden flex">
+                    <div className="w-1/4 bg-yellow-400"></div>
+                    <div className="w-2/4 bg-green-500"></div>
+                    <div className="w-1/4 bg-blue-500"></div>
                   </div>
-
-                  <div className="bg-white p-3 rounded-2xl border border-espresso/10">
-                    <span className="text-[9px] text-muted uppercase font-bold block">Workers Required</span>
-                    <strong className="text-gold text-sm block mt-0.5">{outcome.workersRequired} Ziggers</strong>
+                  <div className="flex justify-between text-[9px] font-mono text-muted">
+                    <span>Broad</span>
+                    <span className="text-green-700 font-bold">Optimal Target</span>
+                    <span>Specific</span>
                   </div>
-
-                  <div className="bg-white p-3 rounded-2xl border border-espresso/10">
-                    <span className="text-[9px] text-muted uppercase font-bold block">Worker Payout</span>
-                    <strong className="text-espresso text-sm block mt-0.5">{outcome.workerPayout}</strong>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-2xl border border-espresso/10">
-                    <span className="text-[9px] text-muted uppercase font-bold block">Platform & Audit</span>
-                    <strong className="text-espresso text-sm block mt-0.5">{outcome.platformFee}</strong>
-                  </div>
-                </div>
-
-                {/* Ziggers Handles Execution Guarantee */}
-                <div className="p-3.5 bg-white rounded-2xl border border-espresso/10 text-[11px] text-muted flex items-center gap-2.5">
-                  <ShieldCheck size={16} className="text-green-600 shrink-0" />
-                  <span>
-                    <strong className="text-espresso">Zero Staffing Hassles:</strong> Ziggers automatically matches Ziggers → assigns workers → briefs them → verifies GPS check-in → collects photo proofs → processes payouts.
-                  </span>
                 </div>
               </div>
+
+              {/* Target Summary Specs */}
+              <div className="bg-white p-4 rounded-2xl border border-espresso/10 shadow-xs space-y-2 font-medium">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block border-b border-espresso/10 pb-1.5">
+                  Targeting Summary
+                </span>
+
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted">Target Area:</span>
+                    <span className="font-bold text-espresso">{formData.targetArea.split(' &')[0]}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Age Bracket:</span>
+                    <span className="font-bold font-mono">{formData.ageRange[0]} – {formData.ageRange[1]} Yrs</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Gender:</span>
+                    <span className="font-bold">{formData.gender}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">SEC Category:</span>
+                    <span className="font-bold text-gold text-[10px]">{formData.secCategory.split(' (')[0]}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Algorithmic Estimate Yield */}
+              <div className="bg-espresso text-white p-4 rounded-2xl shadow-md space-y-3 border border-white/10">
+                <span className="text-[10px] font-bold text-gold uppercase tracking-wider block flex items-center gap-1">
+                  <Sparkles size={12} /> Projected Campaign Yield
+                </span>
+
+                <div className="space-y-2 font-mono">
+                  <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
+                    <span className="text-[10px] text-linen/70">Est. Reach:</span>
+                    <strong className="text-white text-xs">{outcome.estimatedReach}</strong>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
+                    <span className="text-[10px] text-linen/70">Est. Leads:</span>
+                    <strong className="text-gold text-xs">{outcome.estimatedLeads}</strong>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
+                    <span className="text-[10px] text-linen/70">Cost-Per-Lead (CPL):</span>
+                    <strong className="text-green-400 text-xs">{outcome.costPerLead}</strong>
+                  </div>
+                </div>
+              </div>
+
             </div>
-          )}
+
+            {/* Total Budget Card */}
+            <div className="bg-white p-4 rounded-2xl border border-espresso/10 shadow-xs flex items-center justify-between">
+              <div>
+                <span className="text-[9px] font-bold text-muted uppercase block">Total Escrow Budget</span>
+                <span className="text-lg font-extrabold text-espresso font-mono">{outcome.totalCost}</span>
+              </div>
+              <span className="text-[10px] font-mono text-green-700 font-bold bg-green-50 px-2.5 py-1 rounded-lg border border-green-200">
+                Escrow Protected
+              </span>
+            </div>
+
+          </div>
 
         </div>
 
-        {/* Footer Navigation */}
+        {/* Bottom Footer Navigation Bar */}
         <div className="p-4 px-6 border-t border-espresso/10 bg-linen/20 flex items-center justify-between">
           {step > 1 ? (
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="flex items-center gap-1 bg-white hover:bg-linen text-espresso font-bold px-4 py-2 rounded-xl text-xs border border-espresso/15 cursor-pointer shadow-2xs"
+              className="flex items-center gap-1 bg-white hover:bg-linen text-espresso font-bold px-4 py-2 rounded-xl text-xs border border-espresso/15 cursor-pointer shadow-2xs transition-all"
             >
               <ArrowLeft size={14} /> Back
             </button>
@@ -454,11 +770,11 @@ export default function CampaignCreator({ onClose, onPublish }) {
             <div></div>
           )}
 
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="flex items-center gap-1.5 bg-espresso hover:bg-muted text-white font-extrabold px-5 py-2.5 rounded-xl text-xs cursor-pointer shadow-sm ml-auto"
+              className="flex items-center gap-1.5 bg-espresso hover:bg-muted text-white font-extrabold px-6 py-2.5 rounded-xl text-xs cursor-pointer shadow-sm ml-auto transition-all"
             >
               Next Step <ArrowRight size={14} className="text-gold" />
             </button>
@@ -466,10 +782,10 @@ export default function CampaignCreator({ onClose, onPublish }) {
             <button
               type="button"
               onClick={handleLaunch}
-              className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-espresso font-black px-6 py-2.5 rounded-xl text-xs cursor-pointer shadow-lg ml-auto uppercase tracking-wider transition-all transform hover:scale-102"
+              className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-espresso font-black px-7 py-3 rounded-xl text-xs cursor-pointer shadow-lg ml-auto uppercase tracking-wider transition-all transform hover:scale-102"
             >
-              <Zap size={15} />
-              <span>🚀 Launch Campaign</span>
+              <Zap size={16} />
+              <span>🚀 Deploy Campaign</span>
             </button>
           )}
         </div>
