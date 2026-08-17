@@ -17,6 +17,11 @@ export default function LiveCampaignDashboard({ campaigns = [], onCreateClick })
   // Primary active campaign
   const activeCampaign = campaigns.find(c => c.status === true || c.stage === 'Live') || campaigns[0] || null;
 
+  // Extract budget cleanly from any property name (budget, spend, totalBudget)
+  const budgetStr = activeCampaign?.budget || activeCampaign?.spend || activeCampaign?.totalBudget || '₹25,000';
+  const rawBudget = parseInt(String(budgetStr).replace(/[^0-9]/g, ''), 10) || 25000;
+  const rawSpent = Math.round(rawBudget * 0.74);
+
   // Generate location nodes dynamically if active campaign exists
   const locationNodes = activeCampaign ? [
     { 
@@ -26,7 +31,7 @@ export default function LiveCampaignDashboard({ campaigns = [], onCreateClick })
       presentWorkers: Math.ceil((activeCampaign.workers || 10) * 0.4), 
       completedInteractions: Math.round((activeCampaign.samples || 1000) * 0.45), 
       targetInteractions: Math.round((activeCampaign.samples || 1000) * 0.5), 
-      leads: Math.round((activeCampaign.leads || 100) * 0.5), 
+      leads: Math.round((activeCampaign.leads || 150) * 0.5), 
       photos: Math.round((activeCampaign.workers || 10) * 2), 
       status: '🟢 On Track' 
     },
@@ -37,7 +42,7 @@ export default function LiveCampaignDashboard({ campaigns = [], onCreateClick })
       presentWorkers: Math.floor((activeCampaign.workers || 10) * 0.35), 
       completedInteractions: Math.round((activeCampaign.samples || 1000) * 0.35), 
       targetInteractions: Math.round((activeCampaign.samples || 1000) * 0.35), 
-      leads: Math.round((activeCampaign.leads || 100) * 0.35), 
+      leads: Math.round((activeCampaign.leads || 150) * 0.35), 
       photos: Math.round((activeCampaign.workers || 10) * 1.5), 
       status: '🟢 On Track' 
     },
@@ -48,14 +53,11 @@ export default function LiveCampaignDashboard({ campaigns = [], onCreateClick })
       presentWorkers: Math.floor((activeCampaign.workers || 10) * 0.25), 
       completedInteractions: Math.round((activeCampaign.samples || 1000) * 0.2), 
       targetInteractions: Math.round((activeCampaign.samples || 1000) * 0.25), 
-      leads: Math.round((activeCampaign.leads || 100) * 0.15), 
+      leads: Math.round((activeCampaign.leads || 150) * 0.15), 
       photos: Math.round((activeCampaign.workers || 10) * 1), 
       status: '🟢 On Track' 
     }
   ] : [];
-
-  const rawBudget = parseInt((activeCampaign?.spend || activeCampaign?.totalBudget || '0').replace(/[^0-9]/g, ''), 10) || 0;
-  const rawSpent = Math.round(rawBudget * 0.74);
 
   return (
     <div className="bg-white text-espresso border border-espresso/15 rounded-3xl shadow-sm p-6 space-y-6 font-sans">
@@ -79,7 +81,7 @@ export default function LiveCampaignDashboard({ campaigns = [], onCreateClick })
                 {activeCampaign.name}
               </h2>
               <span className="text-xs text-linen/70 font-medium block">
-                Brand: <strong className="text-white">{activeCampaign.brand || 'Enterprise Partner'}</strong> • Target Area: <strong className="text-gold">{activeCampaign.city || 'Metro Activation Area'}</strong>
+                Brand: <strong className="text-white">{activeCampaign.brand || 'Enterprise Brand'}</strong> • Target Area: <strong className="text-gold">{activeCampaign.city || 'Metro Activation Area'}</strong>
               </span>
             </div>
 
