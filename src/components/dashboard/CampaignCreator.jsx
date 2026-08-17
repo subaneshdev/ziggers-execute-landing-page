@@ -14,6 +14,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
   const [step, setStep] = useState(1);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showLocationRankings, setShowLocationRankings] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Form Targeting State
   const [formData, setFormData] = useState({
@@ -32,8 +33,8 @@ export default function CampaignCreator({ onClose, onPublish }) {
     budgetInr: 35000
   });
 
-  // Calculate Live Forecast Engine Output
-  const pred = calculateAudiencePrediction({
+  // Calculate In-Memory Baseline Output
+  const basePred = calculateAudiencePrediction({
     targetLocations: formData.targetLocations,
     radiusKm: formData.radiusKm,
     ageMin: formData.ageRange[0],
@@ -47,6 +48,50 @@ export default function CampaignCreator({ onClose, onPublish }) {
     campaignDays: formData.campaignDays,
     budgetInr: formData.budgetInr
   });
+
+  const [liveForecast, setLiveForecast] = useState(basePred);
+
+  // Asynchronous API Fetch to Gemini AI Audience Forecast Endpoint
+  useEffect(() => {
+    setIsCalculating(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/audience/forecast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetLocations: formData.targetLocations,
+            radiusKm: formData.radiusKm,
+            ageMin: formData.ageRange[0],
+            ageMax: formData.ageRange[1],
+            gender: formData.gender,
+            secClassification: formData.secClassification,
+            selectedInterests: formData.selectedInterests,
+            objective: formData.objective,
+            promoterCount: formData.promoterCount,
+            shiftHours: formData.shiftHours,
+            campaignDays: formData.campaignDays,
+            budgetInr: formData.budgetInr
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.forecast) {
+            setLiveForecast(data.forecast);
+          }
+        }
+      } catch (err) {
+        console.warn('Forecast API update notice:', err);
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [formData]);
+
+  const pred = liveForecast || basePred;
 
   // Multi-Location Rankings
   const rankedLocations = rankLocationCandidates({
@@ -644,9 +689,16 @@ export default function CampaignCreator({ onClose, onPublish }) {
                   <span className="text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
                     <Activity size={14} /> Live Audience Forecast
                   </span>
-                  <span className="text-[9px] font-mono text-green-400 font-bold bg-green-500/20 px-2 py-0.5 rounded border border-green-500/30">
-                    {pred.confidencePercent}% Confidence
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {isCalculating && (
+                      <span className="text-[9px] font-mono text-gold animate-pulse font-bold flex items-center gap-1">
+                        <Sparkles size={10} className="animate-spin" /> AI Updating...
+                      </span>
+                    )}
+                    <span className="text-[9px] font-mono text-green-400 font-bold bg-green-500/20 px-2 py-0.5 rounded border border-green-500/30">
+                      {pred.confidencePercent}% Confidence
+                    </span>
+                  </div>
                 </div>
 
                 {/* 8 Core Metrics Stack */}
