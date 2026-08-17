@@ -21,6 +21,10 @@ export default function CampaignCreator({ onClose, onPublish }) {
     ageRange: [18, 35],
     gender: 'All',
     secCategory: 'SEC A/B (Mid-High Income)',
+    occupationSegment: 'IT & Tech Software Engineers',
+    lifeStage: 'Young Single / Gen-Z (18-24)',
+    promoterLanguage: 'Multi-Lingual Metro Promoters (English + Regional)',
+    shoppingHabit: 'Quick-Commerce & E-Commerce Shoppers',
     selectedInterests: ['Foodies & Coffee Lovers', 'College & Student Youth', 'Fashion & Shopping'],
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -391,7 +395,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
                 {/* SEC Economic Classification */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted uppercase tracking-wider block">
-                    Economic SEC Bracket (Purchasing Power & Income) *
+                    Economic SEC Bracket (Purchasing Power & Household Income) *
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {[
@@ -416,13 +420,99 @@ export default function CampaignCreator({ onClose, onPublish }) {
                   </div>
                 </div>
 
+                {/* Occupation & Persona Segment */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Occupation & Professional Persona *
+                    </label>
+                    <select
+                      value={formData.occupationSegment}
+                      onChange={(e) => setFormData({ ...formData, occupationSegment: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-espresso focus:outline-none focus:border-gold"
+                    >
+                      <option value="College & Campus Students">College & Campus Students</option>
+                      <option value="IT & Tech Software Engineers">IT & Tech Software Engineers</option>
+                      <option value="Corporate Executives & Office Workers">Corporate Executives & Office Workers</option>
+                      <option value="Homemakers & Household Buyers">Homemakers & Household Buyers</option>
+                      <option value="Business Owners & Entrepreneurs">Business Owners & Entrepreneurs</option>
+                      <option value="Retail & Gig Economy Workers">Retail & Gig Economy Workers</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Household Life Stage *
+                    </label>
+                    <select
+                      value={formData.lifeStage}
+                      onChange={(e) => setFormData({ ...formData, lifeStage: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-espresso focus:outline-none focus:border-gold"
+                    >
+                      <option value="Young Single / Gen-Z (18-24)">Young Single / Gen-Z (18-24)</option>
+                      <option value="Newlyweds & Young Couples (25-32)">Newlyweds & Young Couples (25-32)</option>
+                      <option value="Parents with Toddlers / School Kids">Parents with Toddlers / School Kids</option>
+                      <option value="Parents with Teens / College Kids">Parents with Teens / College Kids</option>
+                      <option value="Joint & Senior Household">Joint & Senior Household</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Shopping Habits & Promoter Language Matching */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Consumer Shopping & Tech Habit
+                    </label>
+                    <select
+                      value={formData.shoppingHabit}
+                      onChange={(e) => setFormData({ ...formData, shoppingHabit: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-espresso focus:outline-none focus:border-gold"
+                    >
+                      <option value="Quick-Commerce & E-Commerce Shoppers">Quick-Commerce (Zepto/Blinkit/Swiggy Buyers)</option>
+                      <option value="High-Street & Weekend Mall Shoppers">High-Street & Weekend Mall Shoppers</option>
+                      <option value="Fitness & Organic Lifestyle Buyers">Fitness & Organic Lifestyle Buyers</option>
+                      <option value="iOS / iPhone Heavy Users (> ₹50k Devices)">iOS / iPhone Heavy Users (&gt; ₹50k Devices)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+                      Promoter Spoken Language Requirement
+                    </label>
+                    <select
+                      value={formData.promoterLanguage}
+                      onChange={(e) => setFormData({ ...formData, promoterLanguage: e.target.value })}
+                      className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-espresso focus:outline-none focus:border-gold"
+                    >
+                      <option value="Multi-Lingual Metro Promoters (English + Regional)">Multi-Lingual Metro Promoters (English + Regional)</option>
+                      <option value="Fluent English & Corporate Presentable">Fluent English & Corporate Presentable</option>
+                      <option value="Regional Tamil / Kannada / Telugu / Hindi Native">Regional Native Dialect Specialists</option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Audience Interest Affinities */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted uppercase tracking-wider block">
-                    Audience Interest & Affinity Pill Select (Meta Style)
+                    Detailed Consumer Interest & Affinity Pills (Meta Ads Style)
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {interestOptions.map((interest) => {
+                    {[
+                      'Foodies & Coffee Lovers',
+                      'College & Student Youth',
+                      'Fashion & Shopping',
+                      'Fitness & Wellness',
+                      'Tech & IT Professionals',
+                      'Young Families & Parents',
+                      'Auto & Mobility',
+                      'D2C Brand Enthusiasts',
+                      'Music & Festival Outings',
+                      'Gaming & Esports',
+                      'FinTech & Crypto Users',
+                      'Gourmet & Specialty Dining',
+                      'Beauty & Personal Care'
+                    ].map((interest) => {
                       const selected = formData.selectedInterests.includes(interest);
                       return (
                         <button
@@ -711,6 +801,18 @@ export default function CampaignCreator({ onClose, onPublish }) {
                   <div className="flex justify-between">
                     <span className="text-muted">SEC Category:</span>
                     <span className="font-bold text-gold text-[10px]">{formData.secCategory.split(' (')[0]}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Persona:</span>
+                    <span className="font-bold text-espresso text-[10px]">{formData.occupationSegment.split(' &')[0]}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Life Stage:</span>
+                    <span className="font-bold text-espresso text-[10px]">{formData.lifeStage.split(' /')[0]}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Language:</span>
+                    <span className="font-bold text-espresso text-[10px]">{formData.promoterLanguage.split(' (')[0]}</span>
                   </div>
                 </div>
               </div>
