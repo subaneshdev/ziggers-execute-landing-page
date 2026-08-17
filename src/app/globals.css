@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -29,11 +28,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Global Geist Typography Specs */
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.02em;
+  font-weight: 400;
   overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-geist-sans), sans-serif;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+.font-mono, code, pre, .metric-callout {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .bg-grid-pattern {
@@ -68,4 +80,3 @@ video::-webkit-media-controls-overlay-play-button {
   visibility: hidden !important;
   pointer-events: none !important;
 }
-

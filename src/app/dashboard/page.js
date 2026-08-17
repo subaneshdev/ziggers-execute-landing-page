@@ -152,12 +152,9 @@ export default function DashboardPage() {
             {activeTab === 'aiPlanner' && <Cpu className="text-gold" size={18} />}
             
             <div className="flex items-center gap-2">
-              <h2 className="text-xs font-extrabold text-espresso uppercase tracking-wider">
+              <h2 className="text-xs font-semibold text-espresso uppercase tracking-[-0.02em]">
                 {isClientPortal ? 'Brand Client Portal' : `Campaigns Manager / ${activeTab.toUpperCase()}`}
               </h2>
-              <span className="text-[10px] bg-gold/15 text-espresso font-bold px-2.5 py-0.5 rounded-full border border-gold/20">
-                Supabase Auth Active
-              </span>
             </div>
           </div>
 
