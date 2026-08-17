@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { MapPin, Users, AlertTriangle, TrendingUp, Sparkles, Package, Clock, RefreshCw, UserX, CheckCircle, ShieldAlert, ArrowRight, Activity, Terminal } from 'lucide-react';
+import { MapPin, Users, AlertTriangle, TrendingUp, Sparkles, Package, Clock, RefreshCw, UserX, CheckCircle, ShieldAlert, ArrowRight, Activity, Terminal, Database, Zap } from 'lucide-react';
 
-export default function CommandCenter({ campaigns = [], systemLogs = [], onApplyAiOptimization }) {
+export default function CommandCenter({ campaigns = [], systemLogs = [], onApplyAiOptimization, onRefreshCampaigns }) {
   const [pulse, setPulse] = useState(true);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setPulse(prev => !prev), 2500);
@@ -13,6 +14,7 @@ export default function CommandCenter({ campaigns = [], systemLogs = [], onApply
 
   const totalWorkers = campaigns.reduce((acc, c) => acc + (parseInt(c.workers, 10) || 0), 0);
   const activeCount = campaigns.filter(c => c.status === true || c.stage === 'Live').length;
+  const activeCampaign = campaigns[0] || null;
 
   const handleRunOptimization = () => {
     setIsOptimizing(true);
@@ -20,6 +22,32 @@ export default function CommandCenter({ campaigns = [], systemLogs = [], onApply
       if (onApplyAiOptimization) onApplyAiOptimization();
       setIsOptimizing(false);
     }, 800);
+  };
+
+  const handleSeedLiveTelemetry = async () => {
+    if (!activeCampaign) return;
+    setIsSeeding(true);
+    try {
+      const res = await fetch('/api/telemetry/seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: activeCampaign.id,
+          campaignTitle: activeCampaign.name,
+          city: activeCampaign.city || 'Chennai',
+          headcount: activeCampaign.workers || 10
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✓ Live Telemetry Seeded into Supabase!\n\n${data.message}`);
+        if (onRefreshCampaigns) onRefreshCampaigns();
+      }
+    } catch (err) {
+      console.error('Failed to seed telemetry:', err);
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   return (
@@ -59,14 +87,25 @@ export default function CommandCenter({ campaigns = [], systemLogs = [], onApply
           </div>
 
           {campaigns.length > 0 && (
-            <button 
-              onClick={handleRunOptimization}
-              disabled={isOptimizing}
-              className="w-full mt-2 bg-espresso hover:bg-muted text-white font-extrabold py-2 rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-            >
-              <Sparkles size={13} className="text-gold" />
-              <span>{isOptimizing ? 'Rebalancing Waves...' : 'Trigger AI Wave Rebalance'}</span>
-            </button>
+            <div className="space-y-1.5 pt-1">
+              <button 
+                onClick={handleSeedLiveTelemetry}
+                disabled={isSeeding}
+                className="w-full bg-gold hover:bg-gold/90 text-espresso font-extrabold py-2 rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Zap size={13} className="text-espresso" />
+                <span>{isSeeding ? 'Seeding Supabase DB...' : '⚡ Insert Live Telemetry to Supabase'}</span>
+              </button>
+
+              <button 
+                onClick={handleRunOptimization}
+                disabled={isOptimizing}
+                className="w-full bg-espresso hover:bg-muted text-white font-extrabold py-2 rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Sparkles size={13} className="text-gold" />
+                <span>{isOptimizing ? 'Rebalancing Waves...' : 'Trigger AI Wave Rebalance'}</span>
+              </button>
+            </div>
           )}
         </div>
 

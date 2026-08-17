@@ -317,6 +317,7 @@ export default function DashboardPage() {
               campaigns={campaigns}
               systemLogs={systemLogs}
               onApplyAiOptimization={handleApplyAiOptimization} 
+              onRefreshCampaigns={fetchCampaigns}
             />
           )}
 
