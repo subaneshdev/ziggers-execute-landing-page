@@ -18,19 +18,19 @@ export default function CampaignCreator({ onClose, onPublish }) {
 
   // Form Targeting State
   const [formData, setFormData] = useState({
-    name: 'T. Nagar Store Launch & Product Sampling',
-    brand: 'Artisan Cafe & Bakery',
+    name: '',
+    brand: '',
     objective: 'Product Sampling',
-    targetLocations: ['T. Nagar & Ranganathan Street'],
-    radiusKm: 3.0,
+    targetLocations: ['Connaught Place, New Delhi'],
+    radiusKm: 2.0,
     ageRange: [18, 35],
     gender: 'All',
     secClassification: 'SEC A/B (Mid-High Income)',
-    selectedInterests: ['fashion', 'foodies', 'fitness'],
-    promoterCount: 10,
+    selectedInterests: ['foodies', 'fitness'],
+    promoterCount: null,
     shiftHours: 5,
-    campaignDays: 1,
-    budgetInr: 35000
+    campaignDays: 7,
+    budgetInr: 75000
   });
 
   // Calculate In-Memory Baseline Output
@@ -131,16 +131,20 @@ export default function CampaignCreator({ onClose, onPublish }) {
   };
 
   const handleLaunch = () => {
+    const finalPromoterCount = formData.promoterCount || pred.recommendedPromoters || 4;
+    const finalCity = pred.city || (formData.targetLocations[0] ? formData.targetLocations[0].split(',').pop().trim() : 'Metro Hub');
+    const finalBudget = parseInt(formData.budgetInr, 10) || 75000;
+
     onPublish({
-      name: formData.name,
-      brand: formData.brand,
+      name: formData.name || `${formData.brand || 'Brand'} ${formData.objective} Campaign`,
+      brand: formData.brand || 'Enterprise Client',
       objective: formData.objective,
-      city: pred.city,
-      budget: `₹${parseInt(formData.budgetInr).toLocaleString('en-IN')}`,
-      workers: formData.promoterCount,
-      locations: formData.targetLocations.length,
-      targetCpl: pred.estimatedCpl,
-      actualCpl: pred.estimatedCpl,
+      city: finalCity,
+      budget: `₹${finalBudget.toLocaleString('en-IN')}`,
+      workers: finalPromoterCount,
+      locations: formData.targetLocations.length || 1,
+      targetCpl: pred.estimatedCpl || '₹45',
+      actualCpl: pred.estimatedCpl || '₹45',
       status: true,
       stage: 'Live'
     });
@@ -207,13 +211,22 @@ export default function CampaignCreator({ onClose, onPublish }) {
             {/* STEP 1: OBJECTIVE */}
             {step === 1 && (
               <div className="space-y-5 animate-in fade-in duration-200">
-                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 space-y-1">
-                  <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
-                    Step 1: Campaign Objective
-                  </span>
-                  <p className="text-xs text-muted font-medium">
-                    Select your marketing goal. Ziggers uses objective-specific conversion functions to calculate lead yield and app installs.
-                  </p>
+                <div className="bg-linen/30 p-4 rounded-2xl border border-espresso/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">
+                      Quick Campaign Launcher
+                    </span>
+                    <p className="text-xs text-muted font-medium">
+                      Configure essential targeting parameters or switch to the comprehensive 10-Step Blueprint Studio.
+                    </p>
+                  </div>
+                  <a
+                    href="/campaigns/new"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-espresso text-gold font-bold text-[11px] hover:bg-muted shrink-0 transition-colors"
+                  >
+                    <span>Full 10-Step Studio</span>
+                    <ArrowRight size={12} />
+                  </a>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -238,7 +251,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
                       value={formData.brand}
                       onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                       className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs text-espresso focus:outline-none focus:border-gold font-semibold"
-                      placeholder="e.g. Artisan Cafe, D2C Brand"
+                      placeholder="e.g. Acme Beverage, D2C Apparel"
                     />
                   </div>
                 </div>

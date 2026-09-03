@@ -12,14 +12,14 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
   const [previewItem, setPreviewItem] = useState(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  // New Proof Upload Simulation State
+  // New Proof Form State
   const [uploadForm, setUploadForm] = useState({
-    workerName: 'Rohit Sharma',
+    workerName: '',
     category: 'Product Distribution Proof',
-    location: 'Loyola College, Chennai',
-    campaign: 'Coca-Cola College Activation',
-    gps: '13.0631° N, 80.2341° E',
-    caption: 'Distributed 45 ice-cold Coca-Cola Zero cans to engineering students.'
+    location: campaigns[0]?.city ? `${campaigns[0].city} Hub` : 'Field Activation Hub',
+    campaign: campaigns[0]?.name || 'Active Campaign',
+    gps: '13.0827° N, 80.2707° E',
+    caption: ''
   });
 
   const categories = [
@@ -37,6 +37,22 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
 
   // Evidence dataset
   const [proofs, setProofs] = useState([]);
+
+  // Fetch verified proofs from API
+  React.useEffect(() => {
+    async function loadProofs() {
+      try {
+        const res = await fetch('/api/proofs');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.proofs) && data.proofs.length > 0) {
+          setProofs(data.proofs);
+        }
+      } catch (err) {
+        console.warn('Proofs load notice:', err.message);
+      }
+    }
+    loadProofs();
+  }, [campaigns]);
 
   const filteredProofs = proofs.filter(p => {
     if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;

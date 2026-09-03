@@ -5,6 +5,7 @@ import {
   ShieldCheck, RefreshCw, Copy, Check, Plus, Trash2, Download, Search, 
   Filter, Play, Sparkles, Server, Zap, Lock, AlertCircle, Code, Eye, EyeOff
 } from 'lucide-react';
+import { calculateAttributionFunnel } from '@/lib/intelligence/index';
 
 export default function IntegrationsAndAudit({ onLogAction }) {
   const [activeTab, setActiveTab] = useState('webhooks'); // 'webhooks', 'attribution', 'crm', 'audit'
@@ -35,10 +36,21 @@ export default function IntegrationsAndAudit({ onLogAction }) {
   const [appSignupRate, setAppSignupRate] = useState(30.0);
   const [campaignBudget, setCampaignBudget] = useState(150000);
 
-  const calculatedScans = Math.round(samplesCount * (scanConversionRate / 100));
-  const calculatedVisits = Math.round(calculatedScans * (landingConversionRate / 100));
-  const calculatedSignups = Math.round(calculatedVisits * (appSignupRate / 100));
-  const costPerCustomer = calculatedSignups > 0 ? (campaignBudget / calculatedSignups).toFixed(2) : '0';
+  const attributionRes = calculateAttributionFunnel({
+    physicalInteractions: samplesCount,
+    samplesDistributed: samplesCount,
+    qrScanRate: scanConversionRate / 100,
+    landingSuccessRate: landingConversionRate / 100,
+    signupRate: appSignupRate / 100,
+    campaignCost: campaignBudget
+  });
+
+  const calculatedScans = attributionRes.funnel.totalScans;
+  const calculatedVisits = attributionRes.funnel.landingVisits;
+  const calculatedSignups = attributionRes.funnel.signups;
+  const costPerCustomer = attributionRes.unitEconomics.cacNumeric !== null 
+    ? attributionRes.unitEconomics.cacNumeric.toFixed(2) 
+    : 'N/A';
 
   // ==========================================
   // 2. CRM & WEBHOOKS

@@ -1,14 +1,27 @@
 """
-Ziggers Offline Audience Intelligence Machine Learning Service Contract
+Ziggers Offline Audience Intelligence - Empirical Estimation Service Contract
 Module: ml_service/model_contract.py
 
-Defines the FastAPI & LightGBM prediction model pipeline interface for offline campaign predictions.
-Connects with PostgreSQL/PostGIS campaign_predictions and campaign_results for model feedback training loops.
+Defines the FastAPI & Statistical Estimation pipeline interface for offline campaign planning.
+Explicitly labeled as EMPIRICAL_BASELINE_ESTIMATOR (Maturity Level 2: External Data & Heuristic Model).
+Does NOT claim Machine Learning / LightGBM regressors until a true trained model artifact registry is deployed.
 """
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
-import math
+import enum
+
+class IntelligenceMaturityLevel(enum.IntEnum):
+    LEVEL_0_NO_DATA = 0
+    LEVEL_1_HEURISTIC = 1
+    LEVEL_2_EXTERNAL_DATA_MODEL = 2
+    LEVEL_3_ZIGGERS_EMPIRICAL = 3
+    LEVEL_4_VALIDATED_PREDICTIVE_MODEL = 4
+
+class ConfidenceTier(str, enum.Enum):
+    LOW = "LOW"
+    MODERATE = "MODERATE"
+    HIGH = "HIGH"
 
 @dataclass
 class CampaignTargetingPayload:
@@ -26,87 +39,134 @@ class CampaignTargetingPayload:
     budget_inr: float = 35000.0
 
 @dataclass
-class AudiencePredictionResponse:
-    potential_audience: int
-    qualified_audience: int
-    estimated_exposure: int
-    estimated_reach: int
-    expected_interactions: int
-    expected_leads: int
-    expected_app_installs: int
-    estimated_cpl: float
-    audience_quality_score: int
-    confidence_min_range: int
-    confidence_max_range: int
-    confidence_percentage: int
-    model_version: str = "v1.0_baseline_calibrated"
+class ProvenanceMetric:
+    estimated_value: int
+    min_range: int
+    max_range: int
+    source_type: str = "MODELLED_ESTIMATE"
+    confidence: ConfidenceTier = ConfidenceTier.MODERATE
+    methodology: str = "population_grid_and_heuristic_rates"
+
+@dataclass
+class AudiencePlanningResponse:
+    potential_audience: ProvenanceMetric
+    qualified_audience: ProvenanceMetric
+    estimated_reach: ProvenanceMetric
+    expected_interactions: ProvenanceMetric
+    expected_leads: ProvenanceMetric
+    expected_app_installs: ProvenanceMetric
+    estimated_cpl_range: str
+    match_alignment_tier: str
+    maturity_level: IntelligenceMaturityLevel = IntelligenceMaturityLevel.LEVEL_2_EXTERNAL_DATA_MODEL
+    model_version: str = "v1.0_empirical_baseline"
+    uncertainty_drivers: List[Dict[str, str]] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
 
-class ZiggersLightGBMPipeline:
+class ZiggersEmpiricalEstimator:
     """
-    LightGBM Prediction Engine Interface for Ziggers Offline Campaigns.
-    Uses LightGBM regressors for Reach, Interactions, Leads, Installs, and CPL.
-    Falls back to deterministic calibrated v1.0 engine when training observations < 500.
+    Statistical Baseline Estimator for Ziggers Offline Campaigns.
+    Uses spatial population bounds and operational conversion assumptions.
+    Upgrades to Level 4 (Trained Model) only when 500+ verified campaign observations exist in registry.
     """
-    def __init__(self, model_version: str = "v1.0_baseline_calibrated"):
+    def __init__(self, model_version: str = "v1.0_empirical_baseline"):
         self.model_version = model_version
-        self.is_ml_trained = False # Set to True when trained on 500+ verified campaign outcomes
+        self.maturity_level = IntelligenceMaturityLevel.LEVEL_2_EXTERNAL_DATA_MODEL
+        self.is_ml_trained = False
 
-    def predict(self, payload: CampaignTargetingPayload) -> AudiencePredictionResponse:
-        # Base location feature lookup
+    def estimate(self, payload: CampaignTargetingPayload) -> AudiencePlanningResponse:
         node_name = payload.target_locations[0] if payload.target_locations else "T. Nagar"
         
-        # Physical capacity constraint calculation
+        # Operational capacity baseline (Planning assumption)
         shift_hours = payload.shift_hours or 5
-        hourly_rate = 42 # average sampling capacity per hour per promoter
+        hourly_rate = 35 # conservative planning baseline
         max_physical_capacity = payload.promoter_count * shift_hours * payload.campaign_days * hourly_rate
 
-        # Base Cell Aggregation Simulation
-        base_pop = 142000 if "T. Nagar" in node_name else 118000
-        radius_multiplier = 1.0 + (payload.radius_km - 1.0) * 0.22
-        potential = int(base_pop * radius_multiplier)
+        # Spatial aggregation estimate
+        base_pop = 140000 if "T. Nagar" in node_name else 115000
+        potential = int(base_pop * (1.0 + (payload.radius_km - 1.0) * 0.20))
 
-        # Hard targeting filter (Age & Gender)
+        # Demographic qualification
         age_span = max(5, payload.age_max - payload.age_min)
         age_ratio = min(1.0, age_span / 45.0)
         gender_ratio = 1.0 if payload.gender == "All" else 0.49
         
         qualified = int(potential * age_ratio * gender_ratio)
-        exposure = int(qualified * 0.42)
-        reach = int(exposure * 0.65)
+        reach = int(qualified * 0.25)
 
-        # Physical Capacity Cap
-        interactions = min(max_physical_capacity, int(reach * 0.35))
+        # Capacity capped interactions
+        interactions = min(max_physical_capacity, int(reach * 0.30))
         
-        # Objective-specific conversion rates
-        conv_leads = 0.14
-        if "lead" in payload.objective.lower(): conv_leads = 0.26
-        if "store" in payload.objective.lower(): conv_leads = 0.22
-        
+        # Conversion heuristics
+        conv_leads = 0.20 if "lead" in payload.objective.lower() else 0.12
         leads = int(interactions * conv_leads)
-        installs = int(interactions * 0.18) if "app" in payload.objective.lower() else int(interactions * 0.05)
+        installs = int(interactions * 0.25) if "app" in payload.objective.lower() else int(interactions * 0.05)
         
-        cpl = round(payload.budget_inr / max(1, leads), 2)
+        min_leads = max(1, int(leads * 0.70))
+        max_leads = int(leads * 1.35)
+        min_cpl = int(payload.budget_inr / max_leads)
+        max_cpl = int(payload.budget_inr / min_leads)
 
-        # Quality Score Calculation (0-100)
-        quality_score = min(98, max(50, int(85 + len(payload.selected_interests) * 2)))
+        alignment_tier = "HIGH" if len(payload.selected_interests) >= 3 else "MODERATE"
 
-        return AudiencePredictionResponse(
-            potential_audience=potential,
-            qualified_audience=qualified,
-            estimated_exposure=exposure,
-            estimated_reach=reach,
-            expected_interactions=interactions,
-            expected_leads=leads,
-            expected_app_installs=installs,
-            estimated_cpl=cpl,
-            audience_quality_score=quality_score,
-            confidence_min_range=int(qualified * 0.88),
-            confidence_max_range=int(qualified * 1.12),
-            confidence_percentage=85,
+        return AudiencePlanningResponse(
+            potential_audience=ProvenanceMetric(
+                estimated_value=potential,
+                min_range=int(potential * 0.8),
+                max_range=int(potential * 1.25),
+                source_type="MODELLED_ESTIMATE",
+                confidence=ConfidenceTier.MODERATE,
+                methodology="population_grid_aggregation"
+            ),
+            qualified_audience=ProvenanceMetric(
+                estimated_value=qualified,
+                min_range=int(qualified * 0.75),
+                max_range=int(qualified * 1.30),
+                source_type="HEURISTIC",
+                confidence=ConfidenceTier.MODERATE,
+                methodology="demographic_ratio_heuristic"
+            ),
+            estimated_reach=ProvenanceMetric(
+                estimated_value=reach,
+                min_range=int(reach * 0.70),
+                max_range=int(reach * 1.35),
+                source_type="HEURISTIC",
+                confidence=ConfidenceTier.LOW,
+                methodology="physical_footfall_funnel"
+            ),
+            expected_interactions=ProvenanceMetric(
+                estimated_value=interactions,
+                min_range=int(interactions * 0.80),
+                max_range=int(interactions * 1.20),
+                source_type="HEURISTIC",
+                confidence=ConfidenceTier.MODERATE,
+                methodology="staffing_capacity_constraint"
+            ),
+            expected_leads=ProvenanceMetric(
+                estimated_value=leads,
+                min_range=min_leads,
+                max_range=max_leads,
+                source_type="HEURISTIC",
+                confidence=ConfidenceTier.LOW,
+                methodology="conversion_prior_heuristic"
+            ),
+            expected_app_installs=ProvenanceMetric(
+                estimated_value=installs,
+                min_range=int(installs * 0.65),
+                max_range=int(installs * 1.40),
+                source_type="HEURISTIC",
+                confidence=ConfidenceTier.LOW,
+                methodology="conversion_prior_heuristic"
+            ),
+            estimated_cpl_range=f"₹{min_cpl} – ₹{max_cpl}",
+            match_alignment_tier=alignment_tier,
+            maturity_level=IntelligenceMaturityLevel.LEVEL_2_EXTERNAL_DATA_MODEL,
             model_version=self.model_version,
+            uncertainty_drivers=[
+                {"factor": "Lack of venue-specific historical campaign observations", "impact": "HIGH"},
+                {"factor": "Promoter pitch variation across field shifts", "impact": "MEDIUM"}
+            ],
             recommendations=[
-                f"Promoter capacity ({max_physical_capacity}) matches projected engagements.",
-                "High evening footfall window identified between 4:30 PM and 8:30 PM."
+                f"Promoter team capacity ({max_physical_capacity} interactions) planned for campaign duration.",
+                "Ensure local municipal or property permissions are verified prior to promoter dispatch."
             ]
         )

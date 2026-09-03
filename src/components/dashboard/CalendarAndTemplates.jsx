@@ -82,18 +82,21 @@ export default function CalendarAndTemplates({ campaigns = [], onCreateClick }) 
 
             {Array.from({ length: 28 }).map((_, i) => {
               const dayNum = i + 1;
-              // Map campaigns to days dynamically
-              const assignedCampaign = campaigns[i % Math.max(1, campaigns.length)];
-              const hasEvent = campaigns.length > 0 && (i % 3 === 0 || i % 7 === 5);
+              const activeEvents = campaigns.filter(c => {
+                if (!c.start_date) return false;
+                const startDay = new Date(c.start_date).getDate();
+                const endDay = c.end_date ? new Date(c.end_date).getDate() : startDay;
+                return dayNum >= startDay && dayNum <= endDay;
+              });
 
               return (
                 <div key={i} className="min-h-[75px] border border-espresso/10 rounded-xl p-2 text-left flex flex-col justify-between hover:bg-linen/20 transition-colors">
                   <span className="text-[10px] font-mono text-muted">{dayNum}</span>
-                  {hasEvent && assignedCampaign && (
-                    <div className="bg-gold/15 text-espresso font-bold text-[9px] p-1.5 rounded-md border border-gold/30 truncate">
-                      {assignedCampaign.name}
+                  {activeEvents.map((c, idx) => (
+                    <div key={c.id || idx} className="bg-gold/15 text-espresso font-bold text-[9px] p-1.5 rounded-md border border-gold/30 truncate">
+                      {c.name || c.title}
                     </div>
-                  )}
+                  ))}
                 </div>
               );
             })}

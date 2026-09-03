@@ -26,22 +26,32 @@ export default function LocationHiring({ campaigns = [], onLogAction, onCreateCl
   const [bulkTargetWorkers, setBulkTargetWorkers] = useState(100);
   const [bulkDispatched, setBulkDispatched] = useState(false);
 
-  // Dynamic candidate generation based on active campaigns
-  const workersPool = activeCampaign ? Array.from({ length: Math.min(12, (activeCampaign.workers || 10) * 2) }).map((_, idx) => ({
-    id: `w_${idx + 1}`,
-    name: `Verified Promoter ${idx + 1}`,
-    avatar: idx % 2 === 0 ? '👨🏽' : '👩🏽',
-    rating: (4.8 + (idx % 3) * 0.05).toFixed(2),
-    completedJobs: 25 + idx * 7,
-    distanceKm: (0.5 + idx * 0.4).toFixed(1),
-    skills: ['Product Pitching', 'Sampling', 'Lead Generation'],
-    languages: ['English', activeCampaign.city === 'Chennai' ? 'Tamil' : activeCampaign.city === 'Bangalore' ? 'Kannada' : 'Hindi'],
-    gender: idx % 2 === 0 ? 'Male' : 'Female',
-    kyc: true,
-    experience: '2+ Years Field Experience',
-    availableToday: true,
-    lastCheckin: `${activeCampaign.city || 'Metro'} Geofence Node`
-  })) : [];
+  const [workersPool, setWorkersPool] = useState([]);
+
+  // Load verified candidate pool for the active campaign's city
+  React.useEffect(() => {
+    if (!activeCampaign) {
+      setWorkersPool([]);
+      return;
+    }
+    // Set pool from real assigned/candidate records or empty state
+    const pool = (activeCampaign.assignedStaff || []).map((staff, idx) => ({
+      id: staff.id || `w_${idx + 1}`,
+      name: staff.name || `Certified Promoter ${idx + 1}`,
+      avatar: '👨🏽',
+      rating: staff.rating || '5.00',
+      completedJobs: staff.completedJobs || 1,
+      distanceKm: staff.distanceKm || '1.2',
+      skills: staff.skills || ['Sampling', 'Lead Gen'],
+      languages: staff.languages || ['English', activeCampaign.city === 'Chennai' ? 'Tamil' : 'Hindi'],
+      gender: staff.gender || 'All',
+      kyc: true,
+      experience: staff.experience || 'Certified Field Staff',
+      availableToday: true,
+      lastCheckin: `${activeCampaign.city || 'Metro'} Geofence Hub`
+    }));
+    setWorkersPool(pool);
+  }, [activeCampaign]);
 
   const filteredWorkers = workersPool.filter(w => {
     if (filterKycOnly && !w.kyc) return false;
@@ -255,11 +265,12 @@ export default function LocationHiring({ campaigns = [], onLogAction, onCreateCl
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredWorkers.map((w) => {
+                  {filteredWorkers.map((w, idx) => {
+                    const workerKey = w.id || `worker-${idx}`;
                     const isInvited = invitedWorkerIds.has(w.id);
                     return (
                       <div
-                        key={w.id}
+                        key={workerKey}
                         className={`bg-white border rounded-2xl p-4 shadow-xs transition-all space-y-3 flex flex-col justify-between ${
                           isInvited ? 'border-gold bg-gold/5 ring-2 ring-gold/30' : 'border-espresso/10 hover:border-espresso/30'
                         }`}

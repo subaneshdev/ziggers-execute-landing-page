@@ -13,29 +13,29 @@ export default function TargetsAndLeads({ campaigns = [], onLogAction, onCreateC
   // Active campaign
   const activeCampaign = campaigns[0] || null;
 
-  // Derived targets state
+  // Derived targets state strictly from intelligence forecast and actual logged telemetry
   const derivedTargets = activeCampaign ? [
     {
       id: 'tgt_1',
       kpiName: 'Product Samples Distributed',
-      target: (activeCampaign.workers || 10) * 450,
-      achieved: activeCampaign.samples || Math.round((activeCampaign.workers || 10) * 320),
+      target: activeCampaign.forecast?.samples || activeCampaign.targetSamples || 1000,
+      achieved: parseInt(activeCampaign.samples, 10) || 0,
       unit: 'Physical Product Samples',
       icon: '🥤'
     },
     {
       id: 'tgt_2',
       kpiName: 'Verified Customer Leads Captured',
-      target: (activeCampaign.workers || 10) * 120,
-      achieved: activeCampaign.leads || Math.round((activeCampaign.workers || 10) * 85),
+      target: activeCampaign.forecast?.leads || activeCampaign.targetLeads || 250,
+      achieved: parseInt(activeCampaign.leads, 10) || 0,
       unit: 'SMS OTP Verified Contacts',
       icon: '📋'
     },
     {
       id: 'tgt_3',
       kpiName: 'QR Promo Code Scans',
-      target: (activeCampaign.workers || 10) * 250,
-      achieved: Math.round((activeCampaign.workers || 10) * 180),
+      target: activeCampaign.forecast?.qrScans || 350,
+      achieved: parseInt(activeCampaign.qrScans, 10) || 0,
       unit: 'App Landing Scans',
       icon: '📱'
     }

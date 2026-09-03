@@ -3,16 +3,15 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useAuth } from '../../lib/AuthContext';
 import { 
-  ArrowRight, ShieldCheck, Mail, Lock, Sparkles, CheckCircle2, 
-  AlertCircle, Building2, Store, Users, Eye, EyeOff, Loader2 
+  ArrowRight, ShieldCheck, Mail, Lock, CheckCircle2, 
+  AlertCircle, Eye, EyeOff, Loader2 
 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signInWithPassword, signInWithOtp, signInWithOAuth, loginAsDemo } = useAuth();
+  const { signInWithPassword, signInWithOtp, signInWithOAuth } = useAuth();
 
   const [authMode, setAuthMode] = useState('password'); // 'password' | 'otp'
   const [email, setEmail] = useState('');
@@ -32,15 +31,15 @@ export default function LoginPage() {
     setErrorMsg('');
     setSuccessMsg('');
 
-    const { data, error } = await signInWithPassword({ email, password });
+    const { error } = await signInWithPassword({ email, password });
     if (error) {
       setErrorMsg(error.message || 'Invalid login credentials.');
       setLoading(false);
     } else {
-      setSuccessMsg('Logged in successfully! Redirecting to campaign console...');
+      setSuccessMsg('Authenticated. Entering campaign console...');
       setTimeout(() => {
         router.push('/dashboard');
-      }, 700);
+      }, 500);
     }
   };
 
@@ -74,16 +73,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = (tier) => {
-    loginAsDemo(tier);
-    setSuccessMsg(`Welcome! Logged in as Demo ${tier.replace('_', ' ').toUpperCase()}. Redirecting...`);
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 500);
-  };
-
   return (
-    <div className="min-h-screen bg-[#faf9f6] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-gold/20 selection:text-espresso font-body">
+    <div className="min-h-screen bg-[#faf9f6] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative selection:bg-gold/20 selection:text-espresso font-sans">
       
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-grid-pattern opacity-60 pointer-events-none" />
@@ -95,10 +86,10 @@ export default function LoginPage() {
           <div className="w-9 h-9 bg-espresso text-gold rounded-xl flex items-center justify-center font-black text-lg shadow-sm">
             Z
           </div>
-          <span className="text-2xl font-black tracking-tight text-espresso font-display">Ziggers Execute</span>
+          <span className="text-2xl font-black tracking-tight text-espresso font-serif">Ziggers Execute</span>
         </Link>
-        <h2 className="mt-4 text-2xl font-black text-espresso tracking-tight font-display">
-          Sign In to Your Campaign Console
+        <h2 className="mt-4 text-2xl font-black text-espresso tracking-tight font-serif">
+          Sign In to Your Organization Console
         </h2>
         <p className="mt-1 text-xs text-muted font-medium">
           Launch, monitor, and audit verified offline campaigns across India
@@ -109,39 +100,6 @@ export default function LoginPage() {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-sm border border-espresso/10 rounded-3xl sm:px-10">
           
-          {/* Quick Demo Bypass Banner */}
-          <div className="mb-6 p-3 bg-linen/50 border border-gold/30 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-espresso flex items-center gap-1">
-                <Sparkles size={12} className="text-gold" /> Instant Demo Access
-              </span>
-              <span className="text-[9px] text-muted">No password needed</span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('brand')}
-                className="px-2 py-1.5 bg-espresso hover:bg-muted text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
-              >
-                Brand
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('agency')}
-                className="px-2 py-1.5 bg-gold hover:bg-gold/90 text-espresso text-[10px] font-black rounded-lg transition-colors cursor-pointer"
-              >
-                Agency
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('small_business')}
-                className="px-2 py-1.5 bg-white border border-espresso/15 hover:border-espresso text-espresso text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
-              >
-                Local Store
-              </button>
-            </div>
-          </div>
-
           {/* Mode Switch Tabs */}
           <div className="flex rounded-xl bg-linen/40 p-1 mb-6 border border-espresso/5">
             <button

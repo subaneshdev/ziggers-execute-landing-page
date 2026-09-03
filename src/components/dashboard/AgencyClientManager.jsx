@@ -16,10 +16,9 @@ export default function AgencyClientManager({ campaigns = [], isClientPortal, se
     totalPromoters: c.workers || 10,
     attendanceRate: c.attendance || '100%',
     samplesDistributed: (c.samples || 0).toLocaleString('en-IN'),
-    leadsCaptured: (c.leads || 0).toLocaleString('en-IN'),
-    verifiedPhotos: Math.round((c.workers || 10) * 4),
-    verifiedVideos: Math.round((c.workers || 10) * 0.8),
-    totalSpend: c.spend || c.totalBudget || '₹1,50,000',
+    verifiedPhotos: parseInt(c.photos || c.verifiedPhotos, 10) || 0,
+    verifiedVideos: parseInt(c.videos || c.verifiedVideos, 10) || 0,
+    totalSpend: c.spend || c.totalBudget || '₹0',
     status: (c.status === true || c.stage === 'Live') ? 'Live & On-Field' : 'Completed',
     city: c.city || 'Chennai'
   }));

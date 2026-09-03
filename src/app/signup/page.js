@@ -11,7 +11,7 @@ import {
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUpWithPassword, signInWithOAuth, loginAsDemo } = useAuth();
+  const { signUpWithPassword, signInWithOAuth } = useAuth();
 
   const [accountType, setAccountType] = useState('brand'); // 'brand' | 'agency' | 'small_business'
   const [fullName, setFullName] = useState('');
@@ -166,7 +166,7 @@ export default function SignupPage() {
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Artisan Cafe or Zenith Agency"
+                  placeholder="e.g. Acme Brands or Zenith Media"
                   className="block w-full pl-9 pr-3 py-2.5 text-xs bg-[#faf9f6] border border-espresso/15 rounded-xl text-espresso placeholder:text-muted/60 focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
                 />
               </div>

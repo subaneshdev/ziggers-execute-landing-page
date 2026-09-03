@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   MessageSquare, Send, Bell, AlertTriangle, Users, 
   ShieldCheck, Phone, CheckCheck, Sparkles, Megaphone, 
-  Radio, Clock, AlertCircle, Plus
+  Radio, Clock, AlertCircle, Plus, X
 } from 'lucide-react';
 
 export default function CampaignCommunication({ campaigns = [], onLogAction, onCreateClick }) {
@@ -12,6 +12,11 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
   const [messageInput, setMessageInput] = useState('');
   const [emergencyAlertOpen, setEmergencyAlertOpen] = useState(false);
   const [emergencyText, setEmergencyText] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastSent, setBroadcastSent] = useState(false);
+
+  const campaignTitle = activeCampaign ? (activeCampaign.name || activeCampaign.title || 'Brand Campaign') : '';
+  const campaignCity = activeCampaign?.city || 'Metro';
 
   // Initial messages state derived from campaign
   const initialMessages = activeCampaign ? {
@@ -20,7 +25,7 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
         id: 'm1',
         sender: 'Campaign Dispatch Desk',
         role: 'Operations Lead',
-        text: `Welcome team! Campaign "${activeCampaign.name}" is active. All promotional materials delivered to ${activeCampaign.city} hubs.`,
+        text: `Welcome team! Campaign "${campaignTitle}" is active. All promotional materials delivered to ${campaignCity} hubs.`,
         time: '09:00 AM',
         isAgency: true
       }
@@ -30,7 +35,7 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
         id: 'm2',
         sender: 'Field Supervisor',
         role: 'Operations Lead',
-        text: `Reminder: Greet customers enthusiastically for "${activeCampaign.name}". Capture verified QR scans & OTP leads.`,
+        text: `Reminder: Greet customers enthusiastically for "${campaignTitle}". Capture verified QR scans & OTP leads.`,
         time: '09:30 AM',
         isAgency: false
       }
@@ -40,7 +45,7 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
         id: 'm3',
         sender: 'Ziggers Official Broadcast Desk',
         role: 'System Broadcast',
-        text: `SHIFT REMINDER: Full day shifts conclude at 06:00 PM. Please take your check-out selfie and log final sampling counters.`,
+        text: `SHIFT REMINDER: Shift hours conclude on schedule. Please take your check-out selfie and log final sampling counters.`,
         time: '04:00 PM',
         isAgency: true
       }
@@ -74,6 +79,42 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
     setMessageInput('');
   };
 
+  const handleSendEmergencyAlert = (e) => {
+    e.preventDefault();
+    if (!emergencyText.trim()) return;
+
+    setIsBroadcasting(true);
+    setTimeout(() => {
+      const alertMsg = {
+        id: 'em_' + Date.now().toString(36),
+        sender: '🚨 EMERGENCY OPS DESK',
+        role: 'Priority Alert',
+        text: emergencyText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isAgency: true,
+        isEmergency: true
+      };
+
+      setMessages(prev => ({
+        agency_supervisors: [...(prev.agency_supervisors || []), alertMsg],
+        supervisor_ziggers: [...(prev.supervisor_ziggers || []), alertMsg],
+        agency_all_ziggers: [...(prev.agency_all_ziggers || []), alertMsg]
+      }));
+
+      if (onLogAction) {
+        onLogAction('EMERGENCY_BROADCAST_TRIGGERED', `Emergency alert broadcasted: "${emergencyText}"`);
+      }
+
+      setIsBroadcasting(false);
+      setBroadcastSent(true);
+      setTimeout(() => {
+        setBroadcastSent(false);
+        setEmergencyAlertOpen(false);
+        setEmergencyText('');
+      }, 1500);
+    }, 600);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
@@ -87,7 +128,7 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
             </h2>
           </div>
           <p className="text-xs text-muted mt-1">
-            Replaces messy WhatsApp groups. Structured multi-channel dispatch feeds with instant shift reminders & emergency broadcasts.
+            Structured multi-channel dispatch feeds with instant shift reminders & emergency broadcasts.
           </p>
         </div>
 
@@ -145,7 +186,7 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
             <div className="p-4 bg-linen/30 border-b border-espresso/10 flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-xs text-espresso uppercase tracking-wider">
-                  {activeChannel.replace('_', ' ').toUpperCase()} CHANNEL
+                  {activeChannel.replace(/_/g, ' ').toUpperCase()} CHANNEL
                 </h3>
                 <span className="text-[10px] text-muted font-mono">Campaign: {activeCampaign.name}</span>
               </div>
@@ -162,9 +203,11 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
                   className={`flex flex-col ${msg.isAgency ? 'items-end' : 'items-start'}`}
                 >
                   <div className={`p-3 rounded-2xl max-w-md text-xs space-y-1 shadow-2xs ${
-                    msg.isAgency
-                      ? 'bg-espresso text-white rounded-br-none'
-                      : 'bg-linen/40 text-espresso rounded-bl-none border border-espresso/10'
+                    msg.isEmergency
+                      ? 'bg-red-700 text-white border-2 border-red-400'
+                      : msg.isAgency
+                        ? 'bg-espresso text-white rounded-br-none'
+                        : 'bg-linen/40 text-espresso rounded-bl-none border border-espresso/10'
                   }`}>
                     <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-1 text-[10px] opacity-80">
                       <span className="font-extrabold">{msg.sender}</span>
@@ -218,6 +261,60 @@ export default function CampaignCommunication({ campaigns = [], onLogAction, onC
             <Plus size={16} className="text-gold" />
             <span>Create Campaign to Open Comms Hub</span>
           </button>
+        </div>
+      )}
+
+      {/* Emergency Broadcast Modal */}
+      {emergencyAlertOpen && (
+        <div className="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-red-500 rounded-3xl max-w-lg w-full p-6 shadow-xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-espresso/10 pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <AlertTriangle size={20} />
+                <h3 className="text-base font-black uppercase tracking-tight">Emergency Field Broadcast</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmergencyAlertOpen(false)}
+                className="p-1 rounded-lg text-muted hover:text-espresso"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-muted">
+              This message will be instantly broadcasted with high-priority push notifications to all <strong>Supervisors</strong> and <strong>Field Promoters</strong> across all {campaignCity} hub locations.
+            </p>
+
+            <form onSubmit={handleSendEmergencyAlert} className="space-y-4">
+              <textarea
+                value={emergencyText}
+                onChange={(e) => setEmergencyText(e.target.value)}
+                placeholder="e.g. Immediate weather alert: Please pause outdoor sampling and move inventory inside the venue canopy..."
+                rows={4}
+                required
+                className="w-full bg-linen/20 border border-espresso/15 rounded-xl p-3 text-xs text-espresso focus:outline-none focus:border-red-500 font-medium"
+              />
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEmergencyAlertOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-muted hover:text-espresso border border-espresso/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isBroadcasting || broadcastSent || !emergencyText.trim()}
+                  className="px-5 py-2 rounded-xl text-xs font-black bg-red-600 hover:bg-red-700 text-white shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Megaphone size={14} />
+                  <span>{broadcastSent ? 'Broadcast Dispatched!' : isBroadcasting ? 'Broadcasting...' : 'Trigger Priority Alert'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

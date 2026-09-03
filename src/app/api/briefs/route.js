@@ -36,7 +36,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const briefId = 'brf_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+    const briefId = 'brf_' + (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 10) : Date.now().toString(36));
 
     const newBrief = {
       id: briefId,
@@ -60,13 +60,10 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      briefId,
-      message: 'Your campaign brief has been received and routed to regional operations dispatchers.'
+      brief: newBrief,
+      message: 'Campaign brief received.'
     }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({
-      success: false,
-      error: err.message
-    }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

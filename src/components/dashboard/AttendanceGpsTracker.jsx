@@ -8,35 +8,43 @@ import {
 
 export default function AttendanceGpsTracker({ campaigns = [], onLogAction }) {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-
-  // Instant Replacement State
+  const [standbyCandidates, setStandbyCandidates] = useState([]);
   const [replacementModalOpen, setReplacementModalOpen] = useState(false);
   const [replacingRecord, setReplacingRecord] = useState(null);
-  const [standbyCandidates, setStandbyCandidates] = useState([
-    {
-      id: 'sb_1',
-      name: 'Venkatesh Babu',
-      avatar: '👨🏽',
-      rating: 4.9,
-      distanceKm: 0.9,
-      skills: ['FMCG Sampling', 'Fluent Tamil & English'],
-      phone: '+91 98409 88776',
-      kyc: true,
-      etaMinutes: 12
-    },
-    {
-      id: 'sb_2',
-      name: 'Swathi Narayanan',
-      avatar: '👩🏽',
-      rating: 4.85,
-      distanceKm: 1.4,
-      skills: ['Product Demos', 'Youth Activations'],
-      phone: '+91 98408 77665',
-      kyc: true,
-      etaMinutes: 18
-    }
-  ]);
   const [isDeployingReplacement, setIsDeployingReplacement] = useState(false);
+
+  // Fetch verified check-ins from API
+  React.useEffect(() => {
+    async function loadCheckins() {
+      try {
+        const res = await fetch('/api/checkins');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.checkins) && data.checkins.length > 0) {
+          const records = data.checkins.map((chk, idx) => ({
+            id: chk.checkin_id || `chk_${idx}`,
+            workerName: chk.worker_name || `Promoter ${idx + 1}`,
+            avatar: '👨🏽',
+            campaignName: chk.campaign_name || 'Active Campaign',
+            location: chk.location_name || 'Field Hub',
+            targetGps: 'Centroid Hub',
+            actualGps: `${chk.checkin_latitude?.toFixed(4)}° N, ${chk.checkin_longitude?.toFixed(4)}° E`,
+            distanceToleranceMeters: chk.distance_from_centroid_meters || 10,
+            gpsStatus: chk.is_within_geofence ? 'Verified Inside Geofence' : 'Outside Geofence',
+            checkInTime: new Date(chk.checkin_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            shiftDuration: 'In Progress',
+            status: chk.is_within_geofence ? 'On Duty' : 'Drift Flagged',
+            batteryLevel: '88%',
+            selfieUrl: chk.checkin_selfie_url,
+            isAuditClean: chk.is_within_geofence
+          }));
+          setAttendanceRecords(records);
+        }
+      } catch (err) {
+        console.warn('Checkins load notice:', err.message);
+      }
+    }
+    loadCheckins();
+  }, [campaigns]);
 
   const handleOpenReplacement = (record) => {
     setReplacingRecord(record);
@@ -45,32 +53,23 @@ export default function AttendanceGpsTracker({ campaigns = [], onLogAction }) {
 
   const handleConfirmReplacement = (candidate) => {
     setIsDeployingReplacement(true);
-    setTimeout(() => {
-      // Update attendance records
+    if (replacingRecord && candidate) {
       setAttendanceRecords(prev => prev.map(r => {
         if (r.id === replacingRecord.id) {
           return {
             ...r,
             workerName: `${candidate.name} (Instant Replacement)`,
-            avatar: candidate.avatar,
-            actualGps: '12.9916° N, 80.2171° E (Within 12m)',
-            distanceToleranceMeters: 12,
-            checkInTime: '10:14 AM (Replaced in 14m)',
-            shiftDuration: '4h 46m (Active)',
-            gpsStatus: 'Verified Inside Geofence',
             status: 'On Duty (Replaced)'
           };
         }
         return r;
       }));
-
-      setIsDeployingReplacement(false);
-      setReplacementModalOpen(false);
-
       if (onLogAction) {
-        onLogAction('INSTANT_REPLACEMENT_DEPLOYED', `Instant replacement deployed: ${candidate.name} dispatched to Phoenix MarketCity Hub. ETA: ${candidate.etaMinutes}m`);
+        onLogAction('REPLACEMENT_DISPATCHED', `Dispatched standby replacement ${candidate.name} for ${replacingRecord.workerName}`);
       }
-    }, 900);
+    }
+    setIsDeployingReplacement(false);
+    setReplacementModalOpen(false);
   };
 
   return (

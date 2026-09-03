@@ -3,7 +3,7 @@ import React from 'react';
 import { 
   Layers, MapPin, Users, ShieldCheck, Camera, UserCheck, 
   MessageSquare, Target, Wallet, FileText, Eye, FileCheck, 
-  Cpu, Activity, Zap, Compass, BarChart2, ChevronRight, Settings, LogOut
+  Cpu, Activity, Zap, Compass, BarChart2, ChevronRight, Settings, LogOut, Radio
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -11,8 +11,9 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   const { user, profile, signOut } = useAuth();
   const menuSections = [
     {
-      title: 'Campaign Management',
+      title: 'Digital Signal & Campaign Sync',
       items: [
+        { id: 'signalSync', name: 'Signal Sync (Meta Ads)', icon: <Radio size={15} className="text-gold" /> },
         { id: 'dashboard', name: 'Campaigns Manager', icon: <Layers size={15} /> },
         { id: 'liveDashboard', name: 'Live Multi-Location', icon: <Activity size={15} /> },
         { id: 'locationHiring', name: 'Geofence & Bulk Hiring', icon: <Compass size={15} /> },
@@ -37,6 +38,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         { id: 'agency', name: 'Brand Client Portal', icon: <Eye size={15} /> },
         { id: 'reports', name: 'Automated Reports (PDF)', icon: <FileCheck size={15} /> },
         { id: 'aiPlanner', name: 'AI Campaign Simulator', icon: <Cpu size={15} /> },
+        { id: 'modelEvaluation', name: 'Model Validation & Moat', icon: <BarChart2 size={15} /> },
       ]
     }
   ];
@@ -55,6 +57,16 @@ export default function Sidebar({ activeTab, setActiveTab }) {
               <span className="text-[9px] font-bold text-gold uppercase tracking-wider block">Campaigns Manager</span>
             </div>
           </div>
+        </div>
+
+        {/* Quick Launch Action */}
+        <div className="px-3 pt-3">
+          <a
+            href="/campaigns/new"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gold hover:bg-gold/90 text-espresso text-xs font-black shadow-xs transition-all"
+          >
+            <span>+ Create Campaign (10-Step)</span>
+          </a>
         </div>
 
         {/* Menu Navigation Grouped */}

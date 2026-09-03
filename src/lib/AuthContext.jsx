@@ -7,6 +7,7 @@ const AuthContext = createContext({
   user: null,
   session: null,
   profile: null,
+  organization: null,
   loading: true,
   signInWithPassword: async () => {},
   signUpWithPassword: async () => {},
@@ -14,13 +15,13 @@ const AuthContext = createContext({
   verifyOtp: async () => {},
   signInWithOAuth: async () => {},
   signOut: async () => {},
-  loginAsDemo: () => {},
 });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [organization, setOrganization] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Sync session on mount
@@ -35,22 +36,10 @@ export function AuthProvider({ children }) {
         if (mounted && initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
-          loadProfile(initialSession.user);
-        } else if (mounted) {
-          // Check for local demo session
-          const localDemo = localStorage.getItem('ziggers_demo_user');
-          if (localDemo) {
-            try {
-              const demoUser = JSON.parse(localDemo);
-              setUser(demoUser);
-              setProfile(demoUser.profile);
-            } catch (e) {
-              localStorage.removeItem('ziggers_demo_user');
-            }
-          }
+          await loadProfileAndOrg(initialSession.user);
         }
       } catch (err) {
-        console.warn('Auth initialization fallback:', err.message);
+        console.warn('Auth initialization:', err.message);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -65,10 +54,10 @@ export function AuthProvider({ children }) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession?.user) {
-          localStorage.removeItem('ziggers_demo_user');
-          await loadProfile(currentSession.user);
+          await loadProfileAndOrg(currentSession.user);
         } else {
           setProfile(null);
+          setOrganization(null);
         }
         setLoading(false);
       }
@@ -80,48 +69,58 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  async function loadProfile(currentUser) {
+  async function loadProfileAndOrg(currentUser) {
     if (!currentUser) return;
     try {
-      const { data, error } = await supabase
+      // 1. Fetch user profile
+      const { data: profData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
         .single();
 
-      if (!error && data) {
-        setProfile(data);
+      if (profData) {
+        setProfile(profData);
       } else {
-        // Fallback to user metadata
         setProfile({
           id: currentUser.id,
           full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Ziggers User',
           email: currentUser.email,
-          company: currentUser.user_metadata?.company || 'Brand Partner',
-          role: currentUser.user_metadata?.role || 'brand_admin',
-          avatar_url: currentUser.user_metadata?.avatar_url || null,
+          company: currentUser.user_metadata?.company || 'Organization',
+          role: currentUser.user_metadata?.role || 'admin',
+        });
+      }
+
+      // 2. Fetch or resolve organization context
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('email', currentUser.email)
+        .limit(1);
+
+      if (orgData && orgData.length > 0) {
+        setOrganization(orgData[0]);
+      } else {
+        setOrganization({
+          id: currentUser.id,
+          name: currentUser.user_metadata?.company || `${currentUser.user_metadata?.full_name || 'My'} Organization`,
+          email: currentUser.email
         });
       }
     } catch (err) {
-      setProfile({
-        id: currentUser.id,
-        full_name: currentUser.email?.split('@')[0] || 'Ziggers User',
-        email: currentUser.email,
-        company: 'Brand Partner',
-        role: 'brand_admin',
-      });
+      console.warn('Profile resolution:', err.message);
     }
   }
 
-  // 1. Password sign in
+  // 1. Email & Password Sign In
   const signInWithPassword = async ({ email, password }) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      setUser(data.user);
+      setSession(data.session);
+      await loadProfileAndOrg(data.user);
       return { data, error: null };
     } catch (error) {
       return { data: null, error };
@@ -130,8 +129,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 2. Sign up
-  const signUpWithPassword = async ({ email, password, fullName, company, role = 'brand_admin' }) => {
+  // 2. Sign Up with Email, Password, Full Name, Company
+  const signUpWithPassword = async ({ email, password, full_name, company, role = 'brand_admin' }) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -139,14 +138,32 @@ export function AuthProvider({ children }) {
         password,
         options: {
           data: {
-            full_name: fullName,
-            company: company,
-            role: role,
+            full_name,
+            company,
+            role,
           },
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
         },
       });
       if (error) throw error;
+
+      // Insert profile record if user created
+      if (data.user) {
+        await supabase.from('profiles').insert([{
+          id: data.user.id,
+          full_name,
+          company,
+          role,
+          email,
+          created_at: new Date().toISOString()
+        }]);
+
+        await supabase.from('organizations').insert([{
+          name: company,
+          email,
+          created_at: new Date().toISOString()
+        }]);
+      }
+
       return { data, error: null };
     } catch (error) {
       return { data: null, error };
@@ -155,14 +172,14 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 3. OTP / Magic link
+  // 3. Passwordless OTP Magic Link
   const signInWithOtp = async ({ email }) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
         },
       });
       if (error) throw error;
@@ -174,16 +191,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 4. Verify OTP
-  const verifyOtp = async ({ email, token, type = 'email' }) => {
+  // 4. Verify OTP Token
+  const verifyOtp = async ({ email, token, type = 'magiclink' }) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type,
-      });
+      const { data, error } = await supabase.auth.verifyOtp({ email, token, type });
       if (error) throw error;
+      setUser(data.user);
+      setSession(data.session);
+      await loadProfileAndOrg(data.user);
       return { data, error: null };
     } catch (error) {
       return { data: null, error };
@@ -192,7 +208,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 5. OAuth (Google, etc.)
+  // 5. OAuth Provider Sign In (Google, etc.)
   const signInWithOAuth = async (provider = 'google') => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -212,67 +228,16 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     setLoading(true);
     try {
-      localStorage.removeItem('ziggers_demo_user');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setProfile(null);
+      setOrganization(null);
     } catch (err) {
       console.error('Sign out error:', err);
     } finally {
       setLoading(false);
     }
-  };
-
-  // 7. Instant Demo Login (for frictionless evaluation)
-  const loginAsDemo = (tier = 'brand') => {
-    const demoProfiles = {
-      brand: {
-        id: 'demo-brand-101',
-        email: 'subanesh@ziggers.in',
-        user_metadata: { full_name: 'Subanesh', company: 'Artisan Cafe & Brands', role: 'brand_admin' },
-        profile: {
-          id: 'demo-brand-101',
-          full_name: 'Subanesh',
-          email: 'subanesh@ziggers.in',
-          company: 'Artisan Cafe & Brands',
-          role: 'brand_admin',
-          tier: 'D2C Brand',
-        }
-      },
-      agency: {
-        id: 'demo-agency-202',
-        email: 'ops@experientialmedia.com',
-        user_metadata: { full_name: 'Agency Operations Director', company: 'Zenith BTL Agency', role: 'agency_admin' },
-        profile: {
-          id: 'demo-agency-202',
-          full_name: 'Agency Operations Director',
-          email: 'ops@experientialmedia.com',
-          company: 'Zenith BTL Agency',
-          role: 'agency_admin',
-          tier: 'Enterprise Agency',
-        }
-      },
-      small_business: {
-        id: 'demo-local-303',
-        email: 'owner@localbistro.com',
-        user_metadata: { full_name: 'Local Bistro Owner', company: 'Chennai Bistro', role: 'small_business' },
-        profile: {
-          id: 'demo-local-303',
-          full_name: 'Local Bistro Owner',
-          email: 'owner@localbistro.com',
-          company: 'Chennai Bistro',
-          role: 'small_business',
-          tier: 'Small Business',
-        }
-      }
-    };
-
-    const selected = demoProfiles[tier] || demoProfiles.brand;
-    setUser(selected);
-    setProfile(selected.profile);
-    localStorage.setItem('ziggers_demo_user', JSON.stringify(selected));
-    return selected;
   };
 
   return (
@@ -281,6 +246,7 @@ export function AuthProvider({ children }) {
         user,
         session,
         profile,
+        organization,
         loading,
         signInWithPassword,
         signUpWithPassword,
@@ -288,7 +254,6 @@ export function AuthProvider({ children }) {
         verifyOtp,
         signInWithOAuth,
         signOut,
-        loginAsDemo,
       }}
     >
       {children}

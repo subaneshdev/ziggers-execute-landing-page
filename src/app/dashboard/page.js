@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/dashboard/Sidebar';
 import MetricsHeader from '../../components/dashboard/MetricsHeader';
 import AdsManagerTable from '../../components/dashboard/AdsManagerTable';
@@ -18,22 +19,38 @@ import InvoiceBilling from '../../components/dashboard/InvoiceBilling';
 import AgencyClientManager from '../../components/dashboard/AgencyClientManager';
 import CampaignReportGenerator from '../../components/dashboard/CampaignReportGenerator';
 import AiCampaignPlanner from '../../components/dashboard/AiCampaignPlanner';
+import ModelEvaluationDashboard from '../../components/dashboard/ModelEvaluationDashboard';
+import LocationAnalytics from '../../components/dashboard/LocationAnalytics';
+import CalendarAndTemplates from '../../components/dashboard/CalendarAndTemplates';
+import TrainingManager from '../../components/dashboard/TrainingManager';
+import IntegrationsAndAudit from '../../components/dashboard/IntegrationsAndAudit';
+import SignalSyncDashboard from '../../components/dashboard/SignalSyncDashboard';
 
 import { 
   Layers, Activity, ShieldCheck, MapPin, Users, Cpu, 
   Calendar as CalendarIcon, Key, Plus, RefreshCw, Eye, Camera,
   UserCheck, MessageSquare, Target, Wallet, FileText, FileCheck, Compass,
-  LogOut, User, Sparkles
+  LogOut, User, Sparkles, Building, Loader2, Radio
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { user, profile, organization, loading: authLoading, signOut } = useAuth();
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [isClientPortal, setIsClientPortal] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [systemLogs, setSystemLogs] = useState([]);
+
+  // Route protection: redirect to login if unauthenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   // Fetch live campaigns from Supabase Edge API
   const fetchCampaigns = async () => {
@@ -45,15 +62,17 @@ export default function DashboardPage() {
         setCampaigns(data.campaigns);
       }
     } catch (err) {
-      console.error('Failed to load campaigns:', err);
+      console.warn('Notice loading campaigns:', err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCampaigns();
-  }, []);
+    if (user) {
+      fetchCampaigns();
+    }
+  }, [user]);
 
   const addSystemLog = (action, details) => {
     const newLog = {
@@ -71,7 +90,10 @@ export default function DashboardPage() {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newCampaign),
+        body: JSON.stringify({
+          ...newCampaign,
+          brand: newCampaign.brand || organization?.name || profile?.company || 'Enterprise Client'
+        }),
       });
       const data = await res.json();
       if (data.success && data.campaign) {
@@ -86,7 +108,7 @@ export default function DashboardPage() {
 
   const handleToggleStatus = async (id, currentStatus) => {
     const updatedStatus = !currentStatus;
-    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: updatedStatus, stage: updatedStatus ? 'Live' : 'Paused' } : c));
+    setCampaigns(prev => prev.map(c => (c.id === id || c.campaign_id === id) ? { ...c, status: updatedStatus, stage: updatedStatus ? 'Live' : 'Paused' } : c));
     try {
       await fetch('/api/campaigns', {
         method: 'PATCH',
@@ -100,7 +122,7 @@ export default function DashboardPage() {
   };
 
   const handleDeleteCampaign = async (id) => {
-    setCampaigns(prev => prev.filter(c => c.id !== id));
+    setCampaigns(prev => prev.filter(c => c.id !== id && c.campaign_id !== id));
     try {
       await fetch(`/api/campaigns?id=${id}`, { method: 'DELETE' });
       addSystemLog('CAMPAIGN_ARCHIVED', `Campaign ${id} archived from console.`);
@@ -111,18 +133,24 @@ export default function DashboardPage() {
 
   const handleApplyAiOptimization = () => {
     if (campaigns.length === 0) return;
-    const updated = campaigns.map(c => ({
-      ...c,
-      attendance: '99%',
-      health: 100,
-      actualCpl: '₹88',
-      healthBreakdown: { staffing: 100, attendance: 100, inventory: 98, kpiProgress: 96, proof: 100, budget: 95 }
-    }));
-    setCampaigns(updated);
-    addSystemLog('AI_OPTIMIZE', 'AI Wave Optimization balanced promoter attendance and inventory velocity.');
+    fetchCampaigns();
+    addSystemLog('AI_OPTIMIZE', 'Triggered intelligence model sync against live geofences.');
   };
 
-  const { user, profile, signOut, loginAsDemo } = useAuth();
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-gold" />
+          <span className="text-xs font-bold text-muted">Authenticating Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="flex bg-[#faf9f6] min-h-screen text-espresso font-sans">
@@ -136,6 +164,7 @@ export default function DashboardPage() {
         {/* Header Bar */}
         <header className="bg-white border-b border-espresso/10 py-3 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {activeTab === 'signalSync' && <Radio className="text-gold" size={18} />}
             {activeTab === 'dashboard' && <Layers className="text-gold" size={18} />}
             {activeTab === 'liveDashboard' && <Activity className="text-gold" size={18} />}
             {activeTab === 'locationHiring' && <Compass className="text-gold" size={18} />}
@@ -150,10 +179,15 @@ export default function DashboardPage() {
             {activeTab === 'agency' && <Eye className="text-gold" size={18} />}
             {activeTab === 'reports' && <FileCheck className="text-gold" size={18} />}
             {activeTab === 'aiPlanner' && <Cpu className="text-gold" size={18} />}
+            {activeTab === 'modelEval' && <ShieldCheck className="text-gold" size={18} />}
+            {activeTab === 'analytics' && <Compass className="text-gold" size={18} />}
+            {activeTab === 'calendar' && <CalendarIcon className="text-gold" size={18} />}
+            {activeTab === 'training' && <BookOpenIcon size={18} className="text-gold" />}
+            {activeTab === 'audit' && <Key size={18} className="text-gold" />}
             
             <div className="flex items-center gap-2">
               <h2 className="text-xs font-semibold text-espresso uppercase tracking-[-0.02em]">
-                {isClientPortal ? 'Brand Client Portal' : `Campaigns Manager / ${activeTab.toUpperCase()}`}
+                {isClientPortal ? 'Brand Client Portal' : `Campaigns Manager / ${activeTab === 'signalSync' ? 'SIGNAL SYNC (META ADS)' : activeTab.toUpperCase()}`}
               </h2>
             </div>
           </div>
@@ -168,7 +202,7 @@ export default function DashboardPage() {
             </button>
 
             <button 
-              onClick={() => setIsCreatorOpen(true)}
+              onClick={() => router.push('/campaigns/new')}
               className="flex items-center gap-1.5 bg-espresso hover:bg-muted text-white text-[11px] font-extrabold px-4 py-2 rounded-xl shadow-sm transition-all cursor-pointer"
             >
               <Plus size={14} className="text-gold" />
@@ -190,31 +224,22 @@ export default function DashboardPage() {
             <div className="h-4 w-[1px] bg-espresso/10"></div>
 
             {/* Auth Profile Badge */}
-            {user ? (
-              <div className="flex items-center gap-2 bg-linen/40 border border-espresso/10 px-2.5 py-1 rounded-xl">
-                <div className="w-5 h-5 rounded-full bg-gold text-espresso text-[10px] font-mono font-bold flex items-center justify-center">
-                  {(profile?.full_name || user.email || 'Z')[0].toUpperCase()}
-                </div>
-                <div className="text-left leading-tight hidden sm:block">
-                  <span className="block text-[10px] font-bold text-espresso">{profile?.full_name || user.email?.split('@')[0]}</span>
-                  <span className="block text-[8px] text-muted">{profile?.company || 'Brand Partner'}</span>
-                </div>
-                <button
-                  onClick={signOut}
-                  title="Sign out"
-                  className="text-muted hover:text-red-600 p-1 transition-colors cursor-pointer"
-                >
-                  <LogOut size={12} />
-                </button>
+            <div className="flex items-center gap-2 bg-linen/40 border border-espresso/10 px-2.5 py-1 rounded-xl">
+              <div className="w-5 h-5 rounded-full bg-gold text-espresso text-[10px] font-mono font-bold flex items-center justify-center">
+                {(profile?.full_name || user.email || 'Z')[0].toUpperCase()}
               </div>
-            ) : (
-              <a
-                href="/login"
-                className="text-[10px] font-bold text-espresso bg-white border border-espresso/20 px-3 py-1.5 rounded-xl hover:border-gold"
+              <div className="text-left leading-tight hidden sm:block">
+                <span className="block text-[10px] font-bold text-espresso">{profile?.full_name || user.email?.split('@')[0]}</span>
+                <span className="block text-[8px] text-muted">{organization?.name || profile?.company || 'Organization'}</span>
+              </div>
+              <button
+                onClick={signOut}
+                title="Sign out"
+                className="text-muted hover:text-red-600 p-1 transition-colors cursor-pointer"
               >
-                Sign In
-              </a>
-            )}
+                <LogOut size={12} />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -223,11 +248,22 @@ export default function DashboardPage() {
           
           {/* Main workspace scroll pane */}
           <main className="flex-1 p-6 overflow-y-auto w-full">
+            {activeTab === 'signalSync' && (
+              <SignalSyncDashboard 
+                onDeployCampaign={(newCampaign) => {
+                  setCampaigns(prev => [newCampaign, ...prev]);
+                  addSystemLog('SIGNAL_SYNC_LAUNCH', `Launched "${newCampaign.name}" directly into live execution.`);
+                  setActiveTab('dashboard');
+                }}
+                onLogAction={addSystemLog}
+              />
+            )}
+
             {activeTab === 'dashboard' && (
               <div className="animate-in fade-in duration-200">
                 <MetricsHeader campaigns={campaigns} />
                 <AdsManagerTable 
-                  onCreateClick={() => setIsCreatorOpen(true)} 
+                  onCreateClick={() => router.push('/campaigns/new')} 
                   campaigns={campaigns}
                   onToggleStatus={handleToggleStatus}
                   onDeleteCampaign={handleDeleteCampaign}
@@ -237,99 +273,156 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'liveDashboard' && (
-              <LiveCampaignDashboard campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <LiveCampaignDashboard 
+                campaigns={campaigns} 
+                onCreateClick={() => router.push('/campaigns/new')}
+              />
             )}
 
             {activeTab === 'locationHiring' && (
-              <LocationHiring campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <LocationHiring 
+                campaigns={campaigns}
+                onCreateClick={() => router.push('/campaigns/new')}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'deployment' && (
-              <DeploymentBoard campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <DeploymentBoard 
+                campaigns={campaigns}
+                onCreateClick={() => router.push('/campaigns/new')}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'attendance' && (
-              <AttendanceGpsTracker campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <AttendanceGpsTracker 
+                campaigns={campaigns}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'proof' && (
-              <ProofCenter campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <ProofCenter 
+                campaigns={campaigns}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'supervisors' && (
-              <SupervisorManager campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <SupervisorManager 
+                campaigns={campaigns}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'communication' && (
-              <CampaignCommunication campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <CampaignCommunication 
+                campaigns={campaigns}
+                onCreateClick={() => router.push('/campaigns/new')}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'targetsLeads' && (
-              <TargetsAndLeads campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <TargetsAndLeads 
+                campaigns={campaigns}
+                onCreateClick={() => router.push('/campaigns/new')}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'wallet' && (
-              <CampaignWallet campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <CampaignWallet 
+                campaigns={campaigns}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'billing' && (
-              <InvoiceBilling campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <InvoiceBilling 
+                campaigns={campaigns}
+                onCreateClick={() => router.push('/campaigns/new')}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'agency' && (
               <AgencyClientManager 
                 campaigns={campaigns}
-                isClientPortal={isClientPortal} 
-                setIsClientPortal={setIsClientPortal} 
+                onCreateClick={() => router.push('/campaigns/new')}
                 onLogAction={addSystemLog}
-                onCreateClick={() => setIsCreatorOpen(true)}
               />
             )}
 
             {activeTab === 'reports' && (
-              <CampaignReportGenerator campaigns={campaigns} onLogAction={addSystemLog} onCreateClick={() => setIsCreatorOpen(true)} />
+              <CampaignReportGenerator 
+                campaigns={campaigns}
+                onLogAction={addSystemLog}
+              />
             )}
 
             {activeTab === 'aiPlanner' && (
               <AiCampaignPlanner 
-                onDeployDraft={(draft) => {
-                  handlePublishCampaign({ 
-                    name: draft.name, 
-                    objective: draft.objective, 
-                    workers: draft.headcount || 12, 
-                    budget: draft.budget,
-                    city: draft.cities?.[0] || 'Chennai',
-                    targetCpl: draft.metrics?.estimatedCpl || '₹100',
-                    actualCpl: draft.metrics?.estimatedCpl || '₹95'
-                  });
+                onPlanApproved={(newPlan) => {
+                  handlePublishCampaign(newPlan);
                   setActiveTab('dashboard');
                 }}
               />
             )}
+
+            {activeTab === 'modelEval' && (
+              <ModelEvaluationDashboard />
+            )}
+
+            {activeTab === 'analytics' && (
+              <LocationAnalytics campaigns={campaigns} />
+            )}
+
+            {activeTab === 'calendar' && (
+              <CalendarAndTemplates 
+                campaigns={campaigns} 
+                onCreateClick={() => setIsCreatorOpen(true)}
+              />
+            )}
+
+            {activeTab === 'training' && (
+              <TrainingManager onLogAction={addSystemLog} />
+            )}
+
+            {activeTab === 'audit' && (
+              <IntegrationsAndAudit />
+            )}
           </main>
 
-          {/* Command Center Sidebar (Visible on main Dashboard tab) */}
-          {activeTab === 'dashboard' && (
-            <CommandCenter 
-              campaigns={campaigns}
-              systemLogs={systemLogs}
-              onApplyAiOptimization={handleApplyAiOptimization} 
-              onRefreshCampaigns={fetchCampaigns}
-            />
-          )}
-
+          {/* Right Live Command Center Feed */}
+          <CommandCenter 
+            campaigns={campaigns} 
+            onRunOptimization={handleApplyAiOptimization}
+            logs={systemLogs}
+          />
         </div>
 
       </div>
 
-      {/* Campaign Creator Modal Popup */}
+      {/* Campaign Creation Modal */}
       {isCreatorOpen && (
         <CampaignCreator 
+          isOpen={isCreatorOpen} 
           onClose={() => setIsCreatorOpen(false)} 
-          onPublish={handlePublishCampaign} 
+          onPublish={handlePublishCampaign}
         />
       )}
 
     </div>
+  );
+}
+
+function BookOpenIcon({ size, className }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </svg>
   );
 }

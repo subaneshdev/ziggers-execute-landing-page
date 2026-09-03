@@ -10,16 +10,16 @@ export default function SupervisorManager({ campaigns = [], onLogAction, onCreat
   // Derive supervisor desk dynamically from campaigns
   const supervisors = campaigns.map((c, idx) => ({
     id: `sup_${idx + 1}`,
-    name: c.manager || `Supervisor ${idx + 1}`,
+    name: c.supervisor_name || c.manager || `Supervisor ${idx + 1}`,
     role: 'Field Operations Lead',
     avatar: '👨🏽',
-    phone: '+91 98401 23456',
+    phone: c.supervisor_phone || 'Assigned via Operations Desk',
     assignedHubs: [c.city ? `${c.city} Metro Hub` : 'Central Hub'],
-    promotersCount: c.workers || 10,
-    presentPromoters: c.workers || 10,
-    rating: 4.9,
-    activeShift: '10:00 AM - 06:00 PM',
-    status: 'Active On Ground',
+    promotersCount: parseInt(c.workers || c.headcount_required, 10) || 10,
+    presentPromoters: parseInt(c.workers || c.headcount_required, 10) || 10,
+    rating: '5.00',
+    activeShift: 'Active Shift Window',
+    status: (c.status === true || c.stage === 'Live') ? 'Active On Ground' : 'Scheduled',
     managedCampaign: c.name
   }));
 

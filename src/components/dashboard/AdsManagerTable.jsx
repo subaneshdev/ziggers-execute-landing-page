@@ -37,10 +37,10 @@ export default function AdsManagerTable({
   });
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredCampaigns.length) {
+    if (selectedIds.size === filteredCampaigns.length && filteredCampaigns.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredCampaigns.map(c => c.id)));
+      setSelectedIds(new Set(filteredCampaigns.map((c, idx) => c.id || c.name || `camp-${idx}`)));
     }
   };
 
@@ -221,12 +221,13 @@ export default function AdsManagerTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-espresso/5 font-medium text-xs">
-              {filteredCampaigns.map((c) => {
-                const isChecked = selectedIds.has(c.id);
+              {filteredCampaigns.map((c, index) => {
+                const rowId = c.id || c.name || `camp-${index}`;
+                const isChecked = selectedIds.has(rowId);
                 const isLive = c.status === true || c.stage === 'Live';
                 return (
                   <tr 
-                    key={c.id} 
+                    key={rowId} 
                     className={`hover:bg-linen/20 transition-colors ${isChecked ? 'bg-gold/10' : ''}`}
                   >
                     {/* Checkbox */}
@@ -234,7 +235,7 @@ export default function AdsManagerTable({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => toggleSelectRow(c.id)}
+                        onChange={() => toggleSelectRow(rowId)}
                         className="accent-gold rounded cursor-pointer"
                       />
                     </td>
@@ -275,12 +276,12 @@ export default function AdsManagerTable({
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5 group">
                         <span className="font-extrabold text-espresso group-hover:text-gold cursor-pointer">
-                          {c.name}
+                          {c.name || c.title || 'Brand Campaign'}
                         </span>
                         <Edit3 size={11} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                       <span className="text-[10px] text-muted block mt-0.5">
-                        Brand: <strong className="text-espresso">{c.brand || 'Direct Brand'}</strong> • {c.city || 'Chennai'}
+                        Brand: <strong className="text-espresso">{c.brand || c.brand_name || 'Enterprise Brand'}</strong> • {c.city || 'Chennai'}
                       </span>
                     </td>
 
@@ -291,36 +292,42 @@ export default function AdsManagerTable({
 
                     {/* Budget */}
                     <td className="py-3.5 px-4 font-mono font-bold text-espresso">
-                      <div>{c.spend || c.totalBudget || '₹50,000'}</div>
+                      <div>{c.spend || c.totalBudget || (c.guaranteed_payout ? `₹${Number(c.guaranteed_payout).toLocaleString('en-IN')}` : '₹0')}</div>
                       <span className="text-[9px] text-muted font-sans">Daily / Escrow</span>
                     </td>
 
                     {/* Results */}
                     <td className="py-3.5 px-4 font-mono">
                       <div className="font-extrabold text-espresso">
-                        {c.samples ? `${c.samples} Samples` : c.leads ? `${c.leads} Leads` : `${(parseInt(c.workers) || 10) * 120} Interactions`}
+                        {c.samples > 0 
+                          ? `${c.samples.toLocaleString('en-IN')} Samples` 
+                          : (c.leads > 0 
+                            ? `${c.leads.toLocaleString('en-IN')} Leads` 
+                            : '0 Verified Results')}
                       </div>
                       <span className="text-[9px] text-green-700 font-sans font-bold">100% Verified</span>
                     </td>
 
                     {/* Reach / Footfall */}
                     <td className="py-3.5 px-4 font-mono text-espresso">
-                      {(parseInt(c.workers) || 10) * 650} Footfalls
+                      {c.reach > 0 
+                        ? `${c.reach.toLocaleString('en-IN')} Footfalls` 
+                        : (c.forecast?.reach ? `${c.forecast.reach.toLocaleString('en-IN')} (Target Reach)` : '0 Footfalls')}
                     </td>
 
                     {/* Cost per Result */}
                     <td className="py-3.5 px-4 font-mono font-bold text-green-700">
-                      {c.actualCpl || '₹85.00'}
+                      {c.actualCpl && c.actualCpl !== 'N/A' ? c.actualCpl : (c.targetCpl ? `${c.targetCpl} (Target)` : 'N/A')}
                     </td>
 
                     {/* Amount Spent */}
                     <td className="py-3.5 px-4 font-mono font-extrabold text-espresso">
-                      {c.spend || '₹1,20,000'}
+                      {c.spend || c.totalBudget || (c.guaranteed_payout ? `₹${Number(c.guaranteed_payout).toLocaleString('en-IN')}` : '₹0')}
                     </td>
 
                     {/* Schedule */}
                     <td className="py-3.5 px-4 text-muted text-[11px] font-mono whitespace-nowrap">
-                      Aug 20 – Aug 25
+                      {c.schedule || (c.start_date && c.end_date ? `${c.start_date} – ${c.end_date}` : 'Active Shift')}
                     </td>
 
                     {/* Actions */}

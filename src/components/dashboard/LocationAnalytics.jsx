@@ -10,15 +10,15 @@ export default function LocationAnalytics({ campaigns = [] }) {
 
   // Group campaigns into location rows
   const locationRows = campaigns.map(c => ({
-    name: `${c.city} Primary Retail Corridor`,
+    name: c.location || `${c.city || 'Metro'} Retail Corridor`,
     campaignName: c.name,
     hub: c.city || 'Chennai',
-    workers: c.workers || 10,
+    workers: parseInt(c.workers || c.headcount_required, 10) || 10,
     attendance: c.attendance || '100%',
-    samples: c.samples || 0,
-    leads: c.leads || 0,
-    cost: c.spend || c.totalBudget || '₹1,50,000',
-    cpl: c.actualCpl || '₹95',
+    samples: parseInt(c.samples, 10) || 0,
+    leads: parseInt(c.leads, 10) || 0,
+    cost: c.spend || c.totalBudget || '₹0',
+    cpl: c.actualCpl || (parseInt(c.leads, 10) > 0 ? `₹${Math.round(parseInt((c.spend || '0').replace(/[^0-9]/g, ''), 10) / parseInt(c.leads, 10))}` : 'N/A'),
     health: c.health || 100
   }));
 

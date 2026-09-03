@@ -14,7 +14,8 @@ export default function DeploymentBoard({ campaigns = [], onLogAction }) {
   // Deployment staff roster
   const [roster, setRoster] = useState([]);
 
-  const locations = ['All', 'Loyola College, Nungambakkam', 'MCC College, Tambaram', 'SRM University, Kattankulathur', 'Anna University, Guindy'];
+  // Dynamically derive activation locations from active campaigns
+  const locations = ['All', ...Array.from(new Set(campaigns.map(c => c.location || c.location_name || `${c.city || 'Metro'} Hub`).filter(Boolean)))];
 
   const filteredRoster = selectedLocation === 'All' 
     ? roster 

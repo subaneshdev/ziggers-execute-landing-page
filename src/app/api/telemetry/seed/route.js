@@ -4,20 +4,21 @@ import { supabaseAdmin } from '../../../../lib/supabase';
 export const runtime = 'edge';
 
 export async function POST(request) {
+  // Sandbox-only endpoint: Guard against accidental production execution
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_TELEMETRY_SEED !== 'true') {
+    return NextResponse.json({
+      success: false,
+      error: 'Telemetry seed endpoint is disabled in production environment. All telemetry must originate from verified on-ground mobile check-in APIs.'
+    }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const campaignId = body.campaignId;
     const campaignTitle = body.campaignTitle || 'Brand Activation';
     const city = body.city || 'Chennai';
-    const headcount = parseInt(body.headcount) || 10;
+    const headcount = Math.min(20, parseInt(body.headcount, 10) || 5);
 
-    const sampleWorkerNames = [
-      'Anand Kumar', 'Priya Sundaram', 'Karthik Raja', 'Meera Nair', 
-      'Rohit Sharma', 'Divya Krishnan', 'Aravind Swamy', 'Deepa Venkat',
-      'Suresh Prabhu', 'Kavitha Reddy', 'Vikram Seth', 'Neha Gupta'
-    ];
-
-    // Seed shift checkins
     const checkins = [];
     const samplingLogs = [];
     const proofPhotos = [];
@@ -25,44 +26,44 @@ export async function POST(request) {
 
     for (let i = 0; i < headcount; i++) {
       const workerId = `wrk_${100 + i}`;
-      const workerName = sampleWorkerNames[i % sampleWorkerNames.length];
+      const workerName = `Promoter ${i + 1}`;
       const asgnId = `asgn_${Date.now().toString(36)}_${i}`;
 
       checkins.push({
         checkin_id: `chk_${Date.now().toString(36)}_${i}`,
         assignment_id: asgnId,
-        campaign_id: campaignId || 'camp_1',
+        campaign_id: campaignId || null,
         worker_id: workerId,
         worker_name: workerName,
         checkin_timestamp: new Date().toISOString(),
-        checkin_latitude: 13.0827 + (i * 0.005),
-        checkin_longitude: 80.2707 + (i * 0.005),
-        distance_from_centroid_meters: Math.floor(Math.random() * 30) + 5,
+        checkin_latitude: 13.0827 + (i * 0.002),
+        checkin_longitude: 80.2707 + (i * 0.002),
+        distance_from_centroid_meters: 12 + (i * 2),
         is_within_geofence: true,
-        checkin_selfie_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        checkin_selfie_url: null,
         supervisor_verified: true
       });
 
       samplingLogs.push({
         log_id: `smp_${Date.now().toString(36)}_${i}`,
         assignment_id: asgnId,
-        campaign_id: campaignId || 'camp_1',
+        campaign_id: campaignId || null,
         worker_id: workerId,
-        quantity_logged: 45 + Math.floor(Math.random() * 20),
-        interaction_count: 50 + Math.floor(Math.random() * 25),
-        notes: `Live sampling at ${city} Metro Hub ${i + 1}`,
+        quantity_logged: 40,
+        interaction_count: 50,
+        notes: `Telemetry recorded at ${city} node ${i + 1}`,
         logged_at: new Date().toISOString()
       });
 
       proofPhotos.push({
         proof_id: `prf_${Date.now().toString(36)}_${i}`,
         assignment_id: asgnId,
-        campaign_id: campaignId || 'camp_1',
+        campaign_id: campaignId || null,
         worker_id: workerId,
         storage_bucket: 'proof_photos',
-        image_url: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=800&q=80',
-        latitude: 13.0827 + (i * 0.005),
-        longitude: 80.2707 + (i * 0.005),
+        image_url: null,
+        latitude: 13.0827 + (i * 0.002),
+        longitude: 80.2707 + (i * 0.002),
         verification_status: 'APPROVED',
         reviewed_by: 'Supervisor Desk',
         reviewed_at: new Date().toISOString()
@@ -77,7 +78,7 @@ export async function POST(request) {
         deductions_amount: 0.00,
         total_payable_amount: 1350.00,
         payout_status: 'DISBURSED_UPI',
-        upi_id: `${workerName.toLowerCase().replace(' ', '')}@upi`,
+        upi_id: `worker${i + 1}@upi`,
         transaction_ref_no: `UTR-${Date.now()}-${i}`,
         disbursed_at: new Date().toISOString()
       });
@@ -93,7 +94,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `Seeded ${headcount} real-time telemetry records (check-ins, sampling logs, proof photos, and payouts) into Supabase for campaign "${campaignTitle}".`,
+      message: `Sandbox telemetry logged for campaign "${campaignTitle}".`,
       summary: {
         checkinsSeeded: checkins.length,
         samplingLogsSeeded: samplingLogs.length,
