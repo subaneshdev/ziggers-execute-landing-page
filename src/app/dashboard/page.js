@@ -250,6 +250,7 @@ export default function DashboardPage() {
           <main className="flex-1 p-6 overflow-y-auto w-full">
             {activeTab === 'signalSync' && (
               <SignalSyncDashboard 
+                campaigns={campaigns}
                 onDeployCampaign={(newCampaign) => {
                   setCampaigns(prev => [newCampaign, ...prev]);
                   addSystemLog('SIGNAL_SYNC_LAUNCH', `Launched "${newCampaign.name}" directly into live execution.`);

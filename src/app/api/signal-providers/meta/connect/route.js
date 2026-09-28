@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { metaSignalProvider } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 export async function POST(request) {
   try {

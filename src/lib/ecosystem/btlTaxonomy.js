@@ -328,12 +328,11 @@ export const FULFILLMENT_MODES = {
 };
 
 /**
- * OBJECTIVE-DRIVEN ACTIVATION PLANNER
- * Determines what activation is required to achieve the selected campaign objective
+ * OBJECTIVE-DRIVEN ACTIVATION PLANNER (TOP 3 PLANS ENGINE)
+ * Generates the top 3 distinct, tailored activation concepts for any campaign objective and brand
  */
-export function generateObjectiveActivationPlan({
+export function generateTopObjectiveActivationPlans({
   objective = 'Product Sampling',
-  btlFormat = '',
   brandName = 'Brand',
   brandCategory = 'Retail',
   productLine = 'Consumer Product',
@@ -344,134 +343,380 @@ export function generateObjectiveActivationPlan({
 }) {
   const isAuto = brandCategory.toLowerCase().includes('auto') || brandCategory.toLowerCase().includes('motorcycle');
   const isTech = brandCategory.toLowerCase().includes('tech') || brandCategory.toLowerCase().includes('saas') || brandCategory.toLowerCase().includes('software');
-  const isFood = brandCategory.toLowerCase().includes('food') || brandCategory.toLowerCase().includes('beverage') || brandCategory.toLowerCase().includes('qsr') || brandCategory.toLowerCase().includes('fmcg');
+  const isFood = brandCategory.toLowerCase().includes('food') || brandCategory.toLowerCase().includes('beverage') || brandCategory.toLowerCase().includes('qsr') || brandCategory.toLowerCase().includes('fmcg') || brandCategory.toLowerCase().includes('coffee');
+  const isFashion = brandCategory.toLowerCase().includes('fashion') || brandCategory.toLowerCase().includes('apparel') || brandCategory.toLowerCase().includes('lifestyle');
 
-  const objLower = objective.toLowerCase();
+  const objLower = (objective || '').toLowerCase();
+  const envSlice = (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Commercial Hubs • Shopping Malls • Tech Parks';
 
-  // 1. BRAND AWARENESS
+  // 1. BRAND AWARENESS & VISIBILITY
   if (objLower.includes('awareness') || objLower.includes('visibility') || objLower.includes('reach')) {
-    const activationName = isAuto 
-      ? `${brandName} Performance Showcase & Biker Experience Pod` 
-      : `${brandName} High-Impact Brand Experience Zone`;
-    return {
-      activationName: btlFormat || activationName,
-      objective: 'Brand Awareness & High-Visibility Reach',
-      strategicFocus: 'Pedestrian Reach • Visual Dwell Time • Social Content UGC',
-      whyThisActivationFits: `Maximizes brand visual impact across high-dwell pedestrian environments in ${city}. Focuses on immersive branding, 20-second elevator pitches, and shareable photo opportunities to build top-of-mind affinity with ${audienceName}.`,
-      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
-      recommendedLocations: (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Shopping Malls • High Streets • Colleges',
-      executionFlow: [
-        '1. Set up high-visibility branded experience zone and illuminated backdrops',
-        '2. Deploy Ziggers verified brand promoters and team supervisor',
-        '3. Engage passing footfall with compelling 20-second brand stories',
-        '4. Direct interested consumers to interactive display pods & photo moments',
-        '5. Issue dynamic QR codes for digital contest entry & social sharing',
-        '6. Monitor pedestrian engagement throughput and dwell velocity',
-        '7. Capture GPS-stamped photo proof and promoter attendance telemetry',
-        '8. Synthesize end-of-day reach and interaction performance dashboard'
-      ]
-    };
+    return [
+      {
+        id: 'plan_1',
+        badge: '★ Recommended #1: Flagship Experience Hub',
+        conceptType: 'Flagship Experiential Hub',
+        activationName: isAuto 
+          ? `${brandName} Performance Showcase & Biker Experience Pod` 
+          : (isFood ? `${brandName} Flavor Immersion & Sensory Experience Lounge` : `${brandName} High-Impact Brand Experience Zone`),
+        objective: 'Brand Awareness & High-Visibility Reach',
+        strategicFocus: 'Pedestrian Reach • Visual Dwell Time • Social Content UGC',
+        whyThisActivationFits: `Maximizes brand visual impact across high-dwell pedestrian environments in ${city}. Focuses on immersive branding, 20-second elevator pitches, and shareable photo opportunities to build top-of-mind affinity with ${audienceName}.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: envSlice,
+        suitabilityScore: 96,
+        projectedThroughput: '800–1,200 high-dwell consumer engagements per shift',
+        executionFlow: [
+          '1. Set up high-visibility branded experience zone and illuminated backdrops',
+          '2. Deploy Ziggers verified brand promoters and team supervisor',
+          '3. Engage passing footfall with compelling 20-second brand stories',
+          '4. Direct interested consumers to interactive display pods & photo moments',
+          '5. Issue dynamic QR codes for digital contest entry & social sharing',
+          '6. Monitor pedestrian engagement throughput and dwell velocity',
+          '7. Capture GPS-stamped photo proof and promoter attendance telemetry',
+          '8. Synthesize end-of-day reach and interaction performance dashboard'
+        ]
+      },
+      {
+        id: 'plan_2',
+        badge: '⚡ Option #2: High-Velocity Pop-Up & Street Team',
+        conceptType: 'Mobile Pop-Up & Street Team',
+        activationName: `${brandName} Metro Transit & Street Sprint Team`,
+        objective: 'Brand Awareness & Rapid Footfall Exposure',
+        strategicFocus: 'High Volume Reach • Rapid Engagement • Multi-Node Coverage',
+        whyThisActivationFits: `Deploys agile, high-energy brand ambassadors across prime transit stations, pedestrian bridges, and high-traffic intersections in ${city} for rapid mass visibility.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Metro Stations • High Street Junctions • College Commercial Strips',
+        suitabilityScore: 92,
+        projectedThroughput: '1,800–2,500 passing consumer touchpoints per shift',
+        executionFlow: [
+          '1. Dispatch agile 2-person mobile teams equipped with branded apparel and eye-catching props',
+          '2. Synchronize start times with peak morning and evening transit rush hours',
+          '3. Deliver 10-second memorable brand hooks and distribute premium visual lookbooks',
+          '4. Direct pedestrians to nearby flagship retail stores or digital experience portals',
+          '5. Track real-time distribution rate and street corridor footfall velocity',
+          '6. Capture verified geotagged photo proof across all dispatched street nodes'
+        ]
+      },
+      {
+        id: 'plan_3',
+        badge: '🎯 Option #3: Co-Working & Corporate Atrium Takeover',
+        conceptType: 'Corporate & Community Takeover',
+        activationName: `${brandName} Executive Corporate Lounge & Atrium Showcase`,
+        objective: 'Targeted High-SEC Awareness & Professional Word-of-Mouth',
+        strategicFocus: 'Qualified SEC A/B Reach • High Dwell Discussion • Influencer Discovery',
+        whyThisActivationFits: `Places the brand directly inside tier-1 corporate tech parks and premium co-working spaces in ${city}, capturing salaried decision-makers during lunch hours and coffee breaks.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Tech Park Atriums • Co-Working Lounges • Executive Food Courts',
+        suitabilityScore: 89,
+        projectedThroughput: '600–900 corporate professional conversations per shift',
+        executionFlow: [
+          '1. Fabricate sleek, minimalist corporate display kiosk in office cafeteria / atrium',
+          '2. Staff with articulate brand specialists trained on executive product value',
+          '3. Host lunchtime interactive product discovery sessions with exclusive perks',
+          '4. Facilitate digital business card exchange and priority corporate discount codes',
+          '5. Gather qualitative executive feedback and sentiment metrics'
+        ]
+      }
+    ];
   }
 
   // 2. PRODUCT SAMPLING
   if (objLower.includes('sampling') || objLower.includes('taste') || objLower.includes('sample')) {
-    const activationName = isFood
-      ? `${brandName} Fresh Flavor Taste & Sampling Kiosk`
-      : `${brandName} Product Sampling & Trial Kiosk`;
-    return {
-      activationName: btlFormat || activationName,
-      objective: 'Direct Consumer Product Sampling & First-Hand Trial',
-      strategicFocus: 'Sample Units Distributed • Audience Relevance • Taste Verification',
-      whyThisActivationFits: `Puts physical samples directly into the hands of ${audienceName}. Eliminates trial friction and captures genuine consumer taste reaction and instant purchase interest in ${city}.`,
-      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
-      recommendedLocations: (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Colleges • Food Courts • Gyms • Tech Parks',
-      executionFlow: [
-        '1. Position hygienic sampling counter with branded POSM dispensers',
-        '2. Check in trained sampling crew with biometric / GPS geofencing',
-        '3. Approach target demographic with structured product trial invitations',
-        '4. Administer product samples with hygiene compliance and napkins/cups',
-        '5. Prompt consumers to scan QR for instant discount vouchers on retail packs',
-        '6. Log real-time sample distribution counts and stock velocity',
-        '7. Capture watermarked photo proof and sample batch accountability',
-        '8. Generate daily sampling conversion and audience feedback report'
-      ]
-    };
+    return [
+      {
+        id: 'plan_1',
+        badge: '★ Recommended #1: Flagship Experiential Sampling Kiosk',
+        conceptType: 'Flagship Experiential Sampling Kiosk',
+        activationName: isFood
+          ? `${brandName} Fresh Flavor Taste & Sampling Kiosk`
+          : (isAuto ? `${brandName} Hands-On Touch & Ergonomics Trial Pod` : `${brandName} Experiential Product Sampling & Trial Kiosk`),
+        objective: 'Direct Consumer Product Sampling & First-Hand Trial',
+        strategicFocus: 'Sample Units Distributed • Audience Relevance • Taste Verification',
+        whyThisActivationFits: `Puts physical samples directly into the hands of ${audienceName}. Eliminates trial friction and captures genuine consumer taste reaction and instant purchase interest in ${city}.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: envSlice,
+        suitabilityScore: 96,
+        projectedThroughput: '1,200–1,600 verified product samples distributed per shift',
+        executionFlow: [
+          '1. Position hygienic sampling counter with branded POSM dispensers',
+          '2. Check in trained sampling crew with biometric / GPS geofencing',
+          '3. Approach target demographic with structured product trial invitations',
+          '4. Administer product samples with hygiene compliance and napkins/cups',
+          '5. Prompt consumers to scan QR for instant discount vouchers on retail packs',
+          '6. Log real-time sample distribution counts and stock velocity',
+          '7. Capture watermarked photo proof and sample batch accountability',
+          '8. Generate daily sampling conversion and audience feedback report'
+        ]
+      },
+      {
+        id: 'plan_2',
+        badge: '⚡ Option #2: High-Velocity Flash Chilled Sampling Team',
+        conceptType: 'Mobile Chilled Backpack / Street Team',
+        activationName: `${brandName} High-Velocity Mobile Sampling Blitz`,
+        objective: 'Mass Trial Velocity & High-Density Distribution',
+        strategicFocus: 'Speed of Handout • Mass Trial • Heat/Peak Hour Targeting',
+        whyThisActivationFits: `Promoters equipped with branded dispensers distribute rapid trial units during peak afternoon heat or evening rush, maximizing total trial reach across ${city}.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Transit Interchanges • College Gates • Sports Turfs • High Street Sidewalks',
+        suitabilityScore: 93,
+        projectedThroughput: '2,000–2,800 sample units distributed per shift',
+        executionFlow: [
+          '1. Equip field promoters with ergonomic branded distribution packs and stock',
+          '2. Position mobile pairs at high-density footfall bottleneck gates',
+          '3. Provide rapid 5-second product introduction and sample handover',
+          '4. Direct consumers via quick QR scan on packaging for digital feedback',
+          '5. Restock via mobile supply runner every 90 minutes',
+          '6. Log batch serialization and hourly distribution tally'
+        ]
+      },
+      {
+        id: 'plan_3',
+        badge: '🎯 Option #3: Storefront & Supermarket Sampling Bar',
+        conceptType: 'Retailer Point-of-Sale Conversion Bar',
+        activationName: `${brandName} Point-of-Sale Taste & Instant Purchase Bar`,
+        objective: 'Immediate Retail Shelf Off-Take & Basket Conversion',
+        strategicFocus: 'Trial-to-Buy Conversion • Immediate Supermarket Sales • Retailer Goodwill',
+        whyThisActivationFits: `Stations the sampling counter immediately outside or inside partner supermarket chains and modern trade stores in ${city} to turn trial into instant cart additions.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Supermarkets • Hypermarket Entrances • Mall Grocery Zones',
+        suitabilityScore: 90,
+        projectedThroughput: '700–1,000 samples with 35%+ immediate retail purchase rate',
+        executionFlow: [
+          '1. Set up licensed sampling station at aisle-end or store entrance',
+          '2. Offer freshly served sample to shoppers entering the grocery aisle',
+          '3. Provide instant ₹20–₹50 immediate checkout coupon with multi-pack purchase',
+          '4. Coordinate with store inventory manager to ensure shelf stock replenishment',
+          '5. Track daily register sales uplift vs non-activation baseline'
+        ]
+      }
+    ];
   }
 
   // 3. PRODUCT TRIAL / TEST RIDE / DEMO
   if (objLower.includes('trial') || objLower.includes('demo') || objLower.includes('test drive') || objLower.includes('test ride')) {
-    const activationName = isAuto
-      ? `${brandName} Dynamic Test Ride & Track Experience Pod`
-      : `${brandName} Interactive Product Demonstration Zone`;
-    return {
-      activationName: btlFormat || activationName,
-      objective: 'Hands-On Product Trial & High-Intent Conversion',
-      strategicFocus: 'Qualified Test Rides/Trials • Lead Capture • Direct Conversion',
-      whyThisActivationFits: `Enables ${audienceName} to experience real performance, ergonomics, and value propositions first-hand. Direct trial experience drives high consideration into showroom bookings.`,
-      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
-      recommendedLocations: (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Dealership Corridors • Biker Cafes • Highway Hubs',
-      executionFlow: [
-        '1. Set up test-ride / demonstration registration lounge and safety barrier track',
-        '2. Deploy certified product demonstrators and safety marshals',
-        '3. Qualify prospective buyers and verify driving license credentials',
-        '4. Conduct guided product demonstration and assisted vehicle test ride',
-        '5. Capture test feedback and issue on-spot dealership booking incentives',
-        '6. Record digital test-ride telemetry and prospective buyer contact details',
-        '7. Collect GPS-tagged photo evidence of customer handover',
-        '8. Deliver verified high-intent leads to regional sales team'
-      ]
-    };
+    return [
+      {
+        id: 'plan_1',
+        badge: '★ Recommended #1: Flagship Test & Track Experience Pod',
+        conceptType: 'Dedicated Test Track & Experience Pod',
+        activationName: isAuto
+          ? `${brandName} Dynamic Test Ride & Track Experience Pod`
+          : `${brandName} Interactive Product Demonstration Zone`,
+        objective: 'Hands-On Product Trial & High-Intent Conversion',
+        strategicFocus: 'Qualified Test Rides/Trials • Lead Capture • Direct Conversion',
+        whyThisActivationFits: `Enables ${audienceName} to experience real performance, ergonomics, and value propositions first-hand in ${city}. Direct trial experience drives high consideration into showroom bookings.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: envSlice,
+        suitabilityScore: 96,
+        projectedThroughput: '150–250 assisted deep product trials / rides per shift',
+        executionFlow: [
+          '1. Set up test-ride / demonstration registration lounge and safety barrier track',
+          '2. Deploy certified product demonstrators and safety marshals',
+          '3. Qualify prospective buyers and verify driving license credentials',
+          '4. Conduct guided product demonstration and assisted vehicle test ride',
+          '5. Capture test feedback and issue on-spot dealership booking incentives',
+          '6. Record digital test-ride telemetry and prospective buyer contact details',
+          '7. Collect GPS-tagged photo evidence of customer handover',
+          '8. Deliver verified high-intent leads to regional sales team'
+        ]
+      },
+      {
+        id: 'plan_2',
+        badge: '⚡ Option #2: Corporate Park Pop-Up Test Hub',
+        conceptType: 'Corporate Tech Park Trial Pop-Up',
+        activationName: `${brandName} Workplace Commuter Test-Ride Drive`,
+        objective: 'Salaried Professional Test Conversion',
+        strategicFocus: 'Corporate Upgrades • EMI Consultations • Easy Campus Trials',
+        whyThisActivationFits: `Brings test vehicles and demo units directly into corporate campus parking zones and tech park promenades in ${city}, letting salaried commuters test during work hours.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'IT SEZ Campuses • Financial Hubs • Corporate Parking Plazas',
+        suitabilityScore: 92,
+        projectedThroughput: '180–300 corporate test drives with on-spot finance approvals',
+        executionFlow: [
+          '1. Secure campus permission and designate safe test-loop perimeter',
+          '2. Deploy corporate facilitators and digital loan finance consultants',
+          '3. Offer express 10-minute test rides during lunch and evening break hours',
+          '4. Provide instant corporate exchange bonus calculations',
+          '5. Schedule doorstep home delivery for interested buyers'
+        ]
+      },
+      {
+        id: 'plan_3',
+        badge: '🎯 Option #3: Weekend Enthusiast Pit-Stop Meet',
+        conceptType: 'Community Breakfast Pit-Stop & Meet',
+        activationName: `${brandName} Weekend Highway Biker Pit-Stop & Test Ride`,
+        objective: 'Community Advocacy & Experiential Demonstration',
+        strategicFocus: 'Enthusiast Engagement • Route Testing • Community Word-of-Mouth',
+        whyThisActivationFits: `Captures active enthusiasts at weekend highway rest stops and breakfast cafes in ${city}, converting lifestyle riders into verified brand advocates.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Biker Cafes • Highway Fuel Plazas • Scenic Boulevard Turnoffs',
+        suitabilityScore: 89,
+        projectedThroughput: '200+ enthusiast test runs with high social media sharing',
+        executionFlow: [
+          '1. Host branded pit-stop tent with complimentary coffee and chain lube check',
+          '2. Invite riders to take the flagship model on a designated 5km highway stretch',
+          '3. Capture professional photo of rider with bike for instant WhatsApp delivery',
+          '4. Distribute limited-edition enthusiast merchandise and dealership vouchers'
+        ]
+      }
+    ];
   }
 
-  // 4. LEAD GENERATION
+  // 4. LEAD GENERATION & CUSTOMER ACQUISITION
   if (objLower.includes('lead') || objLower.includes('acquisition') || objLower.includes('sign-up') || objLower.includes('install')) {
-    const activationName = isTech
-      ? `${brandName} Corporate B2B Lead Gen & Workflow Consultation Hub`
-      : `${brandName} Direct Customer Acquisition & Lead Capture Booth`;
-    return {
-      activationName: btlFormat || activationName,
-      objective: 'High-Intent Customer Acquisition & Lead Capture',
-      strategicFocus: 'Verified Leads • Cost Per Lead (CPL) • Immediate Sign-Ups',
-      whyThisActivationFits: `Engages qualified business decision makers and aspirational consumers. Collects verified contact details and schedules follow-up demos with minimal customer drop-off.`,
-      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
-      recommendedLocations: (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'IT Parks • Co-Working Hubs • Business Summits',
-      executionFlow: [
-        '1. Set up professional consultation lounge with tablet registration pods',
-        '2. Deploy articulate sales promoters trained on product value propositions',
-        '3. Engage passing professionals with targeted problem-solving pitch',
-        '4. Conduct 2-minute live interactive software/product demonstration',
-        '5. Capture OTP-verified lead details with instant cloud credits voucher',
-        '6. Track real-time cost-per-lead (CPL) and hourly conversion velocity',
-        '7. Authenticate verified lead entries against fraud prevention checks',
-        '8. Push verified leads directly to client CRM with full attribution report'
-      ]
-    };
+    return [
+      {
+        id: 'plan_1',
+        badge: '★ Recommended #1: Consultation Lounge & Acquisition Pod',
+        conceptType: 'Consultation Lounge & On-Spot Sign-Up Pod',
+        activationName: isTech
+          ? `${brandName} Corporate B2B Lead Gen & Workflow Consultation Hub`
+          : `${brandName} Direct Customer Acquisition & Lead Capture Booth`,
+        objective: 'High-Intent Customer Acquisition & Lead Capture',
+        strategicFocus: 'Verified Leads • Cost Per Lead (CPL) • Immediate Sign-Ups',
+        whyThisActivationFits: `Engages qualified business decision makers and aspirational consumers. Collects verified contact details and schedules follow-up demos with minimal customer drop-off in ${city}.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: envSlice,
+        suitabilityScore: 96,
+        projectedThroughput: '180–320 OTP-verified qualified leads per shift',
+        executionFlow: [
+          '1. Set up professional consultation lounge with tablet registration pods',
+          '2. Deploy articulate sales promoters trained on product value propositions',
+          '3. Engage passing professionals with targeted problem-solving pitch',
+          '4. Conduct 2-minute live interactive software/product demonstration',
+          '5. Capture OTP-verified lead details with instant cloud credits voucher',
+          '6. Track real-time cost-per-lead (CPL) and hourly conversion velocity',
+          '7. Authenticate verified lead entries against fraud prevention checks',
+          '8. Push verified leads directly to client CRM with full attribution report'
+        ]
+      },
+      {
+        id: 'plan_2',
+        badge: '⚡ Option #2: Transit & Metro Rapid Install Kiosk',
+        conceptType: 'Rapid Digital App Install Kiosk',
+        activationName: `${brandName} High-Traffic Metro App Install Station`,
+        objective: 'Fast App Downloads & First Transaction Onboarding',
+        strategicFocus: 'CPA Efficiency • Verified First Order • App Store Conversion',
+        whyThisActivationFits: `Positions dedicated digital promoters at metro concourses to guide commuters through on-spot app download and first transactional interaction.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'Metro Ticketing Concourses • Suburban Railway Hubs • Bus Terminals',
+        suitabilityScore: 92,
+        projectedThroughput: '400–650 verified app installs and registrations per shift',
+        executionFlow: [
+          '1. Set up illuminated banner station with dedicated QR code download badges',
+          '2. Assist users with quick 60-second app installation and OTP sign-up',
+          '3. Unlock instant ₹100 first-order wallet credit or free welcome gift',
+          '4. Verify install via server-to-server referral attribution webhook',
+          '5. Monitor live install velocity and fraud prevention device checks'
+        ]
+      },
+      {
+        id: 'plan_3',
+        badge: '🎯 Option #3: Co-Working Founder Lunch & Demo Desk',
+        conceptType: 'Startup Incubator & Founder Desk',
+        activationName: `${brandName} Incubator Demo Desk & Founder Credits Drive`,
+        objective: 'B2B Founder Lead Capture & Workflow Trials',
+        strategicFocus: 'High LTV Leads • Direct Founder Conversations • Free Tier Upgrades',
+        whyThisActivationFits: `Hosts a dedicated solution advisory desk in top startup hubs, offering live architecture reviews and customized pricing for growing businesses.`,
+        targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+        recommendedLocations: 'WeWork • 91springboard • Startup Incubators • Tech Cafes',
+        suitabilityScore: 89,
+        projectedThroughput: '80–140 high-value B2B founder leads per shift',
+        executionFlow: [
+          '1. Reserve lounge desk in partner co-working center during community lunch',
+          '2. Deliver free 1-on-1 workflow optimization audits to startup operators',
+          '3. Issue exclusive $1,000 equivalent platform credits with corporate email sign-up',
+          '4. Schedule automated follow-up product consultation with account executive'
+        ]
+      }
+    ];
   }
 
   // 5. SALES & CONVERSION / ENGAGEMENT DEFAULT
-  return {
-    activationName: btlFormat || `${brandName} Direct Consumer Engagement & Conversion Drive`,
-    objective: 'Consumer Engagement, Direct Conversion & Sales Uplift',
-    strategicFocus: 'Customer Interactions • Voucher Redemptions • Sales Velocity',
-    whyThisActivationFits: `Creates high-energy interactive touchpoints that educate ${audienceName}, drive impulse purchasing, and reward on-ground engagement.`,
-    targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
-    recommendedLocations: (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Retail High Streets • Malls • Commercial Hubs',
-    executionFlow: [
-      '1. Erect branded interactive kiosk and promotional gantry',
-      '2. Deploy energetic promoters and team supervisor',
-      '3. Initiate consumer conversations with interactive games / spin-the-wheel',
-      '4. Distribute product brochures, promotional flyers, and discount vouchers',
-      '5. Facilitate on-spot merchant purchases and digital QR redemptions',
-      '6. Monitor hourly interaction counts and voucher utilization rates',
-      '7. Collect geotagged execution photos and promoter attendance logs',
-      '8. Compile end-of-campaign ROI and retail sales uplift report'
-    ]
-  };
+  return [
+    {
+      id: 'plan_1',
+      badge: '★ Recommended #1: Interactive Promotional Gantry & Kiosk',
+      conceptType: 'Promotional Gantry & Interactive Kiosk',
+      activationName: `${brandName} Direct Consumer Engagement & Conversion Drive`,
+      objective: 'Consumer Engagement, Direct Conversion & Sales Uplift',
+      strategicFocus: 'Customer Interactions • Voucher Redemptions • Sales Velocity',
+      whyThisActivationFits: `Creates high-energy interactive touchpoints that educate ${audienceName}, drive impulse purchasing, and reward on-ground engagement in ${city}.`,
+      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+      recommendedLocations: envSlice,
+      suitabilityScore: 96,
+      projectedThroughput: '900–1,400 consumer interactions with 25%+ voucher utilization',
+      executionFlow: [
+        '1. Erect branded interactive kiosk and promotional gantry',
+        '2. Deploy energetic promoters and team supervisor',
+        '3. Initiate consumer conversations with interactive games / spin-the-wheel',
+        '4. Distribute product brochures, promotional flyers, and discount vouchers',
+        '5. Facilitate on-spot merchant purchases and digital QR redemptions',
+        '6. Monitor hourly interaction counts and voucher utilization rates',
+        '7. Collect geotagged execution photos and promoter attendance logs',
+        '8. Compile end-of-campaign ROI and retail sales uplift report'
+      ]
+    },
+    {
+      id: 'plan_2',
+      badge: '⚡ Option #2: High-Street Flash Sales Team',
+      conceptType: 'High-Street Flash Activation',
+      activationName: `${brandName} Commercial High-Street Flash Sales Sprint`,
+      objective: 'Rapid Volume Engagement & Local Retail Traffic',
+      strategicFocus: 'Store Footfall Redirection • Instant Purchases • Street Buzz',
+      whyThisActivationFits: `Operates directly along prime commercial high streets to redirect active shoppers into nearby partner stores with exclusive flash deals.`,
+      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+      recommendedLocations: 'Commercial High Streets • Market Squares • Fashion Boulevards',
+      suitabilityScore: 91,
+      projectedThroughput: '1,500–2,200 street consumer touches per shift',
+      executionFlow: [
+        '1. Position dynamic promoters along shopping corridor sidewalk nodes',
+        '2. Announce limited-time hourly flash discounts for local retail outlets',
+        '3. Hand out time-stamped golden tickets redeemable within 60 minutes',
+        '4. Monitor in-store redemptions with participating retail cashiers',
+        '5. Track instantaneous footfall conversion rate'
+      ]
+    },
+    {
+      id: 'plan_3',
+      badge: '🎯 Option #3: Weekend Mall Atrium Festival Booth',
+      conceptType: 'Weekend Mall Plaza Experience',
+      activationName: `${brandName} Weekend Mall Atrium Experience & Gift Station`,
+      objective: 'Weekend Family & Youth Engagement',
+      strategicFocus: 'Family Dwell Time • Social Contests • Gift with Purchase',
+      whyThisActivationFits: `Leverages high weekend mall footfall with entertaining gamification and instant gift-with-purchase rewards to drive peak weekend transaction volume.`,
+      targetAudienceSummary: `${audienceName} (Age ${ageRange[0]}–${ageRange[1]} yrs)`,
+      recommendedLocations: 'Shopping Mall Main Atriums • Cinema Plazas • Food Courts',
+      suitabilityScore: 89,
+      projectedThroughput: '1,100–1,800 mall visitor interactions per shift',
+      executionFlow: [
+        '1. Install branded prize-drop or interactive digital game booth in mall atrium',
+        '2. Invite shoppers with store receipts to play for instant branded merchandise',
+        '3. Capture consented contact info and distribute high-value coupon booklets',
+        '4. Maintain continuous crowd energy with professional promoter host',
+        '5. Log daily sales verified through mall tenant participation'
+      ]
+    }
+  ];
+}
+
+/**
+ * Backward-compatible single-plan helper
+ */
+export function generateObjectiveActivationPlan(params = {}) {
+  const topPlans = generateTopObjectiveActivationPlans(params);
+  if (params.btlFormat) {
+    const match = topPlans.find(p => p.activationName.toLowerCase().includes(params.btlFormat.toLowerCase()) || p.id === params.btlFormat);
+    if (match) return match;
+  }
+  return topPlans[0];
 }
 
 /**
  * ACTIVATION REQUIREMENTS GENERATOR
  * Decomposes an approved activation plan into structured, categorized requirements
+ * dynamically optimized for the specific product line, brand industry, and venue context.
  */
 export function generateActivationRequirements({
   activationPlan,
@@ -480,11 +725,276 @@ export function generateActivationRequirements({
   productLine = 'Consumer Product',
   brandName = 'Brand',
   locationsCount = 1,
-  city = 'Chennai'
-}) {
-  const isAuto = brandCategory.toLowerCase().includes('auto') || brandCategory.toLowerCase().includes('motorcycle');
-  const isFood = brandCategory.toLowerCase().includes('food') || brandCategory.toLowerCase().includes('beverage') || brandCategory.toLowerCase().includes('qsr') || brandCategory.toLowerCase().includes('fmcg');
-  const isTech = brandCategory.toLowerCase().includes('tech') || brandCategory.toLowerCase().includes('saas') || brandCategory.toLowerCase().includes('software');
+  city = 'Chennai',
+  locationName = '',
+  venueType = ''
+} = {}) {
+  const locationText = `${activationPlan?.activationName || ''} ${activationPlan?.environments?.join(' ') || ''} ${locationName || ''} ${venueType || ''}`.toLowerCase();
+  const text = `${brandCategory} ${productLine} ${brandName} ${objective} ${locationText}`.toLowerCase();
+
+  const isTechSaas = text.includes('saas') || text.includes('software') || text.includes('crm') || text.includes('cloud') || text.includes('b2b') || text.includes('developer') || text.includes('api') || text.includes('zoho') || text.includes('freshworks') || text.includes('salesforce') || text.includes('it & tech') || text.includes('tech park') || text.includes('corporate') || text.includes('rmz') || text.includes('tidel') || text.includes('merchant onboarding') || text.includes('lead generation');
+  const isFintech = text.includes('fintech') || text.includes('finance') || text.includes('banking') || text.includes('credit card') || text.includes('payment') || text.includes('upi') || text.includes('cred') || text.includes('paytm') || text.includes('phonepe') || text.includes('insurance') || text.includes('wealth');
+  const isFoodBeverage = text.includes('food') || text.includes('beverage') || text.includes('drink') || text.includes('qsr') || text.includes('snack') || text.includes('red bull') || text.includes('coffee') || text.includes('tea') || text.includes('juice') || text.includes('grocery') || text.includes('packaged food') || text.includes('marina') || text.includes('beach') || text.includes('ranganathan') || text.includes('sampling');
+  const isFashionLifestyle = text.includes('fashion') || text.includes('footwear') || text.includes('shoe') || text.includes('sneaker') || text.includes('apparel') || text.includes('clothing') || text.includes('nike') || text.includes('adidas') || text.includes('puma') || text.includes('streetwear') || text.includes('luxury') || text.includes('eyewear') || text.includes('watch');
+  const isEducationEdtech = text.includes('education') || text.includes('edtech') || text.includes('coaching') || text.includes('test prep') || text.includes('allen') || text.includes('byju') || text.includes('unacademy') || text.includes('jee') || text.includes('neet') || text.includes('upskill') || text.includes('course') || text.includes('university') || text.includes('college');
+  const isAuto = text.includes('auto') || text.includes('motorcycle') || text.includes('bike') || text.includes('car') || text.includes('vehicle') || text.includes('ev') || text.includes('ola electric') || text.includes('ather') || text.includes('royal enfield');
+  const isBeauty = text.includes('beauty') || text.includes('cosmetic') || text.includes('skincare') || text.includes('makeup') || text.includes('haircare') || text.includes('personal care') || text.includes('nykaa') || text.includes('dermatology');
+
+  // 1. Props & Physical Setup
+  let propsSetup = {
+    title: 'Modular Product Showcase & Interactive Demonstration Counter',
+    requirementText: 'Modular Branded Display Pod + Product Shelving + Tension Fabric Backdrop',
+    desc: 'Lightweight modular counter with internal storage, product display shelving with integrated LED under-shelf lighting, and 8x6 ft tension fabric backdrop.',
+    deliverables: ['Modular Display Pod', 'Integrated Product Shelving', '8x6 ft Fabric Backdrop'],
+    estimatedCost: '₹20,000 – ₹48,000'
+  };
+
+  if (isTechSaas) {
+    propsSetup = {
+      title: 'Corporate Podium, Literature Racks & Digital Display Screens',
+      requirementText: 'Corporate Podium + Literature Racks + Digital Display Screens',
+      desc: 'Executive corporate podium with internal cable ducting, tiered literature racks for product one-pagers, and high-resolution digital display screens for indoor tech parks and corporate atriums.',
+      deliverables: ['Executive Corporate Podium', 'Tiered Literature Racks', 'High-Definition Digital Display Screens'],
+      estimatedCost: '₹18,000 – ₹42,000'
+    };
+  } else if (isFintech) {
+    propsSetup = {
+      title: 'Secure Verification Kiosk & Customer Desk',
+      requirementText: 'Compact Security Podium + Pull-Up Privacy Backdrop + Document Folders',
+      desc: 'PCI-compliant compact customer onboarding podium, professional anti-glare branded backdrop, document privacy screening folders, and sanitizing accessories for SEZ & metro transit hubs.',
+      deliverables: ['Secure Onboarding Counter', 'Anti-Glare Pull-Up Backdrop', 'Document Security Clipboards'],
+      estimatedCost: '₹15,000 – ₹38,000'
+    };
+  } else if (isFoodBeverage) {
+    propsSetup = {
+      title: 'Hygienic Sampling Counter, Tasting Bar & Waste Stations',
+      requirementText: 'Branded Modular Tasting Bar + Drip Trays + Segregated Waste Bins',
+      desc: 'Food-grade sanitized sampling presentation counter, spill-resistant stainless steel drip trays, branded front-lit counter panel, and color-coded recycling & trash segregation stations.',
+      deliverables: ['Food-Grade Tasting Counter', 'Spill Drip Trays', 'Wet & Dry Waste Disposal Bins'],
+      estimatedCost: '₹20,000 – ₹45,000'
+    };
+  } else if (isFashionLifestyle) {
+    propsSetup = {
+      title: 'Elevated Product Plinths, Trial Lounge & Full-Length Mirror',
+      requirementText: '3x Matte Display Plinths + Cushioned Trial Bench + Full-Length LED Mirror',
+      desc: 'Architectural matte-black product presentation pedestals, comfortable cushioned trial bench for shoe/outfit try-ons, frameless studio-lit full-length mirror, and premium branded fabric backdrop.',
+      deliverables: ['3x Product Plinths (Varying Heights)', 'Cushioned Trial Bench', 'Studio LED Full-Length Mirror', 'Luxury Fabric Backdrop'],
+      estimatedCost: '₹28,000 – ₹65,000'
+    };
+  } else if (isEducationEdtech) {
+    propsSetup = {
+      title: 'Academic Counseling Booth, Brochure Showcase & Seating Pod',
+      requirementText: 'Counseling Desk + 3 Attendee Consultation Chairs + Tiered Brochure Rack',
+      desc: 'Professional academic counseling desk, comfortable discussion chairs for student-parent consultations, tiered acrylic brochure display rack, and backdrop highlighting student success ranks and faculty credentials.',
+      deliverables: ['Academic Counseling Counter', '3 Consultation Chairs', 'Tiered Brochure Stand', 'Hall of Fame Ranker Backdrop'],
+      estimatedCost: '₹16,000 – ₹38,000'
+    };
+  } else if (isAuto) {
+    propsSetup = {
+      title: 'Vehicle Display Ramp, Safety Barriers & Registration Desk',
+      requirementText: 'Heavy-Duty Vehicle Showcase Ramp + Test-Ride Registration Desk + Safety Stanchions',
+      desc: 'Load-bearing steel vehicle display ramp with under-chassis illumination, weather-resistant test-ride waiver registration desk, and chrome safety stanchions with branded velvet/webbing ropes.',
+      deliverables: ['Vehicle Display Steel Ramp', 'Test-Ride Registration Desk', 'Safety Stanchions & Flags'],
+      estimatedCost: '₹35,000 – ₹85,000'
+    };
+  } else if (isBeauty) {
+    propsSetup = {
+      title: 'Vanity Makeover Station, Swatch Bar & Hollywood Mirror',
+      requirementText: 'Illuminated Vanity Consultation Counter + High Bar Stool + Swatch Display Trays',
+      desc: 'Clean acrylic makeup and skincare consultation counter, Hollywood-style 12-bulb dimmable vanity mirror, hydraulic high chair for express application demos, and hygienic product tester trays.',
+      deliverables: ['Vanity Consultation Counter', 'Hollywood LED Dimmable Mirror', 'Hydraulic Makeover Chair', 'Acrylic Tester Trays'],
+      estimatedCost: '₹24,000 – ₹55,000'
+    };
+  }
+
+  // 2. Equipment & Audio/Visual
+  let equipmentSetup = {
+    title: 'Interactive Display Stand, Ambient Audio & Surge-Protected Power Hub',
+    requirementText: 'Interactive Display Stand / Kiosk + Surge-Protected Power Hub',
+    desc: 'Environment-adaptive display setup with surge-protected multi-socket power hub, optional weather-resistant canopy for outdoor setups or slimline kiosk totem for indoor malls.',
+    deliverables: ['Display Totem / Canopy Unit', 'Industrial Surge Power Strip', 'Cable Concealment Ramps'],
+    estimatedCost: '₹8,000 – ₹20,000'
+  };
+
+  if (isTechSaas) {
+    equipmentSetup = {
+      title: 'Ergonomic Lead Capture Kiosk, High-Speed WiFi Dongle & Tablet Mounts',
+      requirementText: 'Ergonomic Lead Capture Kiosk + High-Speed WiFi Dongle + Tablet Mounts',
+      desc: 'Dual secured touchscreen tablet mounts with high-speed commercial WiFi dongle and multi-device rapid charging station (Indoor setup, no outdoor gazebo canopy or loud PA sound system).',
+      deliverables: ['Ergonomic Lead Capture Kiosk', 'High-Speed WiFi Dongle & Router', 'Dual Anti-Theft Tablet Mounts'],
+      estimatedCost: '₹10,000 – ₹22,000'
+    };
+  } else if (isFintech) {
+    equipmentSetup = {
+      title: 'Dynamic QR Scanner Pedestal, Biometric Terminal & Power Station',
+      requirementText: 'Heavy-Duty QR Scanner Pedestal + POS Biometric KYC Terminal + Power Station',
+      desc: 'Eye-level illuminated dynamic QR scanner stand for frictionless app downloads, approved handheld biometric fingerprint/e-KYC scanner, and portable high-capacity power station.',
+      deliverables: ['Dynamic QR Scanner Pedestal', 'Biometric e-KYC Terminal Stand', 'All-Day Portable Power Battery'],
+      estimatedCost: '₹12,000 – ₹25,000'
+    };
+  } else if (isFoodBeverage) {
+    equipmentSetup = {
+      title: 'Weather-Resistant Gazebo Canopy, Ice Coolers / Chilling Units & High-Decibel Audio',
+      requirementText: 'Weather-Resistant Gazebo Canopy + Ice Coolers / Chilling Units + High-Decibel Audio',
+      desc: 'Heavy-duty all-weather 10x10 waterproof gazebo canopy tent, commercial roto-molded ice chillers maintaining strict 4°C serving temperature, and high-decibel audio/PA microphone for street activations.',
+      deliverables: ['Weather-Resistant Gazebo Canopy', 'Commercial Ice Coolers / Chilling Units', 'High-Decibel Audio & PA Sound System', 'Power Hub'],
+      estimatedCost: '₹12,000 – ₹26,000'
+    };
+  } else if (isFashionLifestyle) {
+    equipmentSetup = {
+      title: 'Warm Spot Accent Lighting, Digital Lookbook Screen & Ambient Sound',
+      requirementText: 'Warm Studio Spot Lighting Rig + 43" Vertical Digital Lookbook + Ambient Speaker',
+      desc: 'High-CRI warm LED spotlighting to highlight garment textures and footwear craftsmanship, a 43-inch vertical digital lookbook screen playing runway visuals, and a low-volume ambient acoustic speaker (Indoor luxury feel, no loud PA blasters).',
+      deliverables: ['High-CRI Warm LED Spotlights', '43" Commercial Vertical Display Totem', 'Low-Decibel Ambient Sound Bar'],
+      estimatedCost: '₹15,000 – ₹35,000'
+    };
+  } else if (isEducationEdtech) {
+    equipmentSetup = {
+      title: 'Diagnostic Test Tablets, Soft Ring Lighting & Silent Power Station',
+      requirementText: '2x Test-Taking Tablets + Soft LED Ring Lighting + Portable Power Station',
+      desc: 'Touchscreen tablets configured for 5-minute scholarship diagnostic quizzes and instant rank evaluation, soft flattering LED lighting for video testimonials, and silent power station.',
+      deliverables: ['2x Diagnostic Quiz Tablets', 'Soft Ring Lighting Kit', 'Silent Power Station'],
+      estimatedCost: '₹9,000 – ₹20,000'
+    };
+  } else if (isAuto) {
+    equipmentSetup = {
+      title: 'Test-Ride Helmet Cams, Outdoor PA Sound & EV Charger Setup',
+      requirementText: 'Helmet Cams & Sanitized Liners + Outdoor PA Sound + Heavy-Duty Power Board',
+      desc: 'Rider action cameras with sanitized helmet liners, wireless PA announcer system for launch announcements, and high-voltage portable EV charging extension.',
+      deliverables: ['Helmet Cams & Sanitized Liners', 'High-Gain Outdoor PA System', 'Heavy-Duty Power Extension & Charger'],
+      estimatedCost: '₹18,000 – ₹42,000'
+    };
+  } else if (isBeauty) {
+    equipmentSetup = {
+      title: 'Skin Analysis Scanner, 18" Ring Light & Mini Skincare Fridge',
+      requirementText: 'Digital Derma Skin Moisture Scanner + 18" Ring Light + Skincare Refrigerator',
+      desc: 'Handheld optical skin hydration & porosity diagnostic scanner for personalized shade/skincare matching, 18-inch bi-color ring light for flawless shade evaluation, and silent mini skincare fridge for cooling serums.',
+      deliverables: ['Digital Skin Diagnostic Scanner', '18" Bi-Color Studio Ring Light', 'Thermoelectric Skincare Fridge'],
+      estimatedCost: '₹14,000 – ₹30,000'
+    };
+  }
+
+  // 3. Product Inventory / Supplies
+  let inventorySetup = {
+    title: 'Product Demonstration Units & Catalogs',
+    requirementText: 'Display Product Units + Functional Demonstration Kits + Spec Catalogs',
+    desc: 'Display product units, functional test demonstration kits, and detailed specification brochures.',
+    deliverables: ['Display Product Units', 'Functional Demo Kits', 'Product Specification Catalogs'],
+    estimatedCost: 'Client In-Kind Inventory'
+  };
+
+  if (isTechSaas) {
+    inventorySetup = {
+      title: 'VIP Founder Credit Cards, Trial Vouchers & Solution Briefs',
+      requirementText: '500 Premium Metal/PVC VIP Founder Credit Cards + 250 Feature Spec Books',
+      desc: 'Exclusive founder credit vouchers with unique activation codes for trial onboarding, enterprise ROI one-pagers, and security compliance whitepaper handouts.',
+      deliverables: ['VIP Trial Voucher Cards with Unique Keys', 'Enterprise Feature One-Pagers', 'Lead Capture Velocity Log'],
+      estimatedCost: 'Client In-Kind Collateral'
+    };
+  } else if (isFintech) {
+    inventorySetup = {
+      title: 'Physical Welcome Kits, Scratch Rewards & Cardholders',
+      requirementText: '1,000 Scratch-and-Win Reward Cards + 300 RFID Blocking Sleeves',
+      desc: 'Engaging physical scratch cards with cashback/voucher incentives on immediate KYC completion, RFID-blocking card protector sleeves, and onboarding guide leaflets.',
+      deliverables: ['Incentive Scratch Reward Cards', 'RFID Card Sleeves', 'App Activation Leaflets'],
+      estimatedCost: 'Client In-Kind Supplies'
+    };
+  } else if (isFoodBeverage) {
+    inventorySetup = {
+      title: 'Chilled Product Inventory & Food-Grade Tasting Supplies',
+      requirementText: 'Chilled Product Units + 2,000 Eco-Friendly Tasting Cups + Tongs & Napkins',
+      desc: 'Fresh temperature-controlled sealed batch units, food-safe biodegradable 60ml tasting cups, serving tongs, sanitizing wipes, and hygienic disposable gloves.',
+      deliverables: ['Chilled Product Inventory Units', 'Biodegradable Tasting Cups', 'Hygienic Serving Kit & Gloves', 'Stock Velocity Tracker'],
+      estimatedCost: 'Client In-Kind Inventory'
+    };
+  } else if (isFashionLifestyle) {
+    inventorySetup = {
+      title: 'Size-Run Display Inventory, Shoehorns & Try-On Supplies',
+      requirementText: 'Curated Size-Run Stock Units + Disposable Trial Socks + Branded Shoehorns',
+      desc: 'Full display size run across key colorways, hygienic disposable try-on socks, premium branded metal shoehorns, and anti-static garment dust covers.',
+      deliverables: ['Size Run Display Units', 'Hygienic Try-On Socks & Shoehorns', 'Lookbook Catalogs'],
+      estimatedCost: 'Client In-Kind Inventory'
+    };
+  } else if (isEducationEdtech) {
+    inventorySetup = {
+      title: 'Sample Mock Test Booklets, Formula Cheat Sheets & Prospectus',
+      requirementText: '1,000 Subject Formula Cheat-Sheets + 500 Mock Test Papers + 250 Prospectus Books',
+      desc: 'High-value physical revision formula booklets, previous year question analysis sheets, scholarship exam application forms, and official course prospectus.',
+      deliverables: ['Formula Quick-Revision Booklets', 'Sample Mock Test Papers', 'Official Academic Prospectus'],
+      estimatedCost: 'Client In-Kind Material'
+    };
+  } else if (isAuto) {
+    inventorySetup = {
+      title: 'Demonstration Vehicles, Riding Gear & Spec Sheets',
+      requirementText: '2x Test-Ride Demonstration Vehicles + ISI Helmets + Technical Brochure Packs',
+      desc: 'Clean, fully-fueled/charged test vehicles, sanitized ISI/DOT-certified riding jackets and helmets across sizes, and laminated technical specification brochures.',
+      deliverables: ['Demonstration Test-Drive Vehicles', 'Sanitized Safety Riding Gear', 'Technical Spec Sheets'],
+      estimatedCost: 'Client In-Kind Fleet'
+    };
+  } else if (isBeauty) {
+    inventorySetup = {
+      title: 'Hygienic Swatch Testers, Sachet Samples & Applicators',
+      requirementText: '1,500 Individual Product Foil Sachets + 500 Disposable Spatulas & Wipes',
+      desc: 'Sealed unit-dose product sample sachets, disposable cotton pads, biodegradable applicator wands, and alcohol-free makeup remover wipes.',
+      deliverables: ['Unit-Dose Trial Sachets', 'Hygienic Disposable Applicator Kit', 'Sanitizing Cleanser Bottles'],
+      estimatedCost: 'Client In-Kind Inventory'
+    };
+  }
+
+  // 4. Creative & Branding
+  let creativeBranding = {
+    title: 'Key Visuals, Standees, Flyers & Uniforms',
+    requirementText: isTechSaas 
+      ? '3 Fabric Tension Banners + 500 Product Overview Cards + Team Polo Shirts'
+      : isFashionLifestyle
+      ? 'Architectural Fabric Lightbox Graphics + Lookbooks + Stylist Aprons'
+      : '4 Roll-up Standees + 1,000 Flyers + Branded T-Shirts',
+    desc: 'High-resolution graphic design files, star-flex vinyl standees, promotional discount handouts, and branded promoter polo t-shirts.',
+    canZiggersExecute: false,
+    suggestedFulfillment: FULFILLMENT_MODES.CLIENT_HANDLES,
+    deliverables: ['Key Visual Vector Files', '4 Roll-up Standees', '1,000 Printed Flyers', 'Branded T-Shirts'],
+    estimatedCost: '₹15,000 – ₹32,000'
+  };
+
+  // 5. Training & Briefing
+  let trainingSetup = {
+    title: 'Standardized 20-Sec Script & Digital Briefing',
+    requirementText: isTechSaas
+      ? 'B2B Elevator Pitch Script + Product FAQ Deck + Objection Handling Module'
+      : isFintech
+      ? 'RBI Compliance Pitch + KYC Security Protocol Guide + Digital Quiz'
+      : isFoodBeverage
+      ? 'Food Safety Standards + Allergen Guidance + 10-Sec Taste Prompt'
+      : isFashionLifestyle
+      ? 'Styling Consultation Script + Fabric USP Cards + Fit Advice Guide'
+      : isEducationEdtech
+      ? 'Academic Counseling Guide + Syllabus Highlights + Scholarship Exam FAQs'
+      : 'Pitch Script PDF + Product FAQ Deck + Pre-Shift Test',
+    desc: 'Structured 20-second consumer pitch script, handling common product FAQs, objection responses, and mandatory pre-shift digital onboarding module.',
+    canZiggersExecute: true,
+    suggestedFulfillment: FULFILLMENT_MODES.ZIGGERS_EXECUTE,
+    deliverables: ['Pitch Script PDF', 'FAQ Flashcard Deck', 'Ziggers Digital Briefing Module'],
+    estimatedCost: 'Included in Ziggers Execute'
+  };
+
+  // 6. Technology & Lead Capture
+  let technologySetup = {
+    title: isTechSaas 
+      ? 'Self-Serve Lead Capture & Instant Onboarding Portal'
+      : isFintech
+      ? 'Instant App Download Dynamic QR & Biometric KYC Portal'
+      : 'Dynamic QR Vouchers & Lead Collection Portal',
+    requirementText: isTechSaas
+      ? 'Tablet Lead Form + Instant Calendar Booking + SMS Link-Drop'
+      : isFintech
+      ? 'Dynamic QR Standee + Instant Cashback SMS Engine + OTP Verification'
+      : 'Dynamic QR Standee + Instant SMS Voucher System',
+    desc: 'Custom branded QR code standee allowing consumers to scan for instant discount vouchers, app downloads, and OTP-verified feedback.',
+    canZiggersExecute: isTechSaas || isFintech,
+    suggestedFulfillment: (isTechSaas || isFintech) ? FULFILLMENT_MODES.ZIGGERS_EXECUTE : FULFILLMENT_MODES.ZIGGERS_PARTNER,
+    deliverables: ['Dynamic QR Code Standee', 'Instant SMS Voucher Engine', 'Real-time Lead Dashboard'],
+    estimatedCost: '₹5,000 – ₹12,000'
+  };
 
   return [
     {
@@ -501,57 +1011,55 @@ export function generateActivationRequirements({
     {
       id: 'REQ_PROPS_SETUP',
       reqCategory: '2. Props & Physical Setup',
-      title: 'Sampling Counter, Booth & Backdrops',
-      requirementText: isAuto ? 'Vehicle Display Ramp & Registration Pod' : 'Branded Sampling Counter & Backdrops',
-      desc: isAuto
-        ? 'Heavy-duty steel vehicle display ramp, test-ride registration desk, safety flags, and barrier structures.'
-        : 'Modular portable sampling counter, 8x6 ft sturdy backdrop frame, and product presentation shelves.',
+      title: propsSetup.title,
+      requirementText: propsSetup.requirementText,
+      desc: propsSetup.desc,
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.ZIGGERS_PARTNER,
-      deliverables: ['Sampling Counter / Ramp', 'Steel/Wood Backdrop Frame', 'Lighting & Display Pods'],
-      estimatedCost: '₹25,000 – ₹60,000'
+      deliverables: propsSetup.deliverables,
+      estimatedCost: propsSetup.estimatedCost
     },
     {
       id: 'REQ_EQUIPMENT',
       reqCategory: '3. Equipment & Audio/Visual',
-      title: 'Canopy Tent, Audio Sound System & Power Backup',
-      requirementText: '10x10 Gazebo Canopy + PA Sound System + Power Hub',
-      desc: 'All-weather waterproof canopy tent, high-clarity wireless PA mic and speaker system, and portable power extension hub.',
+      title: equipmentSetup.title,
+      requirementText: equipmentSetup.requirementText,
+      desc: equipmentSetup.desc,
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.ZIGGERS_PARTNER,
-      deliverables: ['10x10 Gazebo Tent', 'Portable PA Speaker & Wireless Mic', 'Power Hub'],
-      estimatedCost: '₹8,000 – ₹18,000'
+      deliverables: equipmentSetup.deliverables,
+      estimatedCost: equipmentSetup.estimatedCost
     },
     {
       id: 'REQ_CREATIVE_BRANDING',
       reqCategory: '4. Creative & Branding',
-      title: 'Key Visuals, Standees, Flyers & Uniforms',
-      requirementText: '4 Roll-up Standees + 1,000 Flyers + Branded T-Shirts',
-      desc: 'High-resolution graphic design files, star-flex vinyl standees, promotional discount handouts, and branded promoter polo t-shirts.',
+      title: creativeBranding.title,
+      requirementText: creativeBranding.requirementText,
+      desc: creativeBranding.desc,
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.CLIENT_HANDLES,
-      deliverables: ['Key Visual Vector Files', '4 Roll-up Standees', '1,000 Printed Flyers', 'Branded T-Shirts'],
-      estimatedCost: '₹15,000 – ₹32,000'
+      deliverables: creativeBranding.deliverables,
+      estimatedCost: creativeBranding.estimatedCost
     },
     {
       id: 'REQ_PRODUCT_INVENTORY',
       reqCategory: '5. Product / Inventory',
-      title: 'Product Stock Units & Sampling Supplies',
-      requirementText: isFood ? 'Chilled Product Units + Tasting Cups + Bins' : 'Product Demonstration Units + Catalogs',
-      desc: isFood
-        ? 'Fresh sealed product inventory batch, food-grade sampling cups, presentation trays, and hygienic disposal bins.'
-        : 'Display product units, functional test demonstration kits, and detailed specification brochures.',
+      title: inventorySetup.title,
+      requirementText: inventorySetup.requirementText,
+      desc: inventorySetup.desc,
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.CLIENT_HANDLES,
-      deliverables: ['Inventory Stock Batch', 'Tasting Accessories / Demo Units', 'Stock Velocity Sheet'],
-      estimatedCost: 'Client In-Kind Inventory'
+      deliverables: inventorySetup.deliverables,
+      estimatedCost: inventorySetup.estimatedCost
     },
     {
       id: 'REQ_LOGISTICS',
       reqCategory: '6. Logistics & Transport',
       title: 'Material Transportation & Venue Delivery',
-      requirementText: 'Venue Transport Vehicle & Material Loading/Unloading',
-      desc: 'Safe transit of fabricated booth components, printed standees, and stock inventory from warehouse to venue with morning setup delivery.',
+      requirementText: isTechSaas ? 'Equipment Hand-Carry Transit & Secure Vault Pack' : 'Venue Transport Vehicle & Material Loading/Unloading',
+      desc: isTechSaas
+        ? 'Direct secure courier or verified promoter transit of locked tablet enclosures, Wi-Fi router, and promotional collateral.'
+        : 'Safe transit of fabricated booth components, printed standees, and stock inventory from warehouse to venue with morning setup delivery.',
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.ZIGGERS_PARTNER,
       deliverables: ['Venue Transport Vehicle', 'Safe Morning Unloading', 'End-of-Day Material Return'],
@@ -560,30 +1068,32 @@ export function generateActivationRequirements({
     {
       id: 'REQ_TRAINING',
       reqCategory: '7. Training & Briefing',
-      title: 'Standardized 20-Sec Script & Digital Briefing',
-      requirementText: 'Pitch Script PDF + Product FAQ Deck + Pre-Shift Test',
-      desc: 'Structured 20-second consumer pitch script, handling common product FAQs, objection responses, and mandatory pre-shift digital onboarding module.',
+      title: trainingSetup.title,
+      requirementText: trainingSetup.requirementText,
+      desc: trainingSetup.desc,
       canZiggersExecute: true,
       suggestedFulfillment: FULFILLMENT_MODES.ZIGGERS_EXECUTE,
-      deliverables: ['Pitch Script PDF', 'FAQ Flashcard Deck', 'Ziggers Digital Briefing Module'],
+      deliverables: trainingSetup.deliverables,
       estimatedCost: 'Included in Ziggers Execute'
     },
     {
       id: 'REQ_TECHNOLOGY',
       reqCategory: '8. Technology & Lead Capture',
-      title: 'Dynamic QR Vouchers & Lead Collection Portal',
-      requirementText: 'Dynamic QR Standee + Instant SMS Voucher System',
-      desc: 'Custom branded QR code standee allowing consumers to scan for instant discount vouchers, app downloads, and OTP-verified feedback.',
-      canZiggersExecute: isTech,
-      suggestedFulfillment: isTech ? FULFILLMENT_MODES.ZIGGERS_EXECUTE : FULFILLMENT_MODES.ZIGGERS_PARTNER,
-      deliverables: ['Dynamic QR Code Standee', 'Instant SMS Voucher Engine', 'Real-time Lead Dashboard'],
+      title: technologySetup.title,
+      requirementText: technologySetup.requirementText,
+      desc: technologySetup.desc,
+      canZiggersExecute: technologySetup.canZiggersExecute,
+      suggestedFulfillment: technologySetup.suggestedFulfillment,
+      deliverables: technologySetup.deliverables,
       estimatedCost: '₹5,000 – ₹12,000'
     },
     {
       id: 'REQ_PERMISSIONS',
       reqCategory: '9. Permissions & Clearances',
       title: 'Venue NOC & Activity Clearances',
-      requirementText: 'Mall / College / Venue Entry Clearances & NOCs',
+      requirementText: isTechSaas 
+        ? 'Tech Park / SEZ Management Gate Passes & Atrium NOC'
+        : 'Mall / College / Venue Entry Clearances & NOCs',
       desc: 'Obtaining venue management permission letter, gate passes, electrical load approvals, and local municipal/police permissions where statutory.',
       canZiggersExecute: false,
       suggestedFulfillment: FULFILLMENT_MODES.CLIENT_HANDLES,

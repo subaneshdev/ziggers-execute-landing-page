@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local sqlite database & locks
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# temporary scratch & cli
+scratch_*.mjs
+supabase/.temp/
+

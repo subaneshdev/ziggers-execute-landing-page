@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateCampaignForecast, rankLocations } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 /**
  * Call Gemini 1.5 securely server-side for contextual offline campaign planning
@@ -44,9 +43,13 @@ Respond ONLY with a valid JSON object matching this exact schema:
   "nextActions": ["Action 1", "Action 2", "Action 3"]
 }`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
+      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -77,9 +80,11 @@ Respond ONLY with a valid JSON object matching this exact schema:
     };
   } catch (err) {
     return {
-      status: 'AI_UNAVAILABLE',
-      reason: err.message
+      status: err.name === 'AbortError' ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE',
+      reason: err.name === 'AbortError' ? 'Gemini AI request timed out after 8s.' : err.message
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

@@ -4,7 +4,7 @@ import {
   Wallet, DollarSign, CheckCircle2, ShieldCheck, ArrowRight, 
   Sparkles, Lock, RefreshCw, AlertCircle, FileText, Download, Zap, Plus
 } from 'lucide-react';
-import { allocateCampaignEscrow } from '@/lib/intelligence/index';
+import { allocateCampaignEscrow } from '@/lib/intelligence/clientForecast';
 
 export default function CampaignWallet({ campaigns = [], onLogAction, onCreateClick }) {
   const activeCampaign = campaigns[0] || null;

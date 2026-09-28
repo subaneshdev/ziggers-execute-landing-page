@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rankLocationCandidates } from '@/lib/audienceEngine';
 
-export const runtime = 'edge';
 
 export async function POST(request) {
   try {

@@ -246,3 +246,201 @@ export function updateBetaBinomialRate({
     explainability: `Bayesian Posterior Mean: ${(posteriorMean * 100).toFixed(2)}% (95% Credible Interval: [${(lower95Credible * 100).toFixed(1)}% – ${(upper95Credible * 100).toFixed(1)}%]) updated with ${k} ${metricDef.successEvent}s across ${n} ${metricDef.opportunityEvent}s.`
   };
 }
+
+import { getHierarchicalPosterior, upsertBayesianPosterior } from './learningRepository.js';
+
+/**
+ * Get Adaptive Bayesian Rate with Hierarchical Fallback:
+ * H3 Cell + Objective -> Venue Type + Objective -> City + Objective -> Global Benchmark
+ */
+export async function getAdaptiveBayesianRate({
+  tenantId = 'global',
+  h3Cell,
+  venueType = 'COMMERCIAL',
+  city = 'Chennai',
+  objective = 'Product Sampling',
+  metricKey = 'landing_to_lead_rate'
+}) {
+  const metricDef = BAYESIAN_METRIC_DEFINITIONS[metricKey] || BAYESIAN_METRIC_DEFINITIONS.landing_to_lead_rate;
+  
+  // 1. Check Hierarchical Posterior from Repository
+  const resolved = await getHierarchicalPosterior({
+    tenantId,
+    h3Cell,
+    venueType,
+    city,
+    objective,
+    metricName: metricKey
+  });
+
+  if (resolved && (resolved.alpha || resolved.beta)) {
+    const alpha = Number(resolved.alpha);
+    const beta = Number(resolved.beta);
+    const total = alpha + beta;
+    const posteriorMean = total > 0 ? alpha / total : metricDef.defaultPriorMean;
+    const lower90 = betaQuantile(0.05, alpha, beta);
+    const upper90 = betaQuantile(0.95, alpha, beta);
+    const lower95 = betaQuantile(0.025, alpha, beta);
+    const upper95 = betaQuantile(0.975, alpha, beta);
+
+    return {
+      metric: metricKey,
+      rate: parseFloat(posteriorMean.toFixed(4)),
+      credibleInterval90: [lower90, upper90],
+      credibleInterval95: [lower95, upper95],
+      alpha,
+      beta,
+      isAdaptive: true,
+      hierarchyTier: resolved.hierarchyTier || 'H3_CELL_GROUND_TRUTH',
+      dataSource: resolved.dataSource || `h3_cell:${h3Cell}`,
+      observationCount: resolved.observation_count || 1,
+      modelVersion: resolved.model_version || 'bayes-v1.2'
+    };
+  }
+
+  // 2. Default Prior Baseline (Non-informative / Industry benchmark)
+  const mu0 = metricDef.defaultPriorMean;
+  const N0 = PRIOR_STRENGTH_LEVELS[metricDef.defaultPriorLevel] || PRIOR_STRENGTH_LEVELS.LOCATION_TYPE_DATA;
+  const alpha0 = mu0 * N0;
+  const beta0 = (1 - mu0) * N0;
+  const lower90 = betaQuantile(0.05, alpha0, beta0);
+  const upper90 = betaQuantile(0.95, alpha0, beta0);
+
+  return {
+    metric: metricKey,
+    rate: mu0,
+    credibleInterval90: [lower90, upper90],
+    credibleInterval95: [betaQuantile(0.025, alpha0, beta0), betaQuantile(0.975, alpha0, beta0)],
+    alpha: alpha0,
+    beta: beta0,
+    isAdaptive: false,
+    hierarchyTier: 'INDUSTRY_PRIOR_BENCHMARK',
+    dataSource: 'industry_benchmark',
+    observationCount: 0,
+    modelVersion: 'baseline-prior-v1.0'
+  };
+}
+
+/**
+ * Ingest verified campaign outcome into hierarchical Bayesian posteriors
+ */
+export async function ingestCampaignOutcomeToBayesian(outcome) {
+  const {
+    tenantId = 'global',
+    h3Cell = '892f254f177ffff',
+    locationName = 'Chennai Node',
+    venueType = 'COMMERCIAL',
+    city = 'Chennai',
+    objective = 'Product Sampling',
+    actualInteractions = 0,
+    actualConversions = 0,
+    actualFootfall = 0,
+    actualQrScans = 0
+  } = outcome;
+
+  const normObj = (objective || 'Product Sampling').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const normCity = (city || 'chennai').toLowerCase().trim();
+  const normVenue = (venueType || 'commercial').toLowerCase().trim();
+  const cellKey = `${(h3Cell || '892f254f177ffff').toLowerCase()}:${normObj}`;
+  const venueKey = `${normVenue}:${normObj}`;
+  const cityKey = `${normCity}:${normObj}`;
+  const globalKey = `global:${normObj}`;
+
+  const updates = [];
+
+  // 1. Conversion Rate (Conversions out of Interactions)
+  if (actualInteractions > 0) {
+    const k = actualConversions;
+    const n = actualInteractions;
+    const metricKey = 'landing_to_lead_rate';
+    const metricDef = BAYESIAN_METRIC_DEFINITIONS[metricKey];
+    const baseMu = metricDef.defaultPriorMean;
+    const baseN = PRIOR_STRENGTH_LEVELS.LOCATION_TYPE_DATA;
+
+    // Update for H3 Cell Scope
+    const cellPost = await getHierarchicalPosterior({ tenantId, h3Cell, venueType, city, objective, metricName: metricKey });
+    const curAlpha = cellPost ? Number(cellPost.alpha) : baseMu * baseN;
+    const curBeta = cellPost ? Number(cellPost.beta) : (1 - baseMu) * baseN;
+    const curObs = cellPost ? Number(cellPost.observation_count) : 0;
+
+    const newAlpha = curAlpha + k;
+    const newBeta = curBeta + (n - k);
+    const newObs = curObs + 1;
+
+    // Upsert Cell Scope
+    const cellRecord = await upsertBayesianPosterior({
+      tenantId,
+      scopeType: 'h3_cell_objective',
+      scopeKey: cellKey,
+      metricName: metricKey,
+      alpha: parseFloat(newAlpha.toFixed(3)),
+      beta: parseFloat(newBeta.toFixed(3)),
+      observationCount: newObs,
+      modelVersion: 'bayes-v1.2'
+    });
+    updates.push(cellRecord);
+
+    // Upsert Venue Scope
+    await upsertBayesianPosterior({
+      tenantId,
+      scopeType: 'venue_objective',
+      scopeKey: venueKey,
+      metricName: metricKey,
+      alpha: parseFloat(newAlpha.toFixed(3)),
+      beta: parseFloat(newBeta.toFixed(3)),
+      observationCount: newObs,
+      modelVersion: 'bayes-v1.2'
+    });
+
+    // Upsert City Scope
+    await upsertBayesianPosterior({
+      tenantId,
+      scopeType: 'city_objective',
+      scopeKey: cityKey,
+      metricName: metricKey,
+      alpha: parseFloat(newAlpha.toFixed(3)),
+      beta: parseFloat(newBeta.toFixed(3)),
+      observationCount: newObs,
+      modelVersion: 'bayes-v1.2'
+    });
+  }
+
+  // 2. Interaction Rate (Interactions out of Footfall)
+  if (actualFootfall > 0 && actualInteractions > 0) {
+    const k = Math.min(actualFootfall, actualInteractions);
+    const n = actualFootfall;
+    const metricKey = 'footfall_interaction_rate';
+    const metricDef = BAYESIAN_METRIC_DEFINITIONS[metricKey];
+    const baseMu = metricDef.defaultPriorMean;
+    const baseN = PRIOR_STRENGTH_LEVELS.CITY_HISTORICAL_DATA;
+
+    const cellPost = await getHierarchicalPosterior({ tenantId, h3Cell, venueType, city, objective, metricName: metricKey });
+    const curAlpha = cellPost ? Number(cellPost.alpha) : baseMu * baseN;
+    const curBeta = cellPost ? Number(cellPost.beta) : (1 - baseMu) * baseN;
+    const curObs = cellPost ? Number(cellPost.observation_count) : 0;
+
+    const newAlpha = curAlpha + k;
+    const newBeta = curBeta + (n - k);
+    const newObs = curObs + 1;
+
+    const record = await upsertBayesianPosterior({
+      tenantId,
+      scopeType: 'h3_cell_objective',
+      scopeKey: cellKey,
+      metricName: metricKey,
+      alpha: parseFloat(newAlpha.toFixed(3)),
+      beta: parseFloat(newBeta.toFixed(3)),
+      observationCount: newObs,
+      modelVersion: 'bayes-v1.2'
+    });
+    updates.push(record);
+  }
+
+  return {
+    success: true,
+    h3Cell,
+    objective,
+    updatesCount: updates.length,
+    timestamp: new Date().toISOString()
+  };
+}

@@ -17,6 +17,9 @@ import Step7PartnerCoordination from './steps/Step7PartnerCoordination';
 import Step8WorkforcePlanning from './steps/Step8WorkforcePlanning';
 import Step9ExecutionPlan from './steps/Step9ExecutionPlan';
 import Step10BudgetApproval from './steps/Step10BudgetApproval';
+import { adaptCampaignProfile } from '@/lib/intelligence/brandAdaptation';
+import { generateCampaignForecast } from '@/lib/intelligence/clientForecast';
+import { generateActivationRequirements, generateTopObjectiveActivationPlans } from '@/lib/ecosystem/btlTaxonomy';
 
 const STEPS = [
   { id: 1, name: '1. Basic Details' },
@@ -36,39 +39,39 @@ const INITIAL_DRAFT = {
   brand: '',
   productOrService: '',
   productDescription: '',
-  priceRange: '₹125 (Premium Canned Beverage)',
+  priceRange: '',
   existingBrief: '',
-  objective: 'Product Sampling',
-  selectedObjectives: ['Product Sampling'],
+  objective: 'Brand Awareness',
+  selectedObjectives: ['Brand Awareness'],
   customObjectiveText: '',
   campaignDurationDays: 3,
   campaignDays: 3,
   estimatedBudget: 75000,
   budgetInr: 75000,
   blueprintActive: false,
-  brandCategory: 'FMCG',
-  brandSubcategory: 'Beverage → Energy Drink',
-  brandProductLine: 'Energy Drink Can (250ml)',
-  brandPricePositioning: 'Premium / Performance Energy',
+  brandCategory: 'Retail',
+  brandSubcategory: 'D2C Consumer Products & Lifestyle',
+  brandProductLine: 'Consumer Product / Service',
+  brandPricePositioning: 'Mid-Market',
   activationPath: 'ai',
   customActivationIdea: '',
-  btlFormat: 'Product Sampling & Direct Engagement',
+  btlFormat: 'Brand Awareness & High-Visibility Reach',
   activationPlan: null,
-  audienceName: 'Fitness Enthusiasts & Active Adults',
+  audienceName: 'Primary Target Audience',
   ageRange: [20, 35],
   gender: 'All',
-  occupation: 'Working Professionals & Fitness Enthusiasts',
+  occupation: 'Working Professionals & Active Consumers',
   incomeSegment: 'SEC A/B (Upper Middle & Affluent)',
-  lifeStage: 'Early Career & Active Adults',
-  selectedInterests: ['fitness & gym', 'sports & athletics', 'running & marathons', 'energy drinks'],
-  behaviours: ['Gym visitors (3+ times/week)', 'Regular fitness participants', 'Marathon & 10K runners'],
+  lifeStage: 'Early Career & Urban Adults',
+  selectedInterests: ['lifestyle & retail', 'brand discovery', 'shopping'],
+  behaviours: ['Regular high-street & mall shoppers', 'Digital brand followers'],
   locations: [
     {
       id: 'loc_1',
-      name: 'T Nagar Fitness Hub, Chennai',
+      name: 'Chennai Central Commercial Hub',
       city: 'Chennai',
-      lat: 13.0418,
-      lng: 80.2341,
+      lat: 13.0827,
+      lng: 80.2707,
       radiusKm: 3.0,
       radiusText: '3 km radius',
       analyzed: false
@@ -84,8 +87,8 @@ const INITIAL_DRAFT = {
   shiftEndTime: '15:00',
   promoterDailyRate: 1200,
   supervisorDailyRate: 1800,
-  requiredSkills: ['Customer Engagement', 'Product Pitching', 'Sampling Hygiene', 'English & Tamil Speaking'],
-  dressCode: 'Branded Polo T-Shirt & Clean Black Denims / Shoes',
+  requiredSkills: ['Customer Engagement', 'Product Pitching', 'English & Regional Language'],
+  dressCode: 'Branded Uniform / Professional Attire',
   forecast: null
 };
 
@@ -99,14 +102,20 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdCampaign, setCreatedCampaign] = useState(null);
 
-  // Autosave to LocalStorage
+  // Autosave to LocalStorage with cache sanity check
   useEffect(() => {
     try {
       const saved = localStorage.getItem('ziggers_campaign_draft');
       if (saved && !initialDraft) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
-          setDraft(prev => ({ ...prev, ...parsed }));
+          // If stored draft was the old legacy hardcoded Red Bull / Energy Drink mock without a brand name, clear it
+          const isLegacyMock = (parsed.brandSubcategory === 'Beverage → Energy Drink' || parsed.productLine === 'Energy Drink Can (250ml)') && (!parsed.brand || parsed.brand.toLowerCase() !== 'red bull');
+          if (isLegacyMock) {
+            localStorage.removeItem('ziggers_campaign_draft');
+          } else {
+            setDraft(prev => ({ ...prev, ...parsed }));
+          }
         }
       }
     } catch (e) {
@@ -114,9 +123,134 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
     }
   }, [initialDraft]);
 
+  // Ensure forecast is populated on mount
+  useEffect(() => {
+    setDraft(prev => {
+      if (prev.forecast && prev.forecast.capacity?.status) return prev;
+      try {
+        const rawBudget = prev.budgetInr ?? prev.estimatedBudget;
+        const initialBudget = (rawBudget !== undefined && rawBudget !== null && rawBudget !== '')
+          ? Number(rawBudget)
+          : 75000;
+        const fc = generateCampaignForecast({
+          targetLocations: (prev.locations || []).map(l => l.name || 'Chennai Central Commercial Hub'),
+          radiusKm: prev.locations?.[0]?.radiusKm || 3.0,
+          ageMin: Array.isArray(prev.ageRange) ? prev.ageRange[0] : 20,
+          ageMax: Array.isArray(prev.ageRange) ? prev.ageRange[1] : 35,
+          gender: prev.gender || 'All',
+          selectedInterests: prev.selectedInterests || [],
+          objective: prev.objective || 'Brand Awareness',
+          shiftHours: Number(prev.shiftHours || 5),
+          campaignDays: Number(prev.campaignDurationDays || prev.campaignDays || 3),
+          budgetInr: initialBudget,
+          city: prev.locations?.[0]?.city || 'Chennai'
+        });
+        return {
+          ...prev,
+          forecast: fc,
+          promoterCount: fc?.capacity?.promoterCount !== undefined ? fc.capacity.promoterCount : prev.promoterCount,
+          supervisorCount: fc?.capacity?.supervisorCount !== undefined ? fc.capacity.supervisorCount : prev.supervisorCount
+        };
+      } catch (e) {
+        return prev;
+      }
+    });
+  }, []);
+
   const updateDraft = (patch) => {
     setDraft(prev => {
-      const next = { ...prev, ...patch };
+      let next = { ...prev, ...patch };
+
+      // Check what changed
+      const brandChanged = patch.brand !== undefined && patch.brand !== prev.brand && patch.brand.trim().length > 1;
+      const productChanged = patch.productOrService !== undefined && patch.productOrService !== prev.productOrService && patch.productOrService.trim().length > 1;
+      const objectiveChanged = patch.objective !== undefined && patch.objective !== prev.objective;
+      const locationsChanged = patch.locations !== undefined && JSON.stringify(patch.locations) !== JSON.stringify(prev.locations);
+      const budgetChanged = (patch.budgetInr !== undefined && patch.budgetInr !== prev.budgetInr) || 
+                            (patch.estimatedBudget !== undefined && patch.estimatedBudget !== prev.estimatedBudget);
+      const scheduleChanged = (patch.campaignDurationDays !== undefined && patch.campaignDurationDays !== prev.campaignDurationDays) ||
+                              (patch.campaignDays !== undefined && patch.campaignDays !== prev.campaignDays) ||
+                              (patch.shiftHours !== undefined && patch.shiftHours !== prev.shiftHours);
+      const audienceChanged = (patch.ageRange !== undefined && JSON.stringify(patch.ageRange) !== JSON.stringify(prev.ageRange)) ||
+                              (patch.gender !== undefined && patch.gender !== prev.gender) ||
+                              (patch.selectedInterests !== undefined && JSON.stringify(patch.selectedInterests) !== JSON.stringify(prev.selectedInterests));
+
+      // 1. Intelligent Brand & Audience Adaptation
+      if (brandChanged || productChanged || (objectiveChanged && !prev.blueprintActive)) {
+        try {
+          const adapted = adaptCampaignProfile({
+            brandName: next.brand,
+            productOrService: next.productOrService,
+            objective: next.objective,
+            city: next.locations?.[0]?.city || 'Chennai',
+            existingDraft: next
+          });
+          next = { ...next, ...adapted, ...patch };
+        } catch (e) {
+          console.warn('Brand profile adaptation notice:', e);
+        }
+      }
+
+      // 2. Intelligent Real-Time Forecast & Staffing Recalculation
+      if (brandChanged || productChanged || objectiveChanged || locationsChanged || budgetChanged || scheduleChanged || audienceChanged) {
+        try {
+          const rawBudget = next.budgetInr ?? next.estimatedBudget;
+          const currentBudget = (rawBudget !== undefined && rawBudget !== null && rawBudget !== '')
+            ? Number(rawBudget)
+            : 75000;
+          const currentDays = Number(next.campaignDurationDays || next.campaignDays || 3);
+          const currentHours = Number(next.shiftHours || 5);
+          const locNames = (next.locations || []).map(l => l.name || l.label || 'Chennai Central Commercial Hub');
+
+          const liveForecast = generateCampaignForecast({
+            targetLocations: locNames.length > 0 ? locNames : ['Chennai Central Commercial Hub'],
+            radiusKm: next.locations?.[0]?.radiusKm || 3.0,
+            ageMin: Array.isArray(next.ageRange) ? next.ageRange[0] : 20,
+            ageMax: Array.isArray(next.ageRange) ? next.ageRange[1] : 35,
+            gender: next.gender || 'All',
+            selectedInterests: next.selectedInterests || [],
+            objective: next.objective || 'Brand Awareness',
+            shiftHours: currentHours,
+            campaignDays: currentDays,
+            budgetInr: currentBudget,
+            city: next.locations?.[0]?.city || 'Chennai'
+          });
+
+          if (liveForecast) {
+            next.forecast = liveForecast;
+            // Update staffing recommendation if not explicitly locked in this patch
+            if (patch.promoterCount === undefined && liveForecast.capacity?.promoterCount !== undefined) {
+              next.promoterCount = liveForecast.capacity.promoterCount;
+            }
+            if (patch.supervisorCount === undefined && liveForecast.capacity?.supervisorCount !== undefined) {
+              next.supervisorCount = liveForecast.capacity.supervisorCount;
+            }
+          }
+        } catch (forecastErr) {
+          console.warn('Dynamic forecast calculation notice:', forecastErr.message);
+        }
+
+        // 3. Intelligent Requirements Adaptation
+        if (objectiveChanged || locationsChanged || brandChanged) {
+          try {
+            const reqs = generateActivationRequirements({
+              activationPlan: next.activationPlan,
+              objective: next.objective,
+              brandCategory: next.brandCategory || next.brandIndustry,
+              productLine: next.brandProductLine || next.productOrService,
+              brandName: next.brand,
+              locationsCount: next.locations?.length || 1,
+              city: next.locations?.[0]?.city || 'Chennai'
+            });
+            if (Array.isArray(reqs) && reqs.length > 0) {
+              next.activationRequirements = reqs;
+            }
+          } catch (reqErr) {
+            console.warn('Dynamic requirements adaptation notice:', reqErr.message);
+          }
+        }
+      }
+
       try {
         localStorage.setItem('ziggers_campaign_draft', JSON.stringify(next));
         setLastSaved(new Date());
@@ -154,11 +288,23 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
+      const rawBudget = draft.budgetInr ?? draft.estimatedBudget;
+      const effectiveBudget = (rawBudget !== undefined && rawBudget !== null && rawBudget !== '')
+        ? Number(rawBudget)
+        : 75000;
+
+      const campaignName = draft.name?.trim() || (draft.brand ? `${draft.brand} ${draft.objective || 'Activation'} Campaign` : 'New Campaign Activation');
+
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...draft,
+          name: campaignName,
+          title: campaignName,
+          budget: effectiveBudget,
+          budgetInr: effectiveBudget,
+          estimatedBudget: effectiveBudget,
           status: 'DRAFT_READY'
         })
       });
@@ -171,9 +317,13 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
         } catch (e) {
           // ignore
         }
+      } else {
+        console.error('Publish error:', data.error);
+        alert(data.error || 'Failed to deploy campaign');
       }
     } catch (err) {
       console.error('Publish error:', err);
+      alert('Error deploying campaign: ' + err.message);
     } finally {
       setIsPublishing(false);
     }
@@ -274,6 +424,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
                 isSuccess={isSuccess}
                 createdCampaign={createdCampaign}
                 onNavigateHome={() => router.push('/dashboard')}
+                onPublish={handlePublish}
               />
             )}
           </div>

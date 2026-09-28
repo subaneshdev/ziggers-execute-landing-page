@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { metaSignalProvider } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 export async function GET(request) {
   try {
@@ -13,7 +12,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      selectedAccountId: accountId || accounts[0]?.accountId || 'act_982341908234',
+      selectedAccountId: accountId || accounts[0]?.accountId || null,
       accounts,
       campaigns,
       totalCampaigns: campaigns.length,

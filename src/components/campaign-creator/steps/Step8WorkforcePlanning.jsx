@@ -66,6 +66,31 @@ export default function Step8WorkforcePlanning({ draft, onUpdate }) {
         </p>
       </div>
 
+      {/* Insufficient Budget Callout */}
+      {draft?.forecast?.capacity?.status === 'BUDGET_INSUFFICIENT' && (
+        <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-bold text-sm">
+            ⚠️
+          </div>
+          <div className="space-y-1 flex-1 text-xs">
+            <div className="flex items-center justify-between">
+              <strong className="font-extrabold text-amber-950 uppercase font-mono tracking-wider">
+                Workforce Constraint: BUDGET_INSUFFICIENT
+              </strong>
+              <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-md">
+                Min Required: {draft.forecast.capacity.minimumRequiredBudgetFormatted}
+              </span>
+            </div>
+            <p className="text-amber-900 leading-relaxed font-semibold">
+              {draft.forecast.capacity.staffingStrategy || 'Budget is insufficient to meet statutory promoter and supervisor minimum wages.'}
+            </p>
+            <p className="text-[11px] text-amber-800/80">
+              Increase budget in Step 1 or reduce campaign duration to afford the minimum viable workforce deployment.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Deployment Sourcing Choice */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
@@ -148,7 +173,7 @@ export default function Step8WorkforcePlanning({ draft, onUpdate }) {
           
           {/* Promoters Count */}
           <div className="space-y-1.5">
-            <label className="font-bold text-espresso block">Sampling / Brand Promoters</label>
+            <label className="font-bold text-espresso block">Sampling / Brand Promoters (Suggested Starting Count)</label>
             <input
               type="number"
               min={1}
@@ -162,7 +187,7 @@ export default function Step8WorkforcePlanning({ draft, onUpdate }) {
 
           {/* Supervisors Count */}
           <div className="space-y-1.5">
-            <label className="font-bold text-espresso block">Field Supervisors (1:10 Ratio)</label>
+            <label className="font-bold text-espresso block">Field Supervisors (Suggested Count • 1:10 Ratio)</label>
             <input
               type="number"
               min={1}
@@ -176,7 +201,7 @@ export default function Step8WorkforcePlanning({ draft, onUpdate }) {
 
           {/* Shift Hours */}
           <div className="space-y-1.5">
-            <label className="font-bold text-espresso block">Daily Shift Window</label>
+            <label className="font-bold text-espresso block">Daily Shift Window (Default Shift)</label>
             <div className="flex items-center gap-1.5">
               <input
                 type="time"

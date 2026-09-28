@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { classifyBrandUniversal } from '@/lib/intelligence/brandTaxonomy';
 
-export const runtime = 'edge';
 
 function decodeHtmlEntities(str) {
   if (!str) return '';

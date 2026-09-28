@@ -19,7 +19,7 @@ export function matchDigitalToOfflineContext(digitalProfile, options = {}) {
   const {
     city = 'Chennai',
     radiusKm = 3.0,
-    budgetInr = 150000,
+    budgetInr = 75000,
     customCandidateNodes = null
   } = options;
 

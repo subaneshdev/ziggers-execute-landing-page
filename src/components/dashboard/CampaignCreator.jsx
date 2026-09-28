@@ -132,8 +132,9 @@ export default function CampaignCreator({ onClose, onPublish }) {
 
   const handleLaunch = () => {
     const finalPromoterCount = formData.promoterCount || pred.recommendedPromoters || 4;
-    const finalCity = pred.city || (formData.targetLocations[0] ? formData.targetLocations[0].split(',').pop().trim() : 'Metro Hub');
-    const finalBudget = parseInt(formData.budgetInr, 10) || 75000;
+    const finalBudget = formData.budgetInr !== '' && formData.budgetInr !== undefined && formData.budgetInr !== null
+      ? (parseInt(formData.budgetInr, 10) || 0)
+      : 75000;
 
     onPublish({
       name: formData.name || `${formData.brand || 'Brand'} ${formData.objective} Campaign`,
@@ -141,6 +142,8 @@ export default function CampaignCreator({ onClose, onPublish }) {
       objective: formData.objective,
       city: finalCity,
       budget: `₹${finalBudget.toLocaleString('en-IN')}`,
+      budgetInr: finalBudget,
+      estimatedBudget: finalBudget,
       workers: finalPromoterCount,
       locations: formData.targetLocations.length || 1,
       targetCpl: pred.estimatedCpl || '₹45',
@@ -171,7 +174,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
                 </h2>
               </div>
               <p className="text-[11px] text-linen/70 mt-0.5">
-                H3 Geospatial Grid • Census C-14 • MOSPI Affluence Scoring • LightGBM ML Pipeline
+                H3 Geospatial Grid • Census C-14 • MOSPI Affluence Scoring • Empirical Bayesian Engine
               </p>
             </div>
           </div>
@@ -619,7 +622,7 @@ export default function CampaignCreator({ onClose, onPublish }) {
                     type="number"
                     step="5000"
                     value={formData.budgetInr}
-                    onChange={(e) => setFormData({ ...formData, budgetInr: parseInt(e.target.value) || 35000 })}
+                    onChange={(e) => setFormData({ ...formData, budgetInr: e.target.value === '' ? '' : (parseInt(e.target.value, 10) || 0) })}
                     className="w-full bg-white border border-espresso/15 rounded-xl px-3.5 py-2.5 text-xs font-mono font-extrabold text-espresso"
                   />
                 </div>

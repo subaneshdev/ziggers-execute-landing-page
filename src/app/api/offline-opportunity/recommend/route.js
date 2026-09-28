@@ -5,7 +5,6 @@ import {
   generateCampaignRecommendation 
 } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 export async function POST(request) {
   try {
@@ -25,14 +24,19 @@ export async function POST(request) {
       }
     });
 
+    const rawBudget = body.budgetInr ?? body.budget;
+    const resolvedBudget = rawBudget !== undefined && rawBudget !== null && rawBudget !== ''
+      ? (Number(rawBudget) || 75000)
+      : 75000;
+
     const contextMatches = matchDigitalToOfflineContext(digitalProfile, {
       city: body.city || 'Chennai',
       radiusKm: Number(body.radiusKm) || 3.0,
-      budgetInr: Number(body.budget) || 150000
+      budgetInr: resolvedBudget
     });
 
     const recommendation = generateCampaignRecommendation(digitalProfile, contextMatches, {
-      budgetInr: Number(body.budget) || 150000,
+      budgetInr: resolvedBudget,
       campaignDurationDays: Number(body.durationDays) || 3,
       shiftHours: Number(body.shiftHours) || 5
     });

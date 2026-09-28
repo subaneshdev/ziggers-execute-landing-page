@@ -12,7 +12,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
     websiteUrl = '',
     productOrService = '',
     productDescription = '',
-    priceRange = '₹125 (Premium Canned Beverage)',
+    priceRange = '',
     existingBrief = '',
     brandIndustry = '',
     brandCategory = '',
@@ -122,7 +122,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               type="text"
               value={brand}
               onChange={(e) => onUpdate({ brand: e.target.value })}
-              placeholder="e.g. Red Bull, Popeyes, Yamaha"
+              placeholder="e.g. Nike, Starbucks, Zoho, Apple"
               className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
             />
           </div>
@@ -137,7 +137,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
                 type="url"
                 value={websiteUrl}
                 onChange={(e) => onUpdate({ websiteUrl: e.target.value })}
-                placeholder="https://www.redbull.com/in-en"
+                placeholder="https://www.yourbrand.com"
                 className="w-full bg-linen/20 border border-espresso/15 rounded-2xl pl-9 pr-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
               />
             </div>
@@ -151,22 +151,65 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               type="text"
               value={productOrService}
               onChange={(e) => onUpdate({ productOrService: e.target.value, brandProductLine: e.target.value })}
-              placeholder="e.g. Red Bull Energy Drink (250ml Can), XSR155 Bike"
+              placeholder="e.g. Running Shoes, Cold Brew Coffee, Cloud CRM Suite"
               className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-espresso">
-              Price Range / Product Positioning
-            </label>
-            <input
-              type="text"
-              value={priceRange}
-              onChange={(e) => onUpdate({ priceRange: e.target.value, brandPricePositioning: e.target.value })}
-              placeholder="e.g. ₹125 (Premium Energy), ₹1.45 Lakhs (Neo-Retro)"
-              className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
-            />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-espresso">
+                Price Range / Product Positioning
+              </label>
+              <span className="text-[10px] font-mono font-bold text-gold bg-espresso px-2 py-0.5 rounded-full">
+                Currency: ₹ INR
+              </span>
+            </div>
+            
+            <div className="relative">
+              <span className="absolute left-3.5 top-2.5 font-bold text-espresso text-xs select-none pointer-events-none">
+                ₹
+              </span>
+              <input
+                type="text"
+                value={priceRange ? priceRange.replace(/^₹\s*/, '') : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const formatted = val ? (val.startsWith('₹') ? val : `₹ ${val}`) : '';
+                  onUpdate({ priceRange: formatted, brandPricePositioning: formatted });
+                }}
+                placeholder="2,999 (Mid-to-Premium) or 150 (Affordable QSR)"
+                className="w-full bg-linen/20 border border-espresso/15 rounded-2xl pl-8 pr-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
+              />
+            </div>
+
+            {/* Quick Price Tier Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span className="text-[10px] text-muted font-medium">Quick Tiers:</span>
+              {[
+                { label: 'Under ₹100', tier: 'Under ₹100 (Mass Market / FMCG)' },
+                { label: '₹100–₹500', tier: '₹100–₹500 (Affordable Consumer)' },
+                { label: '₹500–₹2,500', tier: '₹500–₹2,500 (Mid-Market / Premium)' },
+                { label: '₹2,500–₹10,000', tier: '₹2,500–₹10,000 (Upper Premium)' },
+                { label: '₹10,000+', tier: '₹10,000+ (Luxury / Enterprise)' }
+              ].map((pill) => {
+                const isSelected = priceRange === pill.tier || priceRange.includes(pill.label);
+                return (
+                  <button
+                    key={pill.label}
+                    type="button"
+                    onClick={() => onUpdate({ priceRange: pill.tier, brandPricePositioning: pill.tier })}
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-espresso text-gold border-espresso shadow-2xs'
+                        : 'bg-linen/40 text-espresso/80 border-espresso/10 hover:bg-linen/80'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
         </div>

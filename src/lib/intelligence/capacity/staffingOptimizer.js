@@ -28,6 +28,36 @@ export const CANONICAL_FINANCIAL_RATES = {
   supervisorDailyFee: 2000      // ₹2,000 / shift (covers field oversight & audit sign-off)
 };
 
+/**
+ * Resolves operational rates from either raw object, tenant DB configuration (in paise/bps), or canonical defaults.
+ * @param {Object|null} ratesOrConfig
+ * @returns {Object}
+ */
+export function resolveOperationalRates(ratesOrConfig = null) {
+  if (!ratesOrConfig) return CANONICAL_FINANCIAL_RATES;
+
+  // DB tenant configuration schema (integer paise & bps)
+  if (ratesOrConfig.promoter_hourly_rate_paise !== undefined || ratesOrConfig.gst_rate_bps !== undefined) {
+    return {
+      gstRate: ratesOrConfig.gst_rate_bps !== undefined ? ratesOrConfig.gst_rate_bps / 10000 : CANONICAL_FINANCIAL_RATES.gstRate,
+      platformFeeRate: ratesOrConfig.platform_fee_bps !== undefined ? ratesOrConfig.platform_fee_bps / 10000 : CANONICAL_FINANCIAL_RATES.platformFeeRate,
+      minimumReserveFloorRate: ratesOrConfig.minimum_reserve_bps !== undefined ? ratesOrConfig.minimum_reserve_bps / 10000 : CANONICAL_FINANCIAL_RATES.minimumReserveFloorRate,
+      minimumReserveAbsolute: ratesOrConfig.minimum_reserve_floor_paise !== undefined ? ratesOrConfig.minimum_reserve_floor_paise / 100 : CANONICAL_FINANCIAL_RATES.minimumReserveAbsolute,
+      materialsRate: ratesOrConfig.materials_rate_bps !== undefined ? ratesOrConfig.materials_rate_bps / 10000 : (ratesOrConfig.materialsRate ?? CANONICAL_FINANCIAL_RATES.materialsRate),
+      promoterHourlyRate: ratesOrConfig.promoter_hourly_rate_paise !== undefined ? ratesOrConfig.promoter_hourly_rate_paise / 100 : CANONICAL_FINANCIAL_RATES.promoterHourlyRate,
+      supervisorDailyFee: ratesOrConfig.supervisor_daily_fee_paise !== undefined ? ratesOrConfig.supervisor_daily_fee_paise / 100 : CANONICAL_FINANCIAL_RATES.supervisorDailyFee,
+      configVersion: ratesOrConfig.config_version || 'custom',
+      tenantId: ratesOrConfig.tenant_id || 'default_org'
+    };
+  }
+
+  // Decimal rate overrides
+  return {
+    ...CANONICAL_FINANCIAL_RATES,
+    ...ratesOrConfig
+  };
+}
+
 // Configurable Supervisor Allocation Policies
 export const SUPERVISOR_POLICIES = {
   STANDARD_RATIO_1_TO_10: {
@@ -69,11 +99,13 @@ export function solveDiscreteStaffingOptimization(
   availableLabourFund, 
   shiftHours = 5, 
   campaignDays = 7,
-  supervisorPolicyKey = 'STANDARD_RATIO_1_TO_10'
+  supervisorPolicyKey = 'STANDARD_RATIO_1_TO_10',
+  customRates = null
 ) {
-  const singlePromoterShiftCost = CANONICAL_FINANCIAL_RATES.promoterHourlyRate * shiftHours;
+  const rates = resolveOperationalRates(customRates);
+  const singlePromoterShiftCost = rates.promoterHourlyRate * shiftHours;
   const singlePromoterTotalCost = singlePromoterShiftCost * campaignDays;
-  const singleSupervisorTotalCost = CANONICAL_FINANCIAL_RATES.supervisorDailyFee * campaignDays;
+  const singleSupervisorTotalCost = rates.supervisorDailyFee * campaignDays;
 
   let bestP = 0;
   let bestSupervisors = 0;
@@ -113,17 +145,19 @@ export function calculateMinimumRequiredGrossBudget(
   shiftHours = 5, 
   campaignDays = 7, 
   minPromoters = 1,
-  supervisorPolicyKey = 'STANDARD_RATIO_1_TO_10'
+  supervisorPolicyKey = 'STANDARD_RATIO_1_TO_10',
+  customRates = null
 ) {
-  const singlePromoterTotal = (CANONICAL_FINANCIAL_RATES.promoterHourlyRate * shiftHours) * campaignDays;
+  const rates = resolveOperationalRates(customRates);
+  const singlePromoterTotal = (rates.promoterHourlyRate * shiftHours) * campaignDays;
   const supervisorsNeeded = getRequiredSupervisors(minPromoters, supervisorPolicyKey);
-  const singleSupervisorTotal = (CANONICAL_FINANCIAL_RATES.supervisorDailyFee * campaignDays) * supervisorsNeeded;
+  const singleSupervisorTotal = (rates.supervisorDailyFee * campaignDays) * supervisorsNeeded;
   
   const requiredOperationalLabour = (minPromoters * singlePromoterTotal) + singleSupervisorTotal;
-  const netFundDenominator = 1 - CANONICAL_FINANCIAL_RATES.platformFeeRate - CANONICAL_FINANCIAL_RATES.materialsRate - CANONICAL_FINANCIAL_RATES.minimumReserveFloorRate;
+  const netFundDenominator = 1 - rates.platformFeeRate - rates.materialsRate - rates.minimumReserveFloorRate;
   
   const minimumNetFund = requiredOperationalLabour / netFundDenominator;
-  const minimumGrossBudget = Math.ceil(minimumNetFund * (1 + CANONICAL_FINANCIAL_RATES.gstRate));
+  const minimumGrossBudget = Math.ceil(minimumNetFund * (1 + rates.gstRate));
 
   return {
     minimumGrossBudget,
@@ -147,34 +181,37 @@ export function optimizeStaffing(params) {
     campaignDays = 7,
     reachableAudience = 50000,
     requestedPromoters = null,
-    supervisorPolicy = 'STANDARD_RATIO_1_TO_10'
+    supervisorPolicy = 'STANDARD_RATIO_1_TO_10',
+    tenantConfig = null,
+    rates = null
   } = params;
 
+  const activeRates = resolveOperationalRates(tenantConfig || rates);
   const numBudget = Math.max(0, Number(budgetInr) || 0);
   const numDays = Math.max(1, Number(campaignDays) || 1);
   const numHours = Math.max(1, Math.min(14, Number(shiftHours) || 5));
   const throughput = getThroughputConfig(objective);
 
   // 1. Canonical Financial Waterfall
-  const taxableBase = isGstInclusive ? (numBudget / (1 + CANONICAL_FINANCIAL_RATES.gstRate)) : numBudget;
-  const gstAmount = isGstInclusive ? (numBudget - taxableBase) : (numBudget * CANONICAL_FINANCIAL_RATES.gstRate);
+  const taxableBase = isGstInclusive ? (numBudget / (1 + activeRates.gstRate)) : numBudget;
+  const gstAmount = isGstInclusive ? (numBudget - taxableBase) : (numBudget * activeRates.gstRate);
   const netCampaignFund = taxableBase;
 
-  const platformFee = netCampaignFund * CANONICAL_FINANCIAL_RATES.platformFeeRate;
-  const materialsCost = netCampaignFund * CANONICAL_FINANCIAL_RATES.materialsRate;
+  const platformFee = netCampaignFund * activeRates.platformFeeRate;
+  const materialsCost = netCampaignFund * activeRates.materialsRate;
   
-  // MinimumReserve = max(₹2,000, NetFund * 10%) [Constraint before staffing]
+  // MinimumReserve = max(minimumReserveAbsolute, NetFund * minimumReserveFloorRate)
   const minimumReserve = Math.max(
-    CANONICAL_FINANCIAL_RATES.minimumReserveAbsolute,
-    netCampaignFund * CANONICAL_FINANCIAL_RATES.minimumReserveFloorRate
+    activeRates.minimumReserveAbsolute,
+    netCampaignFund * activeRates.minimumReserveFloorRate
   );
 
   // LabourFund = NetFund - PlatformFee - MaterialsCost - MinimumReserve
   const labourFund = Math.max(0, netCampaignFund - platformFee - materialsCost - minimumReserve);
 
   // 2. Solve Discrete Staffing Optimization
-  const discrete = solveDiscreteStaffingOptimization(labourFund, numHours, numDays, supervisorPolicy);
-  const minBudgetCalc = calculateMinimumRequiredGrossBudget(numHours, numDays, 1, supervisorPolicy);
+  const discrete = solveDiscreteStaffingOptimization(labourFund, numHours, numDays, supervisorPolicy, activeRates);
+  const minBudgetCalc = calculateMinimumRequiredGrossBudget(numHours, numDays, 1, supervisorPolicy, activeRates);
 
   // 3. Check for BUDGET_INSUFFICIENT condition (P = 0)
   if (discrete.maxAffordablePromoters < 1) {

@@ -11,22 +11,23 @@ export const GST_RATE = 0.18;
  * @param {boolean} isGstInclusive - Whether the entered budget includes 18% GST
  * @returns {Object}
  */
-export function calculateGstBreakdown(budget = 35000, isGstInclusive = true) {
+export function calculateGstBreakdown(budget = 35000, isGstInclusive = true, customGstRate = GST_RATE) {
   const numBudget = Math.max(0, Number(budget) || 0);
+  const effectiveRate = Number(customGstRate) >= 0 ? Number(customGstRate) : GST_RATE;
 
   let taxableBase = 0;
   let gstAmount = 0;
   let grossTotal = 0;
 
   if (isGstInclusive) {
-    // Exact division: Base = Budget / 1.18
-    taxableBase = Math.round(numBudget / (1 + GST_RATE));
+    // Exact division: Base = Budget / (1 + Rate)
+    taxableBase = Math.round(numBudget / (1 + effectiveRate));
     gstAmount = Math.round(numBudget - taxableBase);
     grossTotal = Math.round(numBudget);
   } else {
-    // Base is given: GST = Base * 0.18
+    // Base is given: GST = Base * Rate
     taxableBase = Math.round(numBudget);
-    gstAmount = Math.round(numBudget * GST_RATE);
+    gstAmount = Math.round(numBudget * effectiveRate);
     grossTotal = Math.round(taxableBase + gstAmount);
   }
 

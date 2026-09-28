@@ -4,7 +4,7 @@ import {
   FileText, Download, Printer, DollarSign, Building, 
   CheckCircle, Calendar, ShieldCheck, ArrowRight, Layers, MapPin, Plus
 } from 'lucide-react';
-import { calculateGstBreakdown } from '@/lib/intelligence/index';
+import { calculateGstBreakdown } from '@/lib/intelligence/clientForecast';
 
 export default function InvoiceBilling({ campaigns = [], onLogAction, onCreateClick }) {
   const billingDocs = campaigns.map((c, idx) => {

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --env-file=.env.local test/intelligenceEngine.test.mjs && node --env-file=.env.local test/marketplaceEngine.test.mjs && node --env-file=.env.local tests/production_engine.test.mjs",
+    "test:production": "node --env-file=.env.local tests/production_engine.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

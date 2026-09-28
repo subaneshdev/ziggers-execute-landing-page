@@ -10,23 +10,22 @@
 
 import {
   generateCampaignForecast,
-  rankLocations,
-  PERSONA_TAXONOMY,
-  getH3CellsForRadius,
-  calculateAgeEligibility,
-  calculateGenderAvailability,
-  calculateInterestAffinity,
-  estimateFootfallAndAudience,
   optimizeStaffing,
   forecastConversions,
-  calculateForecastRange,
   calculateAttributionFunnel,
   calculateGstBreakdown,
-  allocateCampaignEscrow,
-  validateGeofenceCheckin,
-  createChainedAuditProof,
-  recordCampaignObservation
-} from './intelligence/index.js';
+  allocateCampaignEscrow
+} from './intelligence/clientForecast.js';
+
+import { getH3CellsForRadius } from './intelligence/geo/h3Engine.js';
+import { calculateAgeEligibility, calculateGenderAvailability } from './intelligence/audience/demographicMatcher.js';
+import { calculateInterestAffinity, PERSONA_TAXONOMY } from './intelligence/audience/interestAffinityEngine.js';
+import { estimateFootfallAndAudience } from './intelligence/footfall/footfallEstimator.js';
+import { calculateForecastRange } from './intelligence/forecast/uncertaintyEngine.js';
+import { rankCandidateLocations as rankLocations } from './intelligence/ranking/locationRanking.js';
+import { validateGeofenceCheckin } from './intelligence/verification/geofenceValidator.js';
+import { createChainedAuditProof } from './intelligence/verification/proofHashChain.js';
+import { recordCampaignObservation } from './intelligence/learning/observationAggregator.js';
 
 import { METRO_NODES_DATA } from './intelligence/providers/populationProvider.js';
 

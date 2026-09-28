@@ -380,6 +380,146 @@ export const METRO_NODES_DATA = {
       workforceShare: 0.20
     },
     confidenceScore: 0.91
+  },
+  'Andheri West & Lokhandwala Complex': {
+    nodeId: 'mum_andheri',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    centerLat: 19.1415,
+    centerLng: 72.8315,
+    locationType: 'Commercial High Street & Entertainment Hub',
+    populationDensitySqKm: 23500,
+    baseCellPopulation: 21000,
+    secClassification: 'SEC A/A+',
+    affluenceScore: 92,
+    mpceIncomeEstimate: '₹1,35,000 / mo',
+    ageDistribution: {
+      '18-24': 0.25,
+      '25-34': 0.40,
+      '35-44': 0.20,
+      '45-54': 0.09,
+      '55-64': 0.04,
+      '65+': 0.02
+    },
+    genderDistribution: { male: 0.51, female: 0.49 },
+    populationMix: {
+      residentShare: 0.38,
+      transientShare: 0.42,
+      workforceShare: 0.20
+    },
+    confidenceScore: 0.92
+  },
+  'Noida Sector 18 & Mall of India': {
+    nodeId: 'noida_sec18',
+    city: 'Delhi NCR',
+    state: 'Uttar Pradesh',
+    centerLat: 28.5672,
+    centerLng: 77.3210,
+    locationType: 'Mega Retail Cluster & Metro Interchange',
+    populationDensitySqKm: 14500,
+    baseCellPopulation: 16200,
+    secClassification: 'SEC A/A+',
+    affluenceScore: 91,
+    mpceIncomeEstimate: '₹1,15,000 / mo',
+    ageDistribution: {
+      '18-24': 0.28,
+      '25-34': 0.42,
+      '35-44': 0.18,
+      '45-54': 0.08,
+      '55-64': 0.03,
+      '65+': 0.01
+    },
+    genderDistribution: { male: 0.52, female: 0.48 },
+    populationMix: {
+      residentShare: 0.28,
+      transientShare: 0.46,
+      workforceShare: 0.26
+    },
+    confidenceScore: 0.91
+  },
+  'Banjara Hills & GVK One Mall': {
+    nodeId: 'hyd_banjara',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    centerLat: 17.4190,
+    centerLng: 78.4485,
+    locationType: 'Premium Luxury High Street & Lifestyle Zone',
+    populationDensitySqKm: 11000,
+    baseCellPopulation: 13500,
+    secClassification: 'SEC A+',
+    affluenceScore: 94,
+    mpceIncomeEstimate: '₹1,38,000 / mo',
+    ageDistribution: {
+      '18-24': 0.22,
+      '25-34': 0.40,
+      '35-44': 0.22,
+      '45-54': 0.10,
+      '55-64': 0.04,
+      '65+': 0.02
+    },
+    genderDistribution: { male: 0.51, female: 0.49 },
+    populationMix: {
+      residentShare: 0.42,
+      transientShare: 0.36,
+      workforceShare: 0.22
+    },
+    confidenceScore: 0.90
+  },
+  'MG Road & Brigade Road Corridor': {
+    nodeId: 'blr_mgroad',
+    city: 'Bangalore',
+    state: 'Karnataka',
+    centerLat: 12.9740,
+    centerLng: 77.6074,
+    locationType: 'Heritage CBD & Metro Transit Crossroads',
+    populationDensitySqKm: 15200,
+    baseCellPopulation: 16500,
+    secClassification: 'SEC A+',
+    affluenceScore: 93,
+    mpceIncomeEstimate: '₹1,20,000 / mo',
+    ageDistribution: {
+      '18-24': 0.26,
+      '25-34': 0.41,
+      '35-44': 0.20,
+      '45-54': 0.08,
+      '55-64': 0.03,
+      '65+': 0.02
+    },
+    genderDistribution: { male: 0.52, female: 0.48 },
+    populationMix: {
+      residentShare: 0.24,
+      transientShare: 0.54,
+      workforceShare: 0.22
+    },
+    confidenceScore: 0.92
+  },
+  'Koregaon Park & North Main Road': {
+    nodeId: 'pune_koregaon',
+    city: 'Pune',
+    state: 'Maharashtra',
+    centerLat: 18.5362,
+    centerLng: 73.8940,
+    locationType: 'High-End Dining & Cultural Corridor',
+    populationDensitySqKm: 12800,
+    baseCellPopulation: 14200,
+    secClassification: 'SEC A/A+',
+    affluenceScore: 91,
+    mpceIncomeEstimate: '₹1,08,000 / mo',
+    ageDistribution: {
+      '18-24': 0.29,
+      '25-34': 0.43,
+      '35-44': 0.16,
+      '45-54': 0.07,
+      '55-64': 0.03,
+      '65+': 0.02
+    },
+    genderDistribution: { male: 0.52, female: 0.48 },
+    populationMix: {
+      residentShare: 0.35,
+      transientShare: 0.40,
+      workforceShare: 0.25
+    },
+    confidenceScore: 0.90
   }
 };
 

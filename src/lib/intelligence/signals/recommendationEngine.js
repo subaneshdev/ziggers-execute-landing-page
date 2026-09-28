@@ -11,7 +11,7 @@ import { allocateCampaignEscrow } from '../finance/campaignAllocator.js';
 
 export function generateCampaignRecommendation(digitalProfile, contextMatchResult, options = {}) {
   const {
-    budgetInr = 150000,
+    budgetInr = 75000,
     campaignDurationDays = 3,
     shiftHours = 5,
     isGstInclusive = true

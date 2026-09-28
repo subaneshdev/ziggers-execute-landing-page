@@ -1,23 +1,31 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '../../../lib/supabase';
-import { validateGeofenceCheckin } from '@/lib/intelligence/index';
-
-export const runtime = 'edge';
-
-let edgeCheckinsStore = [];
+import crypto from 'crypto';
+import { getDatabase } from '@/lib/data/database';
+import { recordShiftCheckin, createWorkerAssignment } from '@/lib/data/repositories/verificationRepository';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const campaignId = searchParams.get('campaignId');
+    const campaignId = searchParams.get('campaignId') || searchParams.get('campaign_id');
+    const workerId = searchParams.get('workerId') || searchParams.get('worker_id');
+    const tenantId = searchParams.get('tenantId') || 'default_org';
 
-    let query = supabaseAdmin.from('shift_checkins').select('*').order('checkin_timestamp', { ascending: false });
+    const db = getDatabase();
+    let query = 'SELECT * FROM shift_checkins WHERE tenant_id = ?';
+    const params = [tenantId];
+
     if (campaignId) {
-      query = query.eq('campaign_id', campaignId);
+      query += ' AND campaign_id = ?';
+      params.push(campaignId);
+    }
+    if (workerId) {
+      query += ' AND worker_id = ?';
+      params.push(workerId);
     }
 
-    const { data, error } = await query;
-    const checkins = (!error && data) ? data : (campaignId ? edgeCheckinsStore.filter(c => c.campaign_id === campaignId) : edgeCheckinsStore);
+    query += ' ORDER BY checkin_timestamp DESC LIMIT 100';
+
+    const checkins = db.prepare(query).all(...params);
 
     return NextResponse.json({
       success: true,
@@ -25,7 +33,7 @@ export async function GET(request) {
       count: checkins.length
     });
   } catch (err) {
-    return NextResponse.json({ success: true, checkins: edgeCheckinsStore, count: edgeCheckinsStore.length });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
@@ -33,44 +41,55 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    // Accuracy-aware geofence validation
-    const validation = validateGeofenceCheckin({
-      targetLat: Number(body.targetLatitude) || 13.0418,
-      targetLng: Number(body.targetLongitude) || 80.2341,
-      actualLat: Number(body.latitude) || 13.0419,
-      actualLng: Number(body.longitude) || 80.2342,
-      gpsAccuracyMeters: Number(body.gpsAccuracy) || 10,
-      allowedRadiusMeters: Number(body.allowedRadiusMeters) || 50
+    const campaignId = body.campaignId || body.campaign_id || 'camp_1';
+    const workerId = body.workerId || body.worker_id || `wrk_${crypto.randomBytes(3).toString('hex')}`;
+    let assignmentId = body.assignmentId || body.assignment_id;
+    const tenantId = body.tenantId || body.tenant_id || 'default_org';
+
+    const db = getDatabase();
+
+    // If assignmentId is not specified or does not exist, ensure one is registered
+    if (!assignmentId) {
+      assignmentId = `asgn_${campaignId}_${workerId}_${Date.now().toString(36)}`;
+    }
+
+    const existingAssignment = db.prepare('SELECT * FROM worker_assignments WHERE assignment_id = ? AND worker_id = ?').get(assignmentId, workerId);
+    if (!existingAssignment) {
+      createWorkerAssignment({
+        assignmentId,
+        campaignId,
+        workerId,
+        tenantId,
+        shiftDate: new Date().toISOString().split('T')[0],
+        shiftStartTime: '09:00',
+        shiftEndTime: '18:00',
+        targetLatitude: Number(body.targetLatitude || body.target_latitude) || 13.0418,
+        targetLongitude: Number(body.targetLongitude || body.target_longitude) || 80.2341,
+        geofenceRadiusMeters: Number(body.allowedRadiusMeters || body.geofenceRadiusMeters) || 50
+      });
+    }
+
+    // Call server-side verification repository.
+    // Client-side 'proof_verified' or 'is_within_geofence' flags are IGNORED.
+    const checkinResult = recordShiftCheckin({
+      assignmentId,
+      campaignId,
+      workerId,
+      tenantId,
+      latitude: Number(body.latitude || body.checkin_latitude) || 13.0419,
+      longitude: Number(body.longitude || body.checkin_longitude) || 80.2342,
+      gpsAccuracyMeters: Number(body.gpsAccuracy || body.gpsAccuracyMeters || body.gps_accuracy) || 10,
+      isMockDetected: Boolean(body.isMockDetected || body.is_mock_detected || body.isMockGpsDetected),
+      checkinTimestamp: body.checkinTimestamp || new Date().toISOString()
     });
 
-    const checkinUuid = globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `chk_${Date.now().toString(36)}`;
-    const workerUuid = body.worker_id || (globalThis.crypto?.randomUUID ? `wrk_${globalThis.crypto.randomUUID().slice(0, 8)}` : `wrk_${Date.now().toString(36)}`);
-
-    const newCheckin = {
-      checkin_id: checkinUuid,
-      assignment_id: body.assignment_id || `asgn_${Date.now().toString(36)}`,
-      campaign_id: body.campaign_id,
-      worker_id: workerUuid,
-      worker_name: body.worker_name || 'Promoter',
-      checkin_timestamp: new Date().toISOString(),
-      checkin_latitude: Number(body.latitude) || 13.0419,
-      checkin_longitude: Number(body.longitude) || 80.2342,
-      distance_from_centroid_meters: validation.distanceToCentroidMeters,
-      is_within_geofence: validation.isWithinGeofence,
-      gps_accuracy_meters: validation.gpsAccuracyMeters,
-      verification_status: validation.verificationStatus,
-      checkin_selfie_url: body.selfie_url || null,
-      supervisor_verified: validation.isWithinGeofence
-    };
-
-    try {
-      await supabaseAdmin.from('shift_checkins').insert([newCheckin]);
-    } catch (_) {}
-
-    edgeCheckinsStore.unshift(newCheckin);
-
-    return NextResponse.json({ success: true, checkin: newCheckin, validation }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      checkin: checkinResult,
+      isVerified: checkinResult.isVerified,
+      verificationStatus: checkinResult.verificationStatus
+    }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 400 });
   }
 }

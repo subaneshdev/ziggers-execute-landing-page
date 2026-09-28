@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { metaSignalProvider } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 export async function GET() {
   try {
@@ -15,9 +14,9 @@ export async function GET() {
         status: metaStatus.status || 'CONNECTED_SANDBOX',
         isConnected: true,
         isSandbox: metaStatus.isSandbox,
-        accountName: metaStatus.accountInfo?.accountName || 'Red Bull India Enterprise Account',
-        accountId: metaStatus.accountInfo?.accountId || 'act_982341908234',
-        campaignsAvailable: metaStatus.accountInfo?.campaignCount || 24,
+        accountName: metaStatus.accountInfo?.accountName || 'Meta Ads Sandbox Environment',
+        accountId: metaStatus.accountInfo?.accountId || null,
+        campaignsAvailable: metaStatus.accountInfo?.campaignCount || 0,
         lastSync: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         supportedBreakdowns: ['Age', 'Gender', 'Geography/Region', 'Hourly Diurnal', 'Placement'],
         notice: metaStatus.notice

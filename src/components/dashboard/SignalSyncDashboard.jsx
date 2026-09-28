@@ -7,22 +7,28 @@ import {
   Database, Share2, Smartphone, Cpu, Check, Copy, ChevronRight, Zap, Filter
 } from 'lucide-react';
 
-export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
+export default function SignalSyncDashboard({ onDeployCampaign, onLogAction, campaigns: initialPlatformCampaigns = [] }) {
   // Navigation Subtabs
   const [activeSubTab, setActiveSubTab] = useState('overview'); 
   // 'overview', 'sources', 'digitalInsights', 'contextMatching', 'recommendations', 'comparison', 'telemetry', 'crm', 'ml'
 
   // Providers & Campaigns State
   const [providers, setProviders] = useState([]);
-  const [selectedAccountId, setSelectedAccountId] = useState('act_982341908234');
-  const [campaigns, setCampaigns] = useState([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState('meta_camp_redbull_sampling_01');
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  
+  // Platform (Ziggers Execute) Campaigns vs Meta Connected Campaigns
+  const [platformCampaigns, setPlatformCampaigns] = useState(initialPlatformCampaigns);
+  const [metaCampaigns, setMetaCampaigns] = useState([]);
+  const [selectedSourceType, setSelectedSourceType] = useState('PLATFORM'); // 'PLATFORM' or 'META'
+  
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [insights, setInsights] = useState(null);
   const [syncAnalysis, setSyncAnalysis] = useState(null);
   
   // Controls & Loading State
   const [selectedCity, setSelectedCity] = useState('Chennai');
-  const [budgetVal, setBudgetVal] = useState(150000);
+  const [budgetVal, setBudgetVal] = useState(250000);
   const [durationDays, setDurationDays] = useState(3);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -34,15 +40,83 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
   const [mlSummary, setMlSummary] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
 
-  // Initial Load: Fetch Providers and Campaigns
+  // Initial Load: Fetch Providers, Platform Campaigns, Meta Campaigns and auto-adapt
   useEffect(() => {
+    initSignalSync();
     fetchProviders();
-    fetchCampaigns();
-    fetchAnalysis('meta_camp_redbull_sampling_01');
     fetchTelemetry();
     fetchConsents();
     fetchMlSummary();
   }, []);
+
+  // Sync if prop campaigns change
+  useEffect(() => {
+    if (initialPlatformCampaigns && initialPlatformCampaigns.length > 0) {
+      setPlatformCampaigns(initialPlatformCampaigns);
+      if (!selectedCampaign) {
+        handleCampaignSelect(initialPlatformCampaigns[0], 'PLATFORM');
+      }
+    }
+  }, [initialPlatformCampaigns]);
+
+  const initSignalSync = async () => {
+    setIsLoading(true);
+    try {
+      let currentPlatformCamps = initialPlatformCampaigns;
+      
+      // If no platform campaigns passed via props, fetch from API
+      if (!currentPlatformCamps || currentPlatformCamps.length === 0) {
+        try {
+          const res = await fetch('/api/campaigns');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.campaigns) && data.campaigns.length > 0) {
+            currentPlatformCamps = data.campaigns;
+            setPlatformCampaigns(data.campaigns);
+          }
+        } catch (e) {
+          console.warn('Failed loading platform campaigns for Signal Sync:', e.message);
+        }
+      }
+
+      // Fetch Meta connected campaigns
+      let currentMetaCamps = [];
+      try {
+        const res = await fetch('/api/signal-providers/meta/campaigns');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.campaigns)) {
+          currentMetaCamps = data.campaigns;
+          setMetaCampaigns(data.campaigns);
+          if (data.selectedAccountId) setSelectedAccountId(data.selectedAccountId);
+        }
+      } catch (e) {
+        console.warn('Failed loading meta campaigns for Signal Sync:', e.message);
+      }
+
+      // Intelligently select active campaign (prioritize user's active platform campaign)
+      if (currentPlatformCamps && currentPlatformCamps.length > 0) {
+        const activeCamp = currentPlatformCamps[0];
+        setSelectedSourceType('PLATFORM');
+        setSelectedCampaignId(activeCamp.id || activeCamp.campaign_id);
+        setSelectedCampaign(activeCamp);
+        if (activeCamp.city) setSelectedCity(activeCamp.city);
+        const bVal = parseInt(String(activeCamp.spend || activeCamp.totalBudget || activeCamp.guaranteed_payout || 250000).replace(/[^0-9]/g, ''), 10) || 250000;
+        setBudgetVal(bVal);
+        await runAnalysis(activeCamp, { city: activeCamp.city, budget: bVal });
+      } else if (currentMetaCamps && currentMetaCamps.length > 0) {
+        const activeCamp = currentMetaCamps[0];
+        setSelectedSourceType('META');
+        setSelectedCampaignId(activeCamp.campaignId);
+        setSelectedCampaign(activeCamp);
+        const bVal = activeCamp.spend || 250000;
+        setBudgetVal(bVal);
+        await runAnalysis(activeCamp, { budget: bVal });
+      }
+    } catch (err) {
+      console.error('Signal Sync init error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchProviders = async () => {
     try {
@@ -53,43 +127,6 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
       }
     } catch (e) {
       console.warn('Providers fetch error:', e.message);
-    }
-  };
-
-  const fetchCampaigns = async () => {
-    try {
-      const res = await fetch('/api/signal-providers/meta/campaigns');
-      const data = await res.json();
-      if (data.success && Array.isArray(data.campaigns)) {
-        setCampaigns(data.campaigns);
-      }
-    } catch (e) {
-      console.warn('Campaigns fetch error:', e.message);
-    }
-  };
-
-  const fetchAnalysis = async (campaignId) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/signal-sync/analyse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaignId: campaignId || selectedCampaignId,
-          city: selectedCity,
-          budgetInr: budgetVal,
-          durationDays: durationDays
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSyncAnalysis(data);
-        setInsights(data.digitalProfile);
-      }
-    } catch (e) {
-      console.error('Analysis fetch error:', e.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -121,17 +158,59 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
     try {
       const res = await fetch('/api/ml/feedback');
       const data = await res.json();
-      if (data.success && data.summary) {
-        setMlSummary(data.summary);
+      if (data.success) {
+        setMlSummary(data);
       }
     } catch (e) {
       console.warn('ML summary fetch error:', e.message);
     }
   };
 
-  const handleCampaignSelect = (campId) => {
-    setSelectedCampaignId(campId);
-    fetchAnalysis(campId);
+  const runAnalysis = async (targetCampaign, overrides = {}) => {
+    if (!targetCampaign) return;
+    setIsLoading(true);
+    try {
+      const cityToUse = overrides.city || selectedCity || targetCampaign.city || 'Chennai';
+      const rawBudgetToUse = overrides.budget || budgetVal || targetCampaign.budgetInr || targetCampaign.budget || targetCampaign.spend || targetCampaign.guaranteed_payout || 75000;
+      const budgetToUse = parseInt(String(rawBudgetToUse).replace(/[^0-9]/g, ''), 10) || 75000;
+      const daysToUse = overrides.durationDays || durationDays || 3;
+
+      const res = await fetch('/api/signal-sync/analyse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaign: targetCampaign,
+          campaignId: targetCampaign.id || targetCampaign.campaign_id || targetCampaign.campaignId,
+          campaignName: targetCampaign.name || targetCampaign.title,
+          brand: targetCampaign.brand || targetCampaign.brand_name,
+          objective: targetCampaign.objective || targetCampaign.campaign_type,
+          city: cityToUse,
+          budgetInr: budgetToUse,
+          durationDays: daysToUse
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncAnalysis(data);
+        setInsights(data.digitalProfile);
+      }
+    } catch (e) {
+      console.error('Analysis fetch error:', e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCampaignSelect = (camp, type = null) => {
+    const srcType = type || (camp.accountId ? 'META' : 'PLATFORM');
+    setSelectedSourceType(srcType);
+    setSelectedCampaignId(camp.id || camp.campaign_id || camp.campaignId);
+    setSelectedCampaign(camp);
+    const city = camp.city || selectedCity;
+    const rawCampBudget = camp.budgetInr || camp.budget || camp.spend || camp.totalBudget || camp.guaranteed_payout || 75000;
+    const bVal = parseInt(String(rawCampBudget).replace(/[^0-9]/g, ''), 10) || 75000;
+    setBudgetVal(bVal);
+    runAnalysis(camp, { city, budget: bVal });
   };
 
   const handleDeployToExecute = async () => {
@@ -213,13 +292,84 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
               </span>
             </div>
             <button
-              onClick={() => fetchAnalysis(selectedCampaignId)}
+              onClick={() => runAnalysis(selectedCampaign)}
               disabled={isLoading}
               className="bg-gold hover:bg-gold/90 text-espresso font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer"
             >
               <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
-              <span>{isLoading ? 'Recalibrating...' : 'Sync Live Signals'}</span>
+              <span>{isLoading ? 'Recalibrating...' : 'Sync Active Campaign'}</span>
             </button>
+          </div>
+        </div>
+
+        {/* Campaign Intelligence Anchor Selector Bar */}
+        <div className="mt-5 bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/15 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-gold uppercase tracking-wider">
+              <Target size={15} className="text-gold animate-pulse" />
+              <span>Target Campaign:</span>
+            </span>
+
+            {/* Campaign Selection Dropdown */}
+            <div className="relative min-w-[280px] sm:min-w-[360px]">
+              <select
+                value={selectedCampaignId || ''}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  const foundPlat = platformCampaigns.find(c => (c.id === id || c.campaign_id === id));
+                  if (foundPlat) {
+                    handleCampaignSelect(foundPlat, 'PLATFORM');
+                    return;
+                  }
+                  const foundMeta = metaCampaigns.find(c => c.campaignId === id);
+                  if (foundMeta) {
+                    handleCampaignSelect(foundMeta, 'META');
+                  }
+                }}
+                className="w-full bg-[#1c1917] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl border border-gold/40 shadow-xs cursor-pointer pr-8 focus:outline-none focus:border-gold"
+              >
+                {platformCampaigns.length > 0 && (
+                  <optgroup label="⚡ Active Platform Campaigns (Ziggers Execute)">
+                    {platformCampaigns.map(c => (
+                      <option key={c.id || c.campaign_id} value={c.id || c.campaign_id}>
+                        {c.name || c.title} — {c.brand || 'Enterprise'} ({c.stage || 'Live'})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {metaCampaigns.length > 0 && (
+                  <optgroup label="📡 Connected Ad Accounts (Meta Ads Sandbox)">
+                    {metaCampaigns.map(c => (
+                      <option key={c.campaignId} value={c.campaignId}>
+                        {c.name} — {c.brand || 'Meta Ad'}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
+
+            {/* Dynamic Campaign Meta Badges */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+              <span className="bg-white/10 text-white font-bold px-2.5 py-1 rounded-lg border border-white/10">
+                Brand: <strong className="text-gold font-sans">{selectedCampaign?.brand || selectedCampaign?.brand_name || syncAnalysis?.digitalProfile?.brand || 'Brand'}</strong>
+              </span>
+              <span className="bg-white/10 text-linen/90 px-2.5 py-1 rounded-lg border border-white/10">
+                {selectedCampaign?.objective || selectedCampaign?.campaign_type || syncAnalysis?.digitalProfile?.objective || 'Sampling'}
+              </span>
+              <span className="bg-white/10 text-linen/90 px-2.5 py-1 rounded-lg border border-white/10">
+                📍 {selectedCity}
+              </span>
+              <span className="bg-green-500/20 text-green-300 font-bold px-2.5 py-1 rounded-lg border border-green-500/30">
+                {selectedSourceType === 'PLATFORM' ? '● Live Platform Campaign' : '● Connected Meta Stream'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-linen/60 hidden lg:inline-block">
+              {platformCampaigns.length} Platform • {metaCampaigns.length} Meta
+            </span>
           </div>
         </div>
 
@@ -276,7 +426,7 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
             </div>
 
             {/* Stepper Pipeline Diagram */}
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-2.5 text-center text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3 text-center text-xs">
               {[
                 { step: '1', title: 'Meta Ads', sub: 'Aggregate Insights', color: 'border-blue-300 bg-blue-50/50 text-blue-950' },
                 { step: '2', title: 'Digital Profile', sub: 'Demographics & Time', color: 'border-amber-300 bg-amber-50/50 text-amber-950' },
@@ -287,12 +437,12 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                 { step: '7', title: '1st-Party CRM', sub: 'Consented Opt-In', color: 'border-teal-300 bg-teal-50/50 text-teal-950' },
                 { step: '8', title: 'ML Learning', sub: 'Model Calibration', color: 'border-rose-300 bg-rose-50/50 text-rose-950' },
               ].map((node, i) => (
-                <div key={i} className={`p-3.5 rounded-2xl border ${node.color} flex flex-col justify-between space-y-1 relative`}>
+                <div key={i} className={`p-3 rounded-2xl border ${node.color} flex flex-col justify-between space-y-1.5 relative min-h-[90px]`}>
                   <span className="w-5 h-5 rounded-full bg-espresso text-gold text-[10px] font-black mx-auto flex items-center justify-center font-mono">
                     {node.step}
                   </span>
-                  <span className="font-extrabold text-[11px] block mt-1 leading-tight">{node.title}</span>
-                  <span className="text-[9px] text-muted block leading-tight">{node.sub}</span>
+                  <span className="font-extrabold text-[11px] block leading-tight px-0.5">{node.title}</span>
+                  <span className="text-[10px] text-muted block leading-tight px-0.5">{node.sub}</span>
                 </div>
               ))}
             </div>
@@ -302,10 +452,10 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
               <div className="p-5 rounded-2xl bg-linen/20 border border-espresso/10 space-y-2">
                 <span className="text-[10px] font-mono font-bold text-muted uppercase block">Active Digital Anchor</span>
                 <h4 className="text-sm font-extrabold text-espresso truncate">
-                  {syncAnalysis?.digitalProfile?.campaign_name || 'Red Bull Sampling & Trial Push'}
+                  {syncAnalysis?.digitalProfile?.campaign_name || selectedCampaign?.name || 'Active Campaign'}
                 </h4>
                 <p className="text-xs text-muted">
-                  Objective: <strong className="text-espresso">{syncAnalysis?.digitalProfile?.objective || 'Product Sampling'}</strong> • Top Cohort: <strong className="text-espresso">18–24 (Fitness)</strong>
+                  Objective: <strong className="text-espresso">{syncAnalysis?.digitalProfile?.objective || selectedCampaign?.objective || 'Product Sampling'}</strong> • Top Cohort: <strong className="text-espresso">{syncAnalysis?.digitalProfile?.top_age_ranges?.[0]?.range || '20–35'} ({syncAnalysis?.digitalProfile?.brand || selectedCampaign?.brand || 'Brand'})</strong>
                 </p>
                 <button 
                   onClick={() => setActiveSubTab('digitalInsights')}
@@ -439,30 +589,95 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
               </div>
             </div>
 
-            {/* Campaign Selection Table */}
+            {/* Platform Campaigns Table */}
+            {platformCampaigns.length > 0 && (
+              <div className="bg-white border border-espresso/10 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-espresso/10 pb-3">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-espresso uppercase tracking-wider flex items-center gap-2">
+                      <Zap size={16} className="text-gold" />
+                      <span>Active Platform Campaigns (Ziggers Execute)</span>
+                    </h3>
+                    <span className="text-xs text-muted">Select an active campaign from your workspace to translate and synchronize digital audience signals.</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded border border-green-200">
+                    {platformCampaigns.length} Active Campaigns
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {platformCampaigns.map(camp => {
+                    const campId = camp.id || camp.campaign_id;
+                    const isSelected = selectedCampaignId === campId && selectedSourceType === 'PLATFORM';
+                    return (
+                      <div 
+                        key={campId}
+                        onClick={() => handleCampaignSelect(camp, 'PLATFORM')}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          isSelected 
+                            ? 'bg-gold/15 border-gold shadow-xs ring-1 ring-gold/40' 
+                            : 'bg-linen/15 border-espresso/10 hover:border-gold/50'
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-gold' : 'bg-green-600'}`} />
+                            <strong className="text-xs font-extrabold text-espresso">{camp.name || camp.title}</strong>
+                            <span className="text-[9px] font-mono font-bold text-espresso uppercase bg-white px-2 py-0.5 rounded border border-espresso/10">
+                              {camp.brand || camp.brand_name || 'Brand'}
+                            </span>
+                            <span className="text-[9px] font-mono text-muted uppercase bg-linen px-1.5 py-0.5 rounded">
+                              {camp.objective || camp.campaign_type || 'Sampling'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted">
+                            Location: <strong className="text-espresso">{camp.location || camp.location_name || `${camp.city || 'Chennai'} Hub`}</strong> • Workers: <span className="text-espresso font-medium">{camp.workers || 10}</span> • Schedule: <span className="text-espresso font-medium">{camp.schedule || 'Active'}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs font-mono shrink-0">
+                          <div className="text-right">
+                            <span className="text-[9px] text-muted uppercase block">Budget</span>
+                            <strong className="text-espresso">{camp.spend || camp.totalBudget || `₹${(camp.guaranteed_payout || 75000).toLocaleString('en-IN')}`}</strong>
+                          </div>
+                          <button className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            isSelected ? 'bg-espresso text-gold shadow-xs' : 'bg-linen text-espresso hover:bg-gold'
+                          }`}>
+                            {isSelected ? '✓ Syncing' : 'Select'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Connected Meta Ad Accounts Campaigns Table */}
             <div className="bg-white border border-espresso/10 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-espresso/10 pb-3">
                 <div>
-                  <h3 className="text-sm font-extrabold text-espresso uppercase tracking-wider">
-                    Authorized Meta Campaigns Available for Sync
+                  <h3 className="text-sm font-extrabold text-espresso uppercase tracking-wider flex items-center gap-2">
+                    <Database size={16} className="text-gold" />
+                    <span>Connected Ad Account Campaigns (Meta Graph API / Sandbox)</span>
                   </h3>
-                  <span className="text-xs text-muted">Select a digital campaign to translate its audience signals into real-world activations.</span>
+                  <span className="text-xs text-muted">Select an authorized ad account stream to model aggregate digital performance cohorts.</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold text-muted bg-linen px-2.5 py-1 rounded">
-                  {campaigns.length} Campaigns Found
+                  {metaCampaigns.length} Ad Campaigns
                 </span>
               </div>
 
               <div className="space-y-2.5">
-                {campaigns.map(camp => {
-                  const isSelected = camp.campaignId === selectedCampaignId;
+                {metaCampaigns.map(camp => {
+                  const isSelected = selectedCampaignId === camp.campaignId && selectedSourceType === 'META';
                   return (
                     <div 
                       key={camp.campaignId}
-                      onClick={() => handleCampaignSelect(camp.campaignId)}
+                      onClick={() => handleCampaignSelect(camp, 'META')}
                       className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         isSelected 
-                          ? 'bg-gold/15 border-gold shadow-xs' 
+                          ? 'bg-gold/15 border-gold shadow-xs ring-1 ring-gold/40' 
                           : 'bg-linen/15 border-espresso/10 hover:border-gold/50'
                       }`}
                     >
@@ -471,11 +686,14 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                           <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-gold' : 'bg-espresso/30'}`} />
                           <strong className="text-xs font-extrabold text-espresso">{camp.name}</strong>
                           <span className="text-[9px] font-mono text-muted uppercase bg-white px-1.5 py-0.5 rounded border border-espresso/10">
+                            {camp.brand || 'Meta Ad'}
+                          </span>
+                          <span className="text-[9px] font-mono text-muted uppercase bg-linen px-1.5 py-0.5 rounded">
                             {camp.objective}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted">
-                          Context: <strong className="text-espresso">{camp.topAudienceContext || 'Fitness + Active Lifestyle'}</strong> • Top Region: <span className="text-espresso font-medium">{camp.topGeography || 'Chennai'}</span>
+                          Context: <strong className="text-espresso">{camp.topAudienceContext || 'Audience Cohort'}</strong> • Top Region: <span className="text-espresso font-medium">{camp.topGeography || 'Chennai'}</span>
                         </p>
                       </div>
 
@@ -488,10 +706,10 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                           <span className="text-[9px] text-muted uppercase block">CPA</span>
                           <strong className="text-green-700">₹{camp.cpa}</strong>
                         </div>
-                        <button className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                          isSelected ? 'bg-espresso text-white' : 'bg-linen text-espresso hover:bg-gold'
+                        <button className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isSelected ? 'bg-espresso text-gold shadow-xs' : 'bg-linen text-espresso hover:bg-gold'
                         }`}>
-                          {isSelected ? '✓ Selected' : 'Select'}
+                          {isSelected ? '✓ Syncing' : 'Select'}
                         </button>
                       </div>
                     </div>
@@ -514,8 +732,9 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                   <select 
                     value={selectedCity} 
                     onChange={(e) => {
-                      setSelectedCity(e.target.value);
-                      fetchAnalysis(selectedCampaignId);
+                      const newCity = e.target.value;
+                      setSelectedCity(newCity);
+                      runAnalysis(selectedCampaign, { city: newCity });
                     }}
                     className="w-full bg-linen/30 border border-espresso/15 rounded-xl px-3 py-2 font-bold text-espresso"
                   >
@@ -552,11 +771,11 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                 </div>
 
                 <button
-                  onClick={() => fetchAnalysis(selectedCampaignId)}
+                  onClick={() => runAnalysis(selectedCampaign, { budget: budgetVal, durationDays, city: selectedCity })}
+                  disabled={isLoading}
                   className="w-full bg-espresso hover:bg-muted text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
                 >
                   <Sparkles size={14} className="text-gold" />
-                  <span>Recalculate Context Match</span>
                 </button>
               </div>
             </div>
@@ -792,8 +1011,8 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                       <strong className="text-espresso">{loc.subScores?.ageMatch}/100</strong>
                     </div>
                     <div className="bg-white/80 p-2 rounded-lg border border-espresso/5">
-                      <span className="text-[9px] text-muted uppercase block">Fitness Affinity</span>
-                      <strong className="text-green-700">{loc.subScores?.fitnessAffinity}/100</strong>
+                      <span className="text-[9px] text-muted uppercase block">Audience Affinity</span>
+                      <strong className="text-green-700">{(loc.subScores?.interestAffinity !== undefined ? loc.subScores?.interestAffinity : loc.subScores?.fitnessAffinity) || 92}/100</strong>
                     </div>
                     <div className="bg-white/80 p-2 rounded-lg border border-espresso/5">
                       <span className="text-[9px] text-muted uppercase block">Footfall Score</span>
@@ -1023,15 +1242,15 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                 <div className="space-y-2 text-xs font-mono">
                   <div className="p-2.5 bg-linen/25 rounded-xl border border-espresso/5">
                     <span className="text-[9px] text-muted uppercase block">Level 1: Brand</span>
-                    <strong className="text-espresso font-sans">{syncAnalysis?.digitalProfile?.brand || 'Red Bull India'}</strong>
+                    <strong className="text-espresso font-sans">{syncAnalysis?.digitalProfile?.brand || selectedCampaign?.brand || 'Brand'}</strong>
                   </div>
                   <div className="p-2.5 bg-linen/25 rounded-xl border border-espresso/5">
                     <span className="text-[9px] text-muted uppercase block">Level 2: Campaign</span>
-                    <strong className="text-espresso">{syncAnalysis?.digitalProfile?.campaign_id || 'camp_sig_01'}</strong>
+                    <strong className="text-espresso">{syncAnalysis?.digitalProfile?.campaign_id || selectedCampaign?.id || 'camp_sig_01'}</strong>
                   </div>
                   <div className="p-2.5 bg-linen/25 rounded-xl border border-espresso/5">
                     <span className="text-[9px] text-muted uppercase block">Level 3: Physical Location</span>
-                    <strong className="text-espresso font-sans">{syncAnalysis?.contextMatches?.topLocation?.locationName || 'OMR IT Corridor'}</strong>
+                    <strong className="text-espresso font-sans">{syncAnalysis?.contextMatches?.topLocation?.locationName || selectedCampaign?.location || 'Central Hub'}</strong>
                   </div>
                   <div className="p-2.5 bg-linen/25 rounded-xl border border-espresso/5">
                     <span className="text-[9px] text-muted uppercase block">Level 4: H3 Zone Index</span>
@@ -1042,8 +1261,8 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                     <strong className="text-espresso font-sans">Promoter 482 (Vikas R.)</strong>
                   </div>
                   <div className="p-2.5 bg-linen/25 rounded-xl border border-espresso/5">
-                    <span className="text-[9px] text-muted uppercase block">Level 6: Creative / Can Format</span>
-                    <strong className="text-espresso">CAN_SAMPLING_250ML_V1</strong>
+                    <span className="text-[9px] text-muted uppercase block">Level 6: Activation Creative Format</span>
+                    <strong className="text-espresso font-sans">{(syncAnalysis?.digitalProfile?.objective || selectedCampaign?.objective || '').includes('Sampling') ? 'EXPERIENTIAL_SAMPLE_UNIT_V1' : 'DIGITAL_VOUCHER_INTERACTION_V1'}</strong>
                   </div>
                 </div>
               </div>
@@ -1155,14 +1374,14 @@ export default function SignalSyncDashboard({ onDeployCampaign, onLogAction }) {
                 <span className="text-[10px] text-muted block">Low Variance</span>
               </div>
               <div className="p-4 bg-linen/25 border border-espresso/10 rounded-2xl space-y-1">
-                <span className="text-[9px] text-muted uppercase block font-sans">Trained Observations</span>
-                <strong className="text-xl font-black text-gold">{mlSummary?.totalTrainedObservations || 144}</strong>
+                <span className="text-[9px] text-muted uppercase block font-sans">Verified Observations</span>
+                <strong className="text-xl font-black text-gold">{mlSummary?.verifiedObservationsCount ?? mlSummary?.totalTrainedObservations ?? 0}</strong>
                 <span className="text-[10px] text-muted block">Ground-Truth Samples</span>
               </div>
               <div className="p-4 bg-linen/25 border border-espresso/10 rounded-2xl space-y-1">
-                <span className="text-[9px] text-muted uppercase block font-sans">LightGBM Pipeline</span>
-                <strong className="text-sm font-black text-espresso block mt-1">Active Pipeline</strong>
-                <span className="text-[10px] text-green-700 font-bold block">Ready for Retraining</span>
+                <span className="text-[9px] text-muted uppercase block font-sans">Adaptive Engine</span>
+                <strong className="text-sm font-black text-espresso block mt-1">Hierarchical Bayesian</strong>
+                <span className="text-[10px] text-green-700 font-bold block">Active Learning Loop</span>
               </div>
             </div>
 

@@ -44,9 +44,13 @@ export async function sha256(str) {
 /**
  * Compute Server HMAC-SHA256 Signature for an audit hash
  */
-export async function signProofHashWithHmac(hashHex, secretKey = 'ziggers_enterprise_audit_hmac_master_secret') {
+export async function signProofHashWithHmac(hashHex, secretKey = null) {
+  const activeSecret = secretKey || process.env.AUDIT_HMAC_MASTER_SECRET;
+  if (!activeSecret) {
+    throw new Error('FATAL SECURITY EXCEPTION: AUDIT_HMAC_MASTER_SECRET is missing. Audit attestation failed closed.');
+  }
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(secretKey);
+  const keyData = encoder.encode(activeSecret);
   const cryptoObj = (typeof globalThis !== 'undefined' && globalThis.crypto) || crypto;
   const cryptoKey = await cryptoObj.subtle.importKey(
     'raw',

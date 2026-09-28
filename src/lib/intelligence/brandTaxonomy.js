@@ -759,9 +759,9 @@ export function classifyBrandUniversal({ brandName, websiteUrl, appUrl, title, d
     let score = 0;
     for (const kw of subcat.keywords) {
       if (hasExactWord(fullText, kw)) {
-        if (hasExactWord(brandName.toLowerCase(), kw) || hasExactWord(domainToken.toLowerCase(), kw)) {
+        if (hasExactWord((brandName || '').toLowerCase(), kw) || hasExactWord((domainToken || '').toLowerCase(), kw)) {
           score += 15;
-        } else if (hasExactWord(title.toLowerCase(), kw)) {
+        } else if (hasExactWord((title || '').toLowerCase(), kw)) {
           score += 8;
         } else {
           score += 3;

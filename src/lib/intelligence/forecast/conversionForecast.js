@@ -2,7 +2,7 @@
  * Ziggers Intelligence - Conversion Forecast Engine
  * 
  * Calculates objective-specific conversions, QR scans, leads, app installs,
- * and unit economics with explicit Data Provenance and honest planning bounds.
+ * and unit economics with explicit Data Provenance and integer paise financials.
  */
 
 import { createProvenanceValue, SOURCE_TYPES, MATURITY_LEVELS, CONFIDENCE_LEVELS } from '../provenance.js';
@@ -75,7 +75,7 @@ export const CONVERSION_PRIORS = {
 };
 
 /**
- * Forecast conversions and financial attribution metrics with provenance
+ * Forecast conversions and financial attribution metrics with provenance and integer paise
  * @param {Object} params
  * @returns {Object}
  */
@@ -83,53 +83,70 @@ export function forecastConversions(params) {
   const {
     interactions = 2000,
     budgetInr = 250000,
+    budgetPaise = null,
     objective = 'Product Sampling',
     weightedInterestAffinity = 0.80,
     ageEligibilityRatio = 0.54,
-    inventoryCap = null
+    inventoryCap = null,
+    priors = null
   } = params;
 
-  const prior = CONVERSION_PRIORS[objective] || CONVERSION_PRIORS.Default;
-  const numBudget = Math.max(1, Number(budgetInr) || 250000);
+  const prior = priors || CONVERSION_PRIORS[objective] || CONVERSION_PRIORS.Default;
+  const numBudgetInr = Math.max(1, Number(budgetInr) || 250000);
+  const numBudgetPaise = budgetPaise !== null ? Number(budgetPaise) : Math.round(numBudgetInr * 100);
   const numInteractions = Math.max(0, Number(interactions) || 0);
 
   // Quality multiplier based on audience affinity
   const qualityMultiplier = Math.max(0.70, Math.min(1.30, (weightedInterestAffinity * 0.7) + (ageEligibilityRatio * 0.4) + 0.20));
 
   // 1. Samples Projected
-  let potentialSamples = Math.round(numInteractions * prior.sampleDistributionRate * qualityMultiplier);
+  const rawSampleRate = prior.sampleDistributionRate ?? prior.sample_distribution_rate ?? 0.95;
+  let potentialSamples = Math.round(numInteractions * rawSampleRate * qualityMultiplier);
   if (inventoryCap !== null && Number(inventoryCap) > 0) {
     potentialSamples = Math.min(Number(inventoryCap), potentialSamples);
   }
 
   // 2. Attribution Funnel
-  const qrScans = Math.round(potentialSamples * prior.qrScanRate * qualityMultiplier);
-  const landingVisits = Math.round(qrScans * prior.landingConversionRate);
-  const signups = Math.round(landingVisits * prior.signupRate);
+  const rawQrRate = prior.qrScanRate ?? prior.qr_scan_rate ?? 0.18;
+  const rawLandingRate = prior.landingConversionRate ?? prior.landing_conversion_rate ?? 0.55;
+  const rawSignupRate = prior.signupRate ?? prior.signup_rate ?? 0.28;
+
+  const qrScans = Math.round(potentialSamples * rawQrRate * qualityMultiplier);
+  const landingVisits = Math.round(qrScans * rawLandingRate);
+  const signups = Math.round(landingVisits * rawSignupRate);
   
   // 3. Leads and App Installs
-  const leads = Math.round(numInteractions * prior.leadConvRate * qualityMultiplier);
-  const appInstalls = Math.round(numInteractions * prior.appInstallRate * qualityMultiplier);
+  const rawLeadRate = prior.leadConvRate ?? prior.lead_conversion_rate ?? 0.14;
+  const rawAppRate = prior.appInstallRate ?? prior.app_install_rate ?? 0.08;
 
-  // 4. Unit Economics (Honest ranges)
+  const leads = Math.round(numInteractions * rawLeadRate * qualityMultiplier);
+  const appInstalls = Math.round(numInteractions * rawAppRate * qualityMultiplier);
+
+  // 4. Unit Economics in Integer Paise and Rupee formatting
   const minLeads = Math.max(1, Math.round(leads * 0.75));
   const maxLeads = Math.round(leads * 1.35);
 
-  const minCpl = Math.round(numBudget / maxLeads);
-  const maxCpl = Math.round(numBudget / minLeads);
+  const costPerLeadPaise = leads > 0 ? Math.round(numBudgetPaise / leads) : null;
+  const minCplPaise = Math.round(numBudgetPaise / maxLeads);
+  const maxCplPaise = Math.round(numBudgetPaise / minLeads);
 
-  const costPerSample = potentialSamples > 0 ? parseFloat((numBudget / potentialSamples).toFixed(2)) : null;
-  const costPerLead = leads > 0 ? Math.round(numBudget / leads) : null;
-  const costPerAcquisition = signups > 0 ? Math.round(numBudget / signups) : null;
+  const costPerSamplePaise = potentialSamples > 0 ? Math.round(numBudgetPaise / potentialSamples) : null;
+  const cacPaise = signups > 0 ? Math.round(numBudgetPaise / signups) : null;
+
+  const costPerLead = costPerLeadPaise !== null ? Math.round(costPerLeadPaise / 100) : null;
+  const minCpl = Math.round(minCplPaise / 100);
+  const maxCpl = Math.round(maxCplPaise / 100);
+  const costPerSample = costPerSamplePaise !== null ? parseFloat((costPerSamplePaise / 100).toFixed(2)) : null;
+  const costPerAcquisition = cacPaise !== null ? Math.round(cacPaise / 100) : null;
 
   const leadsProvenance = createProvenanceValue({
     value: leads,
     minRange: minLeads,
     maxRange: maxLeads,
-    sourceType: SOURCE_TYPES.HEURISTIC,
-    maturityLevel: MATURITY_LEVELS.LEVEL_1_HEURISTIC,
-    confidence: CONFIDENCE_LEVELS.LOW,
-    methodology: 'conversion_prior_heuristic',
+    sourceType: priors ? SOURCE_TYPES.MODELLED_ESTIMATE : SOURCE_TYPES.HEURISTIC,
+    maturityLevel: priors ? MATURITY_LEVELS.LEVEL_3_ZIGGERS_EMPIRICAL : MATURITY_LEVELS.LEVEL_1_HEURISTIC,
+    confidence: CONFIDENCE_LEVELS.MODERATE,
+    methodology: priors ? 'database_bayesian_posterior' : 'conversion_prior_heuristic',
     uncertaintyDrivers: [
       { factor: 'lack_of_brand_historical_conversion_baseline', impact: 'HIGH' },
       { factor: 'human_promoter_pitch_variability', impact: 'MEDIUM' }
@@ -141,15 +158,17 @@ export function forecastConversions(params) {
     value: costPerLead,
     minRange: minCpl,
     maxRange: maxCpl,
-    sourceType: SOURCE_TYPES.HEURISTIC,
-    maturityLevel: MATURITY_LEVELS.LEVEL_1_HEURISTIC,
-    confidence: CONFIDENCE_LEVELS.LOW,
-    methodology: 'budget_to_conversion_heuristic_ratio',
+    sourceType: priors ? SOURCE_TYPES.MODELLED_ESTIMATE : SOURCE_TYPES.HEURISTIC,
+    maturityLevel: priors ? MATURITY_LEVELS.LEVEL_3_ZIGGERS_EMPIRICAL : MATURITY_LEVELS.LEVEL_1_HEURISTIC,
+    confidence: CONFIDENCE_LEVELS.MODERATE,
+    methodology: 'budget_to_conversion_paise_ratio',
     uncertaintyDrivers: [
       { factor: 'contingent_on_promoter_productivity_and_lead_qualification', impact: 'HIGH' }
     ],
     label: `₹${minCpl.toLocaleString('en-IN')} – ₹${maxCpl.toLocaleString('en-IN')} estimated CPL`
   });
+
+  const roiMultiplier = prior.benchmarkRoiMultiplier ?? prior.benchmark_roi_multiplier ?? 3.0;
 
   return {
     potentialSamples,
@@ -163,12 +182,15 @@ export function forecastConversions(params) {
     unitEconomics: {
       costPerSample: costPerSample !== null ? `₹${costPerSample.toLocaleString('en-IN')}` : 'N/A (No Samples)',
       costPerSampleNum: costPerSample,
+      costPerSamplePaise,
       costPerLead: costPerLead !== null ? `₹${costPerLead.toLocaleString('en-IN')}` : 'N/A (No Leads)',
       costPerLeadNum: costPerLead,
+      costPerLeadPaise,
       costPerLeadRange: `₹${minCpl} – ₹${maxCpl}`,
       cac: costPerAcquisition !== null ? `₹${costPerAcquisition.toLocaleString('en-IN')}` : null,
       cacFormatted: costPerAcquisition !== null ? `₹${costPerAcquisition.toLocaleString('en-IN')}` : 'N/A (No Conversions)',
-      projectedRoi: (prior.benchmarkRoiMultiplier * qualityMultiplier).toFixed(1) + 'x'
+      cacPaise,
+      projectedRoi: (roiMultiplier * qualityMultiplier).toFixed(1) + 'x'
     },
     qualityMultiplier: parseFloat(qualityMultiplier.toFixed(3))
   };

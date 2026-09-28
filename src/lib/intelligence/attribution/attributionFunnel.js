@@ -17,7 +17,7 @@ export function calculateAttributionFunnel(params) {
     landingSuccessRate = 0.60,
     signupRate = 0.30,
     activationRate = 0.40,
-    campaignCost = 150000
+    campaignCost = 75000
   } = params;
 
   const totalInteractions = Math.max(0, Number(physicalInteractions) || 0);

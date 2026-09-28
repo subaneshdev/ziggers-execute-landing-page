@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 
 // Memory event stream store for edge runtime
 let signalEventsStore = [

@@ -112,13 +112,15 @@ export class MLFeedbackEngine {
 
     return {
       modelVersion: this.modelVersion,
-      totalTrainedObservations: samples.length + 142, // Includes historical calibration dataset
+      verifiedObservationsCount: samples.length,
+      totalTrainedObservations: samples.length, // Honest real verified observation count
       meanAccuracy: `${accuracy.toFixed(1)}%`,
       mape: `${overallMape.toFixed(1)}%`,
       reachMape: `${avgReachError.toFixed(1)}%`,
       interactionsMape: `${avgInteractionsError.toFixed(1)}%`,
       leadsMape: `${avgLeadsError.toFixed(1)}%`,
-      lightGbmReadiness: 'READY_FOR_CONTINUOUS_TRAINING',
+      learningEngineStatus: 'EMPIRICAL_BAYESIAN_CALIBRATION_ACTIVE',
+      modelType: 'HYBRID_EMPIRICAL_BAYESIAN_ESTIMATOR',
       recentFeedback: samples.slice(0, 5)
     };
   }

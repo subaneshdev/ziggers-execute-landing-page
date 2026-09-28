@@ -32,8 +32,11 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
   } = draft;
 
   const totalDays = campaignDurationDays || campaignDays || 3;
-  const budgetVal = budgetInr || estimatedBudget || 75000;
-  const formattedBudget = budgetVal > 0 ? `₹${Number(budgetVal).toLocaleString('en-IN')}` : '₹75,000';
+  const rawBudget = budgetInr ?? estimatedBudget;
+  const budgetVal = (rawBudget !== undefined && rawBudget !== null && rawBudget !== '')
+    ? Number(rawBudget)
+    : 75000;
+  const formattedBudget = `₹${budgetVal.toLocaleString('en-IN')}`;
 
   return (
     <aside className="w-full lg:w-80 bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs flex flex-col justify-between font-sans">
@@ -122,7 +125,7 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
               </button>
             </div>
             <p className="text-[11px] font-bold text-espresso truncate">
-              {activationPlan?.activationName || btlFormat || 'Gym & Fitness Sampling'}
+              {activationPlan?.activationName || btlFormat || (objective ? `${objective} Activation` : 'Direct Brand Activation')}
             </p>
           </div>
 
@@ -226,14 +229,28 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
               </button>
             </div>
             <div className="text-[11px] text-espresso font-medium space-y-0.5">
-              <div className="flex justify-between">
-                <span className="text-muted">Staffing:</span>
-                <span className="font-bold">{promoterCount} Promoters • {supervisorCount} Team Leader</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Execution:</span>
-                <span className="font-bold">{totalDays} Days ({shiftHours}h / shift)</span>
-              </div>
+              {draft?.forecast?.capacity?.status === 'BUDGET_INSUFFICIENT' ? (
+                <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-[10px] space-y-0.5">
+                  <div className="font-extrabold flex items-center gap-1 text-amber-950">
+                    <span>⚠️ BUDGET_INSUFFICIENT</span>
+                  </div>
+                  <div>0 Promoters (Budget below minimum threshold)</div>
+                  <div className="font-mono text-amber-800 font-bold">
+                    Min Viable: {draft.forecast.capacity.minimumRequiredBudgetFormatted || '₹32,235'}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Staffing:</span>
+                    <span className="font-bold">{promoterCount} Promoters • {supervisorCount} Team Leader</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Execution:</span>
+                    <span className="font-bold">{totalDays} Days ({shiftHours}h / shift)</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

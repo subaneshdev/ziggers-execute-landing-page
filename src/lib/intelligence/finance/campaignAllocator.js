@@ -6,7 +6,7 @@
  */
 
 import { calculateGstBreakdown } from './gstCalculator.js';
-import { CANONICAL_FINANCIAL_RATES } from '../capacity/staffingOptimizer.js';
+import { CANONICAL_FINANCIAL_RATES, resolveOperationalRates } from '../capacity/staffingOptimizer.js';
 
 export const FORECAST_ESCROW_WEIGHTS = {
   promoterWagePool: 0.60,      // 60% target for on-ground promoters
@@ -71,19 +71,22 @@ export function allocateActualCampaignEscrow({
   supervisorsDeployed = 1,
   shiftHours = 5,
   campaignDays = 7,
-  materialsCost = 0
+  materialsCost = 0,
+  tenantConfig = null,
+  rates = null
 }) {
-  const { taxableBase, gstAmount, grossBudget } = calculateGstBreakdown(budgetInr, isGstInclusive);
+  const activeRates = resolveOperationalRates(tenantConfig || rates);
+  const { taxableBase, gstAmount, grossBudget } = calculateGstBreakdown(budgetInr, isGstInclusive, activeRates.gstRate);
   const netCampaignFund = taxableBase;
 
-  const singlePromoterCost = CANONICAL_FINANCIAL_RATES.promoterHourlyRate * shiftHours * campaignDays;
-  const singleSupervisorCost = CANONICAL_FINANCIAL_RATES.supervisorDailyFee * campaignDays;
+  const singlePromoterCost = activeRates.promoterHourlyRate * shiftHours * campaignDays;
+  const singleSupervisorCost = activeRates.supervisorDailyFee * campaignDays;
 
   const actualPromoterCost = promotersDeployed * singlePromoterCost;
   const actualSupervisorCost = supervisorsDeployed * singleSupervisorCost;
   const totalActualLabour = actualPromoterCost + actualSupervisorCost;
 
-  const platformOsFee = Math.round(netCampaignFund * CANONICAL_FINANCIAL_RATES.platformFeeRate);
+  const platformOsFee = Math.round(netCampaignFund * activeRates.platformFeeRate);
   const dynamicReserve = Math.max(0, netCampaignFund - totalActualLabour - platformOsFee - materialsCost);
 
   const totalReconciled = totalActualLabour + platformOsFee + materialsCost + dynamicReserve;

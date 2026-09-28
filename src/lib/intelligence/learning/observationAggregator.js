@@ -7,6 +7,7 @@
  */
 
 import { CONFIDENCE_LEVELS } from '../provenance.js';
+import { saveCampaignOutcome, listCampaignOutcomes } from './learningRepository.js';
 
 // In-memory ground-truth store indexed by multi-dimensional context keys
 const OBSERVATION_REGISTRY = new Map();
@@ -117,6 +118,26 @@ export function recordCampaignObservation(observation) {
   const list = OBSERVATION_REGISTRY.get(contextKey);
   list.push(structuredRecord);
 
+  // Durable persistence in learningRepository
+  try {
+    saveCampaignOutcome({
+      campaignId,
+      h3Cell,
+      objective: campaignObjective,
+      locationName: locationType,
+      venueType: locationType,
+      predictedInteractions,
+      predictedConversions,
+      predictedFootfall,
+      actualVerifiedInteractions: actualInteractions,
+      actualConversions,
+      actualVerifiedFootfall: actualFootfall,
+      dataQualityStatus: dataQuality === CONFIDENCE_LEVELS.HIGH ? 'HIGH' : 'VERIFIED'
+    });
+  } catch (e) {
+    // Ignore async background sync error
+  }
+
   return {
     success: true,
     contextKey,
@@ -143,13 +164,41 @@ export function getHistoricalObservations(contextParams) {
   // 2. Fallback: Search by Resolution + H3 Cell + Objective
   const matchingRecords = [];
   const targetCell = (contextParams.h3Cell || '').toLowerCase();
-  const targetObj = (contextParams.campaignObjective || '').toUpperCase();
+  const targetObj = (contextParams.campaignObjective || '').toUpperCase().replace(/[^A-Z0-9]/g, '_');
 
   for (const [key, records] of OBSERVATION_REGISTRY.entries()) {
-    if (key.includes(targetCell) && key.includes(targetObj)) {
+    if (key.includes(targetCell) && (targetObj === '' || key.includes(targetObj))) {
       const valid = records.filter(o => o.dataQuality !== CONFIDENCE_LEVELS.LOW);
       matchingRecords.push(...valid);
     }
+  }
+
+  if (matchingRecords.length > 0) {
+    return matchingRecords;
+  }
+
+  // 3. Fallback: Query learningRepository durable outcomes
+  try {
+    const durableOutcomes = listCampaignOutcomes({
+      h3Cell: contextParams.h3Cell,
+      objective: contextParams.campaignObjective,
+      limit: 20
+    });
+    if (durableOutcomes && durableOutcomes.length > 0) {
+      return durableOutcomes.map(o => ({
+        campaignId: o.campaign_id || o.campaignId,
+        h3Cell: o.h3_cell || o.h3Cell,
+        campaignObjective: o.objective,
+        actual: {
+          interactions: o.actual_verified_interactions || o.actualVerifiedInteractions || 0,
+          conversions: o.actual_conversions || o.actualConversions || 0,
+          footfall: o.actual_verified_footfall || o.actualVerifiedFootfall || 0
+        },
+        dataQuality: CONFIDENCE_LEVELS.HIGH
+      }));
+    }
+  } catch (err) {
+    // Graceful fallback
   }
 
   return matchingRecords;

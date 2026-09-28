@@ -73,7 +73,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
             required
             value={name}
             onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="e.g. Red Bull Fitness & Gym Sampling Drive"
+            placeholder="e.g. Summer Brand Activation Drive, Metro Retail Launch"
             className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-3 text-xs text-espresso font-semibold focus:outline-none focus:border-gold placeholder:text-muted/50"
           />
         </div>
@@ -88,7 +88,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
             required
             value={brand}
             onChange={(e) => onUpdate({ brand: e.target.value })}
-            placeholder="e.g. Red Bull, Yamaha, Zoho"
+            placeholder="e.g. Nike, Starbucks, Zoho, Apple, Cult.fit"
             className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-3 text-xs text-espresso font-semibold focus:outline-none focus:border-gold placeholder:text-muted/50"
           />
         </div>
@@ -103,7 +103,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
             required
             value={productOrService}
             onChange={(e) => onUpdate({ productOrService: e.target.value })}
-            placeholder="e.g. Energy Drink Can (250ml), XSR155 Bike, CRM Suite"
+            placeholder="e.g. Running Shoes, Cold Brew Coffee, Cloud CRM Suite"
             className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-3 text-xs text-espresso font-semibold focus:outline-none focus:border-gold placeholder:text-muted/50"
           />
         </div>
@@ -111,7 +111,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
         {/* Campaign Duration */}
         <div className="space-y-1.5">
           <label className="block text-xs font-bold text-espresso">
-            Estimated Duration (Days)
+            Default Campaign Duration (Days)
           </label>
           <input
             type="number"
@@ -126,7 +126,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
         {/* Estimated Budget (Optional) */}
         <div className="space-y-1.5">
           <label className="block text-xs font-bold text-espresso">
-            Estimated Budget (INR, Optional)
+            Suggested Starting Budget (INR, Editable)
           </label>
           <input
             type="number"
@@ -139,6 +139,45 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
         </div>
 
       </div>
+
+      {/* Budget Insufficiency Warning Callout */}
+      {draft?.forecast?.capacity?.status === 'BUDGET_INSUFFICIENT' && (
+        <div className="p-4 bg-amber-50/90 border border-amber-300 rounded-2xl flex items-start gap-3 animate-in fade-in duration-200">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-bold text-sm">
+            ⚠️
+          </div>
+          <div className="space-y-1 flex-1 text-xs">
+            <div className="flex items-center justify-between">
+              <strong className="font-extrabold text-amber-950 uppercase font-mono tracking-wider">
+                Status: BUDGET_INSUFFICIENT
+              </strong>
+              <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-md">
+                Deficit: {draft.forecast.capacity.budgetDeficitFormatted || 'Deficit detected'}
+              </span>
+            </div>
+            <p className="text-amber-900 leading-relaxed font-semibold">
+              {draft.forecast.capacity.staffingStrategy || `Budget Insufficient: Minimum required budget to activate 1 certified promoter for ${campaignDurationDays} days is ${draft.forecast.capacity.minimumRequiredBudgetFormatted}.`}
+            </p>
+            <p className="text-[11px] text-amber-800/80">
+              Rather than forcing an unviable 1-promoter campaign that violates operational labor and supervision minimums, the engine recommends a realistic minimum viable budget calculated backward from statutory minimum wage, supervisor ratio, and statutory reserves.
+            </p>
+            {draft?.forecast?.capacity?.minimumRequiredBudget && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => onUpdate({
+                    budgetInr: draft.forecast.capacity.minimumRequiredBudget,
+                    estimatedBudget: draft.forecast.capacity.minimumRequiredBudget
+                  })}
+                  className="px-3 py-1.5 bg-amber-800 hover:bg-amber-900 text-white rounded-xl font-bold text-[11px] transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <span>Apply Recommended Minimum Budget ({draft.forecast.capacity.minimumRequiredBudgetFormatted})</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Campaign Objectives (Select One or More) */}
       <div className="space-y-3 pt-2 border-t border-espresso/10">

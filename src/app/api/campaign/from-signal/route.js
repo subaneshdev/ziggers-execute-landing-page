@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { QrAttributionEngine } from '@/lib/intelligence/index';
 
-export const runtime = 'edge';
 
 // Global memory cache for edge deployments
 let liveSignalCampaigns = [];
@@ -16,8 +15,11 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Campaign name and brand are required.' }, { status: 400 });
     }
 
-    const campaignId = `camp_sig_${Date.now().toString(36)}`;
-    const budgetNum = parseInt(String(execution.budget || 150000).replace(/[^0-9]/g, ''), 10) || 150000;
+    const rawBudget = execution.budgetInr ?? execution.estimatedBudget ?? execution.budget ?? execution.guaranteed_payout ?? execution.spend;
+    const parsedBudget = rawBudget !== undefined && rawBudget !== null && rawBudget !== ''
+      ? parseInt(String(rawBudget).replace(/[^0-9]/g, ''), 10)
+      : 75000;
+    const budgetNum = isNaN(parsedBudget) ? 75000 : parsedBudget;
     const workersNum = parseInt(execution.workers, 10) || 12;
     const targetCity = execution.city || 'Chennai';
     const primaryLocation = execution.location || `${targetCity} Central Hub`;

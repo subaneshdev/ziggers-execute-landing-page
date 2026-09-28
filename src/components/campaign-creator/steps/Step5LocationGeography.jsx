@@ -7,61 +7,33 @@ import {
 } from 'lucide-react';
 import LocationRecommendationCard from '../ui/LocationRecommendationCard';
 import GooglePlacesMap from '../ui/GooglePlacesMap';
+import { resolveIndustryKey, INDUSTRY_METRIC_PROFILES } from '@/lib/intelligence/brandAdaptation';
 
 export default function Step5LocationGeography({ draft, onUpdate }) {
   const { 
     blueprintActive = false,
     locations = [], 
     brand = 'Brand',
-    brandIndustry = 'FMCG',
-    brandSubcategory = 'Energy Drinks',
-    brandProductLine = 'Energy Drink (250ml)',
-    audienceName = 'Fitness Enthusiasts',
-    objective = 'Product Sampling',
-    selectedInterests = ['fitness & gym', 'sports & athletics'],
+    brandCategory = '',
+    brandIndustry = '',
+    brandSubcategory = '',
+    brandProductLine = '',
+    audienceName = '',
+    objective = 'Brand Awareness',
+    selectedInterests = [],
     ageRange = [20, 35],
     suggestedEnvironments = [],
     recommendedEnvironments = []
   } = draft;
 
+  const currentIndKey = resolveIndustryKey(`${brandCategory} ${brandIndustry} ${brandSubcategory} ${brand}`);
+  const profile = INDUSTRY_METRIC_PROFILES[currentIndKey] || INDUSTRY_METRIC_PROFILES.RETAIL_AND_ECOMMERCE;
+
   const activeEnvironments = (suggestedEnvironments && suggestedEnvironments.length > 0)
     ? suggestedEnvironments
     : (recommendedEnvironments && recommendedEnvironments.length > 0)
       ? recommendedEnvironments
-      : [
-          {
-            environment: 'Premium Fitness Centers & High-End Gyms',
-            whyExists: 'Concentrated demographic of active consumers seeking hydration, energy replenishment, and workout performance.',
-            relevanceScore: 96,
-            footfallQuality: 'High Volume High Affinity',
-            dwellTime: '45–75 mins',
-            activationFormat: 'Dedicated Chilled Sampling Counter & Pre-Workout Trial Pod'
-          },
-          {
-            environment: 'Fitness Studios & Functional CrossFit Arenas',
-            whyExists: 'Dedicated community athletes with high brand loyalty and active word-of-mouth referral.',
-            relevanceScore: 91,
-            footfallQuality: 'Highly Targeted Enthusiasts',
-            dwellTime: '60–90 mins',
-            activationFormat: 'Post-Workout Refreshment Station'
-          },
-          {
-            environment: 'Sports Complexes & Badminton / Football Turfs',
-            whyExists: 'Weekend and evening athletes engaging in intense physical sports.',
-            relevanceScore: 87,
-            footfallQuality: 'High Energy Sports Audience',
-            dwellTime: '60–120 mins',
-            activationFormat: 'Field-Side Hydration Booth'
-          },
-          {
-            environment: 'Running Corridors & Marathon Training Parks',
-            whyExists: 'Morning runners and marathon athletes seeking stamina and energy endurance.',
-            relevanceScore: 84,
-            footfallQuality: 'Health Conscious Cohort',
-            dwellTime: '30–60 mins',
-            activationFormat: 'Early Morning Finish-Line Sampling Bar'
-          }
-        ];
+      : profile.environments;
 
   const [selectedCity, setSelectedCity] = useState('Chennai');
   const [searchAreaInput, setSearchAreaInput] = useState('T Nagar, Chennai');
@@ -85,19 +57,28 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
     if (envName.includes('studio') || envName.includes('sports') || envName.includes('turf')) {
       return `sports complexes in ${city}`;
     }
+    if (envName.includes('food') || envName.includes('dining') || envName.includes('restaurant')) {
+      return `popular food courts and restaurants in ${city}`;
+    }
+    if (envName.includes('cafe') || envName.includes('coffee') || envName.includes('biker cafe')) {
+      return `popular cafes and coffee shops in ${city}`;
+    }
+    if (envName.includes('it park') || envName.includes('tech') || envName.includes('corporate') || envName.includes('sez')) {
+      return `major IT parks and corporate campuses in ${city}`;
+    }
+    if (envName.includes('dealership') || envName.includes('auto') || envName.includes('motor')) {
+      return `automobile showrooms in ${city}`;
+    }
+    if (envName.includes('beauty') || envName.includes('salon') || envName.includes('spa')) {
+      return `beauty salons and spas in ${city}`;
+    }
     if (envName.includes('mall') || envName.includes('shopping')) {
       return `shopping malls in ${city}`;
     }
-    if (envName.includes('cafe') || envName.includes('biker')) {
-      return `biker cafes in ${city}`;
+    if (envName.includes('college') || envName.includes('university') || envName.includes('campus')) {
+      return `colleges and universities in ${city}`;
     }
-    if (envName.includes('it park') || envName.includes('tech corridor')) {
-      return `IT parks in ${city}`;
-    }
-    if (envName.includes('college') || envName.includes('university')) {
-      return `colleges in ${city}`;
-    }
-    return `commercial hubs in ${city}`;
+    return `commercial high streets and malls in ${city}`;
   };
 
   const handleDiscoverPlaces = async (envToSearch = null) => {
@@ -238,7 +219,7 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
           </div>
 
           <div className="space-y-1">
-            <label className="font-bold text-espresso block">Target Area / Locality</label>
+            <label className="font-bold text-espresso block">Target Area / Locality (Example Location)</label>
             <input
               type="text"
               value={searchAreaInput}
