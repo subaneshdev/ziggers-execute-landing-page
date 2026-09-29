@@ -59,7 +59,7 @@ export default function AgencyClientManager({ campaigns = [], isClientPortal, se
               }`}
             >
               <Eye size={15} />
-              <span>{isClientPortal ? '👁️ Brand Portal Mode (Active)' : 'Preview Brand Client View'}</span>
+              <span>{isClientPortal ? 'Brand Portal Mode (Active)' : 'Preview Brand Client View'}</span>
             </button>
           </div>
         )}

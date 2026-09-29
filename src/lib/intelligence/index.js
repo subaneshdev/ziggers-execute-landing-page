@@ -23,6 +23,7 @@ import { calculateAttributionFunnel } from './attribution/attributionFunnel.js';
 import { calculateGstBreakdown } from './finance/gstCalculator.js';
 import { allocateCampaignEscrow, allocateActualCampaignEscrow, calculateWorkerShiftPayout } from './finance/campaignAllocator.js';
 import { validateGeofenceCheckin } from './verification/geofenceValidator.js';
+import { calculateScheduleMetrics } from './schedule/scheduleEngine.js';
 import { createChainedAuditProof, computeBatchMerkleRoot } from './verification/proofHashChain.js';
 import { recalibrateWithGroundTruth } from './learning/modelCalibration.js';
 import { recordCampaignObservation, getHistoricalObservations, getAllObservations } from './learning/observationAggregator.js';
@@ -90,8 +91,26 @@ export function generateCampaignForecast(params = {}) {
     inventoryCap = null,
     venueType = 'commercial_high_street',
     city = 'Chennai',
-    dayType = 'WEEKEND'
+    dayType = 'WEEKEND',
+    startDate = null,
+    endDate = null,
+    dailyStartTime = null,
+    dailyEndTime = null,
+    timezone = null,
+    schedule = null
   } = params;
+
+  // Resolve schedule metrics if schedule parameters are provided
+  const inputSchedule = schedule || (startDate && endDate ? { startDate, endDate, dailyStartTime, dailyEndTime, timezone } : null);
+  let scheduleMetrics = null;
+  if (inputSchedule && inputSchedule.startDate && inputSchedule.endDate) {
+    scheduleMetrics = calculateScheduleMetrics(inputSchedule);
+  }
+
+  const effectiveCampaignDays = (scheduleMetrics && scheduleMetrics.campaignDays > 0) ? scheduleMetrics.campaignDays : campaignDays;
+  const effectiveShiftHours = (scheduleMetrics && scheduleMetrics.hoursPerDay > 0) ? scheduleMetrics.hoursPerDay : shiftHours;
+  const effectiveStartHour = (scheduleMetrics && scheduleMetrics.startHour !== undefined && scheduleMetrics.startHour !== null) ? scheduleMetrics.startHour : startHour;
+  const effectiveDayType = (scheduleMetrics && scheduleMetrics.dominantDayType) ? scheduleMetrics.dominantDayType : dayType;
 
   const primaryLocationName = targetLocations[0] || 'T. Nagar & Ranganathan Street';
 
@@ -170,22 +189,43 @@ export function generateCampaignForecast(params = {}) {
   const targetCity = locationNode.city || city || 'Chennai';
   let trafficProfile = null;
   try {
-    trafficProfile = getHourlyTrafficCurve(targetVenueType, targetCity, dayType);
+    trafficProfile = getHourlyTrafficCurve(targetVenueType, targetCity, effectiveDayType);
   } catch (_) {}
 
   // 10. Calculate shift exposure from resident, transient, and workforce segments
   const mobilityFactor = 1.05;
   const weatherCoeff = 1.0;
-  const footfallData = estimateFootfallAndAudience({
+  let footfallData = estimateFootfallAndAudience({
     locationNode,
     totalPopulation: totalAggregatedPopulation,
     objective,
-    startHour,
-    shiftHours,
-    campaignDays,
+    startHour: effectiveStartHour,
+    shiftHours: effectiveShiftHours,
+    campaignDays: effectiveCampaignDays,
     mobilityFactor,
     weatherCoefficient: weatherCoeff
   });
+
+  // Diurnal profile blending: if schedule spans both weekdays and weekends, blend traffic curves
+  if (scheduleMetrics && scheduleMetrics.weekdayCount > 0 && scheduleMetrics.weekendCount > 0) {
+    try {
+      const weekdayProfile = getHourlyTrafficCurve(targetVenueType, targetCity, 'WEEKDAY');
+      const weekendProfile = getHourlyTrafficCurve(targetVenueType, targetCity, 'WEEKEND');
+      if (weekdayProfile?.coefficients && weekendProfile?.coefficients) {
+        let weekdaySum = 0;
+        let weekendSum = 0;
+        for (let h = effectiveStartHour; h < effectiveStartHour + effectiveShiftHours && h < 24; h++) {
+          weekdaySum += (weekdayProfile.coefficients[h] || 0.05);
+          weekendSum += (weekendProfile.coefficients[h] || 0.05);
+        }
+        const weightedActiveFraction = (weekdaySum * scheduleMetrics.weekdayCount + weekendSum * scheduleMetrics.weekendCount) / scheduleMetrics.campaignDays;
+        const baseDaily = footfallData.baseDailyFootfall;
+        const blendedShiftFootfall = Math.round(baseDaily * weightedActiveFraction);
+        footfallData.shiftFootfallExposure = blendedShiftFootfall;
+        footfallData.totalCampaignExposure = blendedShiftFootfall * effectiveCampaignDays;
+      }
+    } catch (_) {}
+  }
 
   // 11. Load tenant versioned labor, fee, reserve, and tax configuration
   let tenantConfig = null;
@@ -212,8 +252,8 @@ export function generateCampaignForecast(params = {}) {
     budgetPaise,
     isGstInclusive,
     objective,
-    shiftHours,
-    campaignDays,
+    shiftHours: effectiveShiftHours,
+    campaignDays: effectiveCampaignDays,
     reachableAudience: footfallData.availableAudienceBase,
     requestedPromoters: promoterCount,
     operationalRates: tenantConfig
@@ -228,7 +268,7 @@ export function generateCampaignForecast(params = {}) {
     shiftFootfallExposure: footfallData.shiftFootfallExposure,
     totalCampaignExposure: footfallData.totalCampaignExposure,
     physicalCapacity: staffingData.capacity.expectedInteractions,
-    campaignDays
+    campaignDays: effectiveCampaignDays
   });
 
   // 14. Load tenant-scoped Bayesian posterior for (tenantId, city, h3Cell, venueType, objective, metric)
@@ -257,7 +297,7 @@ export function generateCampaignForecast(params = {}) {
 
   // Guardrail: Capacity bottleneck must bind interactions
   const maxPossibleInteractions = Math.min(
-    staffingData.recommendedPromoters * staffingData.capacity.throughputPerHour * shiftHours * campaignDays,
+    staffingData.recommendedPromoters * staffingData.capacity.throughputPerHour * effectiveShiftHours * effectiveCampaignDays,
     funnelData.totalCampaignReach
   );
 
@@ -302,7 +342,7 @@ export function generateCampaignForecast(params = {}) {
       forecastId, forecastId, tenantId, totalAggregatedPopulation, funnelData.totalCampaignReach,
       finalInteractions, finalLeads, finalSamples, costPerLeadPaise,
       staffingData.recommendedPromoters, staffingData.supervisorCount,
-      (staffingData.recommendedPromoters * tenantConfig.promoter_hourly_rate_paise * shiftHours * campaignDays),
+      (staffingData.recommendedPromoters * tenantConfig.promoter_hourly_rate_paise * effectiveShiftHours * effectiveCampaignDays),
       leadRatePosterior?.observation_count > 0 ? 'HIGH' : 'MODERATE',
       'BAYESIAN_STATISTICAL_ESTIMATE',
       'bayes-v2.0',
@@ -482,8 +522,32 @@ export function generateCampaignForecast(params = {}) {
       confidencePercent: Math.round((locationNode.confidenceScore || 0.90) * 100)
     },
     financials: escrowData,
+    schedule: scheduleMetrics || {
+      startDate: null,
+      endDate: null,
+      dailyStartTime: `${effectiveStartHour}:00`,
+      dailyEndTime: `${effectiveStartHour + effectiveShiftHours}:00`,
+      timezone: 'Asia/Kolkata',
+      campaignDays: effectiveCampaignDays,
+      hoursPerDay: effectiveShiftHours,
+      totalCampaignHours: effectiveCampaignDays * effectiveShiftHours,
+      scheduleStatus: 'ESTIMATED_DEFAULT',
+      scheduleDisplay: `${effectiveCampaignDays} Days`,
+      dailyTimingDisplay: `${effectiveShiftHours}h / day`
+    },
+    timingMetadata: {
+      scheduleStatus: scheduleMetrics ? scheduleMetrics.scheduleStatus : 'ESTIMATED_DEFAULT',
+      campaignDays: effectiveCampaignDays,
+      hoursPerDay: effectiveShiftHours,
+      totalCampaignHours: effectiveCampaignDays * effectiveShiftHours,
+      weekdayCount: scheduleMetrics?.weekdayCount || 0,
+      weekendCount: scheduleMetrics?.weekendCount || 0,
+      dominantDayType: effectiveDayType,
+      provenanceSource: scheduleMetrics ? 'USER_DECLARED_SCHEDULE' : 'DEFAULT_ESTIMATE'
+    },
     explanation: {
       topReasons: [
+        ...(scheduleMetrics ? [`Campaign scheduled for ${scheduleMetrics.scheduleDisplay} (${scheduleMetrics.dailyTimingDisplay}, ${effectiveCampaignDays * effectiveShiftHours} total activation hours).`] : []),
         `${Math.round(ageEligibility.ageEligibilityRatio * 100)}% of the aggregated ${totalAggregatedPopulation.toLocaleString('en-IN')} local population matches the ${ageMin}–${ageMax} target demographic.`,
         `High-affinity POI density around ${primaryLocationName} produces a ${Math.round(interestAffinity.weightedAffinityScore * 100)}% interest alignment.`,
         `Peak activation window (${footfallData.timeExposure.operatingWindow}) captures ${Math.round(footfallData.timeExposure.activeHourFraction * 100)}% of daily footfall opportunity.`,

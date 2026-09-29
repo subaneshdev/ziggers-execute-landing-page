@@ -151,32 +151,37 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Header */}
-      <div>
-        <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
+      {/* Step Header */}
+      <div className="border-b border-espresso/10 pb-5">
+        <span className="text-[11px] font-mono font-bold text-gold uppercase tracking-wider block">
           Step 3 • Activation Blueprints
         </span>
-        <h2 className="text-xl md:text-2xl font-black text-espresso tracking-tight font-serif mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-black text-espresso tracking-tight font-serif mt-1">
           Select Your Activation Strategy
         </h2>
-        <p className="text-xs text-muted mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Ziggers intelligence generated the top 3 high-impact activation blueprints tailored to your objective (<strong>{objective}</strong>) and target audience. Select your preferred execution strategy or browse 75+ formats.
         </p>
       </div>
 
-      {/* Top 3 Blueprint Selection Cards */}
-      <div className="space-y-3">
+      {/* Section 01: Top 3 Tailored Blueprints */}
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles size={14} className="text-gold" />
-            <span>Top 3 Tailored Blueprints for {brand || 'Your Brand'}</span>
-          </span>
-          <span className="text-[10px] font-mono font-bold text-muted">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              01
+            </span>
+            <span className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles size={14} className="text-gold" />
+              <span>Top 3 Tailored Blueprints for {brand || 'Your Brand'}</span>
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-muted">
             Click to compare & select
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {topPlans.map((plan, idx) => {
             const isSelected = (currentPlan?.activationName === plan.activationName) || 
                                (currentPlan?.id === plan.id) || 
@@ -185,15 +190,15 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
               <div
                 key={plan.id || idx}
                 onClick={() => handleSelectPlan(plan)}
-                className={`p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                className={`p-6 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 ${
                   isSelected
-                    ? 'bg-espresso text-white border-espresso shadow-lg ring-2 ring-gold/60'
-                    : 'bg-white border-espresso/15 hover:border-espresso/35 text-espresso shadow-2xs hover:shadow-xs'
+                    ? 'bg-espresso text-white border-espresso shadow-xl ring-2 ring-gold/60'
+                    : 'bg-white border-espresso/15 hover:border-espresso/35 text-espresso shadow-xs hover:shadow-sm'
                 }`}
               >
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
+                    <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full ${
                       isSelected
                         ? 'bg-gold text-espresso'
                         : 'bg-linen/60 text-espresso border border-espresso/10'
@@ -201,37 +206,37 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
                       Option {idx + 1} • {plan.badge || `Blueprint #${idx + 1}`}
                     </span>
                     {isSelected && (
-                      <span className="text-[10px] font-bold text-green-300 bg-green-950/60 px-2 py-0.5 rounded-full border border-green-700 flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-green-300 bg-green-950/70 px-2.5 py-1 rounded-full border border-green-700 flex items-center gap-1">
                         <Check size={11} strokeWidth={3} />
                         <span>Active</span>
                       </span>
                     )}
                   </div>
 
-                  <h3 className={`text-sm sm:text-base font-black font-serif tracking-tight leading-snug ${
+                  <h3 className={`text-base sm:text-lg font-black font-serif tracking-tight leading-snug ${
                     isSelected ? 'text-white' : 'text-espresso'
                   }`}>
                     {plan.activationName}
                   </h3>
 
-                  <p className={`text-[11px] leading-relaxed line-clamp-3 font-medium ${
+                  <p className={`text-xs leading-relaxed line-clamp-3 font-medium ${
                     isSelected ? 'text-linen/80' : 'text-muted'
                   }`}>
                     {plan.whyThisActivationFits}
                   </p>
                 </div>
 
-                <div className={`pt-3 border-t space-y-2 text-xs ${
+                <div className={`pt-4 border-t space-y-3 text-xs ${
                   isSelected ? 'border-linen/15' : 'border-espresso/10'
                 }`}>
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className={isSelected ? 'text-linen/60' : 'text-muted'}>Focus:</span>
                     <span className={`font-bold truncate max-w-[170px] ${isSelected ? 'text-gold' : 'text-espresso'}`}>
                       {plan.strategicFocus}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className={isSelected ? 'text-linen/60' : 'text-muted'}>Expected Impact:</span>
                     <span className={`font-medium truncate max-w-[170px] ${isSelected ? 'text-green-300' : 'text-green-700'}`}>
                       {plan.expectedImpact || 'High Conversion'}
@@ -244,21 +249,21 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
                       e.stopPropagation();
                       handleSelectPlan(plan);
                     }}
-                    className={`w-full py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all mt-1 cursor-pointer ${
+                    className={`w-full h-11 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all mt-2 cursor-pointer ${
                       isSelected
-                        ? 'bg-gold text-espresso shadow-xs'
+                        ? 'bg-gold text-espresso shadow-xs hover:bg-gold/90'
                         : 'bg-linen/40 hover:bg-linen text-espresso border border-espresso/15'
                     }`}
                   >
                     {isSelected ? (
                       <>
-                        <Check size={13} strokeWidth={2.5} />
+                        <Check size={14} strokeWidth={2.5} />
                         <span>Selected Strategy</span>
                       </>
                     ) : (
                       <>
                         <span>Select Option {idx + 1}</span>
-                        <ArrowRight size={12} />
+                        <ArrowRight size={13} />
                       </>
                     )}
                   </button>
@@ -269,34 +274,37 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
         </div>
       </div>
 
-      {/* Alternative Options: Custom Brief or Format Library */}
-      <div className="bg-linen/25 border border-espresso/10 rounded-3xl p-5 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {/* Section 02: Alternative Options: Custom Brief or Format Library */}
+      <div className="bg-linen/20 border border-espresso/10 rounded-3xl p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              02
+            </span>
             <Compass size={16} className="text-gold" />
-            <strong className="text-xs font-bold text-espresso uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-espresso uppercase tracking-wider">
               Need A Custom Idea or Specialized Format?
-            </strong>
+            </h3>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onUpdate({ activationPath: activationPath === 'manual' ? 'ai' : 'manual' })}
-              className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+              className={`h-10 text-xs font-bold px-4 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
                 activationPath === 'manual' 
                   ? 'bg-espresso text-gold border-espresso shadow-2xs' 
                   : 'bg-white border-espresso/15 text-espresso hover:bg-linen/50'
               }`}
             >
-              <MessageSquare size={12} className="inline mr-1" />
+              <MessageSquare size={13} />
               <span>Custom Brief</span>
             </button>
             <button
               type="button"
               onClick={() => setShowFormatPicker(!showFormatPicker)}
-              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-espresso/15 text-gold hover:text-espresso hover:bg-linen/50 transition-all cursor-pointer flex items-center gap-1"
+              className="h-10 text-xs font-bold px-4 rounded-xl bg-white border border-espresso/15 text-gold hover:text-espresso hover:bg-linen/50 transition-all cursor-pointer flex items-center gap-1.5"
             >
-              <Edit3 size={12} />
+              <Edit3 size={13} />
               <span>{showFormatPicker ? 'Hide Library' : 'Browse 75+ BTL Formats'}</span>
             </button>
           </div>

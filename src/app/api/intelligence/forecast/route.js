@@ -35,7 +35,13 @@ export async function POST(request) {
       h3Resolution: body.h3Resolution ? Number(body.h3Resolution) : null,
       inventoryCap: body.inventoryCap ? Number(body.inventoryCap) : null,
       venueType: body.venueType || 'commercial_high_street',
-      city: body.city || 'Chennai'
+      city: body.city || 'Chennai',
+      startDate: body.startDate || body.start_date || null,
+      endDate: body.endDate || body.end_date || null,
+      dailyStartTime: body.dailyStartTime || body.daily_start_time || null,
+      dailyEndTime: body.dailyEndTime || body.daily_end_time || null,
+      timezone: body.timezone || null,
+      schedule: body.schedule || null
     });
 
     return NextResponse.json({

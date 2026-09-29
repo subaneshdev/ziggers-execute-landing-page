@@ -6,7 +6,9 @@ import { motion } from 'framer-motion';
 import {
   ShieldCheck, MapPin, CheckCircle, ArrowRight, BarChart2, Lock,
   Play, Search, Bell, ChevronDown, Plus, MoreVertical, Home, Megaphone, Users,
-  BarChart3, CreditCard, Settings, Target, DollarSign, Cpu, Activity, Zap, X
+  BarChart3, CreditCard, Settings, Target, DollarSign, Cpu, Activity, Zap, X,
+  Store, Rocket, Package, FileText, ClipboardList, PartyPopper, Smartphone,
+  Layers, TrendingUp, Building2, Sparkles
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -78,23 +80,25 @@ export default function HomePage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
   const campaignObjectives = [
-    { icon: '📢', title: 'Brand Awareness', desc: 'High-visibility on-ground presence in metro hubs.' },
-    { icon: '🏷️', title: 'Product Promotion', desc: 'New SKU launches with branded demos.' },
-    { icon: '🎉', title: 'Store Opening', desc: 'Drive queues for new outlets.' },
-    { icon: '🥤', title: 'Sampling', desc: 'Distribute trial packs with photo proof.' },
-    { icon: '📄', title: 'Flyer Distribution', desc: 'Hand-to-hand pamphlet delivery.' },
-    { icon: '📋', title: 'Lead Generation', desc: 'Capture verified phone numbers.' },
-    { icon: '🎟️', title: 'Event Promotion', desc: 'Promote concerts, fests, and expos.' },
-    { icon: '📱', title: 'App Downloads', desc: 'Guided installs and onboarding.' },
-    { icon: '📊', title: 'Market Survey', desc: 'Consumer feedback and intelligence.' },
-    { icon: '🛍️', title: 'Sales Promotion', desc: 'Direct on-field sales drives.' },
-    { icon: '🎪', title: 'On-Ground Activation', desc: 'Kiosks, flash mobs, roadshows.' },
+    { icon: Megaphone, title: 'Brand Awareness', desc: 'High-visibility on-ground presence in metro hubs.' },
+    { icon: Rocket, title: 'Product Promotion', desc: 'New SKU launches with branded demos.' },
+    { icon: Store, title: 'Store Opening', desc: 'Drive queues and footfall for new retail outlets.' },
+    { icon: Package, title: 'Product Sampling', desc: 'Distribute verified trial packs with photo proof.' },
+    { icon: FileText, title: 'Flyer Distribution', desc: 'Hand-to-hand localized collateral delivery.' },
+    { icon: ClipboardList, title: 'Lead Generation', desc: 'Capture consent-verified consumer prospects.' },
+    { icon: PartyPopper, title: 'Event Promotion', desc: 'Promote concerts, cultural fests, and exhibitions.' },
+    { icon: Smartphone, title: 'App Downloads', desc: 'Guided mobile installs and initial activation.' },
+    { icon: BarChart3, title: 'Market Survey', desc: 'First-party consumer feedback and field intelligence.' },
+    { icon: CreditCard, title: 'Sales Promotion', desc: 'Direct on-field customer sales drives.' },
+    { icon: Layers, title: 'On-Ground Activation', desc: 'Kiosks, experiential pop-ups, and roadshows.' },
   ];
 
   const customerTiers = [
     {
-      badge: '🟢',
+      icon: Store,
+      badge: 'Hyperlocal Tier',
       tier: 'Small Businesses',
       tagline: 'Self-Serve in 2 Mins',
       persona: 'Restaurant, Local Gym, Boutique, Clinic',
@@ -103,7 +107,8 @@ export default function HomePage() {
       action: 'Launch Local Campaign'
     },
     {
-      badge: '🔵',
+      icon: TrendingUp,
+      badge: 'Growth Tier',
       tier: 'Growing D2C Brands',
       tagline: 'Scalable Execution',
       persona: 'Beverage, FMCG, Fintech, Startups',
@@ -112,7 +117,8 @@ export default function HomePage() {
       action: 'Scale Multi-City Campaign'
     },
     {
-      badge: '🟣',
+      icon: Building2,
+      badge: 'Enterprise Tier',
       tier: 'Agencies & Enterprise',
       tagline: 'Power User Console',
       persona: 'BTL Agencies, Experiential Marketers, National Brands',
@@ -207,7 +213,8 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 bg-linen border border-espresso/10 px-4 py-1.5 rounded-full text-xs font-bold text-muted uppercase tracking-wider mb-8"
           >
             <span className="flex h-2 w-2 rounded-full bg-gold animate-pulse"></span>
-            Offline campaigns, finally made simple ✨
+            <span>Offline campaigns, finally made simple</span>
+            <Sparkles size={12} className="text-gold" />
           </motion.div>
 
           {/* Headline — Instrument Serif */}
@@ -451,8 +458,9 @@ export default function HomePage() {
                             </div>
                           ))}
                         </div>
-                        <div className="mt-2.5 w-full py-1.5 rounded-md text-center font-bold text-[10px] bg-gold text-espresso">
-                          🚀 Launch Campaign
+                        <div className="mt-2.5 w-full py-2 rounded-xl text-center font-bold text-[10px] bg-gold text-espresso flex items-center justify-center gap-1.5 shadow-2xs">
+                          <Sparkles size={11} />
+                          <span>Launch Campaign</span>
                         </div>
                       </div>
                     </div>
@@ -514,10 +522,12 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
           {campaignObjectives.map((obj) => (
-            <div key={obj.title} className="bg-linen/40 border border-espresso/5 rounded-2xl p-6 hover:bg-linen/60 hover:border-gold/40 transition-all hover:-translate-y-0.5">
-              <div className="text-2xl mb-3">{obj.icon}</div>
+            <div key={obj.title} className="group bg-linen/30 border border-espresso/10 rounded-3xl p-6 hover:bg-white hover:border-gold/50 transition-all hover:-translate-y-1 shadow-2xs hover:shadow-sm">
+              <div className="w-11 h-11 rounded-2xl bg-gold/15 text-espresso flex items-center justify-center mb-4 group-hover:bg-gold transition-colors">
+                <obj.icon size={20} className="text-espresso" />
+              </div>
               <h3 className="text-sm font-extrabold text-espresso">{obj.title}</h3>
-              <p className="text-xs text-muted leading-relaxed mt-1">{obj.desc}</p>
+              <p className="text-xs text-muted leading-relaxed mt-1.5">{obj.desc}</p>
             </div>
           ))}
         </div>
@@ -537,23 +547,26 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {customerTiers.map((tier, idx) => (
-            <div key={idx} className="bg-white border border-espresso/5 hover:border-gold/40 rounded-3xl p-8 shadow-soft transition-all flex flex-col justify-between hover:-translate-y-1">
+            <div key={idx} className="bg-white border border-espresso/10 hover:border-gold/50 rounded-3xl p-8 shadow-xs hover:shadow-md transition-all flex flex-col justify-between hover:-translate-y-1">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold bg-linen px-3 py-1 rounded-full text-espresso">{tier.badge} {tier.tagline}</span>
+                  <span className="text-xs font-bold bg-linen/50 border border-espresso/10 px-3 py-1.5 rounded-full text-espresso flex items-center gap-1.5">
+                    <tier.icon size={13} className="text-gold" />
+                    <span>{tier.badge} • {tier.tagline}</span>
+                  </span>
                   <span className="text-xs font-extrabold text-gold font-mono">0{idx+1}</span>
                 </div>
                 <h3 className="text-xl font-extrabold text-espresso tracking-tight">{tier.tier}</h3>
-                <span className="text-[11px] font-bold text-muted block">{tier.persona}</span>
-                <div className="p-4 bg-linen/50 rounded-2xl border border-espresso/5 italic text-xs text-espresso font-medium leading-relaxed">
+                <span className="text-xs font-bold text-muted block">{tier.persona}</span>
+                <div className="p-4 bg-linen/40 rounded-2xl border border-espresso/5 italic text-xs text-espresso font-medium leading-relaxed">
                   {tier.quote}
                 </div>
                 <p className="text-xs text-muted leading-relaxed">{tier.desc}</p>
               </div>
               <div className="pt-6">
-                <Link href="/dashboard" className="w-full bg-espresso hover:bg-gold hover:text-espresso text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors decoration-transparent">
+                <Link href="/dashboard" className="w-full h-11 bg-espresso hover:bg-gold hover:text-espresso text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all decoration-transparent shadow-xs">
                   <span>{tier.action}</span>
-                  <ArrowRight size={13} />
+                  <ArrowRight size={14} />
                 </Link>
               </div>
             </div>

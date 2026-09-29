@@ -167,6 +167,15 @@ function initSchema(db) {
       location_name TEXT NOT NULL,
       city TEXT NOT NULL,
       primary_h3_cell TEXT,
+      start_date TEXT,
+      end_date TEXT,
+      daily_start_time TEXT,
+      daily_end_time TEXT,
+      timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+      campaign_days INTEGER,
+      hours_per_day REAL,
+      total_campaign_hours REAL,
+      schedule_status TEXT NOT NULL DEFAULT 'LEGACY_MISSING',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -388,6 +397,34 @@ function initSchema(db) {
 
   // Ensure default configuration, 18 metro nodes, and 4 diurnal curves are seeded
   seedDefaults(db);
+  migrateCampaignSchedule(db);
+}
+
+export function migrateCampaignSchedule(db) {
+  try {
+    const existingCols = db.prepare("PRAGMA table_info(campaigns)").all().map(c => c.name);
+    const scheduleCols = [
+      { name: 'start_date', def: 'TEXT' },
+      { name: 'end_date', def: 'TEXT' },
+      { name: 'daily_start_time', def: 'TEXT' },
+      { name: 'daily_end_time', def: 'TEXT' },
+      { name: 'timezone', def: "TEXT DEFAULT 'Asia/Kolkata'" },
+      { name: 'campaign_days', def: 'INTEGER' },
+      { name: 'hours_per_day', def: 'REAL' },
+      { name: 'total_campaign_hours', def: 'REAL' },
+      { name: 'schedule_status', def: "TEXT DEFAULT 'LEGACY_MISSING'" }
+    ];
+
+    for (const col of scheduleCols) {
+      if (!existingCols.includes(col.name)) {
+        db.exec(`ALTER TABLE campaigns ADD COLUMN ${col.name} ${col.def};`);
+      }
+    }
+
+    db.exec(`UPDATE campaigns SET schedule_status = 'LEGACY_MISSING' WHERE schedule_status IS NULL;`);
+  } catch (err) {
+    console.warn('Database campaign schedule migration notice:', err.message);
+  }
 }
 
 function seedDefaults(db) {

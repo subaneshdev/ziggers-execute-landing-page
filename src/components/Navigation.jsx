@@ -160,27 +160,27 @@ export default function Navigation() {
         {/* Mobile Hamburger */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-espresso p-1 hover:bg-linen/30 rounded-lg transition-colors cursor-pointer"
+          className="md:hidden text-espresso p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-linen/40 rounded-xl transition-colors cursor-pointer"
           aria-label="Toggle menu"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 top-[72px] bg-white z-40 border-t border-espresso/5 p-6 overflow-y-auto animate-in slide-in-from-right duration-250">
+        <div className="md:hidden fixed inset-0 top-[72px] bg-white z-40 border-t border-espresso/10 p-6 overflow-y-auto animate-in slide-in-from-right duration-200 shadow-xl">
           <div className="flex flex-col gap-6">
             {Object.keys(menuItems).map((key) => (
               <div key={key} className="flex flex-col gap-2">
-                <span className="text-xs font-bold tracking-widest text-muted uppercase">{menuItems[key].label}</span>
-                <div className="flex flex-col gap-1 pl-2 border-l border-linen">
+                <span className="text-[10px] font-black tracking-widest text-gold uppercase">{menuItems[key].label}</span>
+                <div className="flex flex-col gap-1 pl-3 border-l-2 border-gold/30">
                   {menuItems[key].items.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className="py-2 text-sm font-bold text-espresso hover:text-gold transition-colors decoration-transparent"
+                      className="py-2 text-xs font-bold text-espresso hover:text-gold transition-colors decoration-transparent"
                     >
                       {item.name}
                     </Link>
@@ -191,33 +191,35 @@ export default function Navigation() {
 
             <hr className="border-espresso/5" />
 
-            <Link href="/pricing" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
-              Pricing
-            </Link>
-            <Link href="/partners" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
-              Partners
-            </Link>
-            <Link href="/about" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
-              About
-            </Link>
-            <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-base font-bold text-espresso decoration-transparent">
-              Console
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link href="/pricing" onClick={() => setIsOpen(false)} className="text-sm font-bold text-espresso hover:text-gold decoration-transparent">
+                Pricing
+              </Link>
+              <Link href="/partners" onClick={() => setIsOpen(false)} className="text-sm font-bold text-espresso hover:text-gold decoration-transparent">
+                Partners
+              </Link>
+              <Link href="/about" onClick={() => setIsOpen(false)} className="text-sm font-bold text-espresso hover:text-gold decoration-transparent">
+                About
+              </Link>
+              <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-bold text-gold hover:text-espresso decoration-transparent">
+                Campaign Console
+              </Link>
+            </div>
 
-            <div className="flex flex-col gap-3 mt-4">
+            <div className="flex flex-col gap-3 mt-2">
               {user ? (
                 <>
                   <Link
                     href="/dashboard"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-1 bg-espresso text-white font-bold py-3 rounded-full decoration-transparent"
+                    className="h-12 flex items-center justify-center gap-2 bg-espresso text-white font-extrabold rounded-xl decoration-transparent text-xs shadow-sm"
                   >
                     <span>Open Campaign Console</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={14} className="text-gold" />
                   </Link>
                   <button
                     onClick={() => { signOut(); setIsOpen(false); }}
-                    className="py-2 text-xs font-bold text-red-600 border border-red-200 rounded-full"
+                    className="h-11 flex items-center justify-center text-xs font-bold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
                   >
                     Sign Out
                   </button>
@@ -227,14 +229,14 @@ export default function Navigation() {
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center py-2.5 text-xs font-bold text-espresso border border-espresso/20 rounded-full"
+                    className="h-11 flex items-center justify-center text-xs font-bold text-espresso border border-espresso/20 rounded-xl hover:bg-linen/40 transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-1 bg-espresso text-white font-bold py-3 rounded-full decoration-transparent text-xs uppercase tracking-wider"
+                    className="h-12 flex items-center justify-center gap-1.5 bg-espresso text-white font-extrabold rounded-xl decoration-transparent text-xs uppercase tracking-wider shadow-sm"
                   >
                     <span>Launch Campaign</span>
                     <ArrowRight size={13} className="text-gold" />

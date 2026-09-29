@@ -43,9 +43,14 @@ const INITIAL_DRAFT = {
   existingBrief: '',
   objective: 'Brand Awareness',
   selectedObjectives: ['Brand Awareness'],
-  customObjectiveText: '',
+  startDate: '2026-10-15',
+  endDate: '2026-10-17',
+  dailyStartTime: '16:00',
+  dailyEndTime: '21:00',
+  timezone: 'Asia/Kolkata',
   campaignDurationDays: 3,
   campaignDays: 3,
+  shiftHours: 5,
   estimatedBudget: 75000,
   budgetInr: 75000,
   blueprintActive: false,
@@ -143,7 +148,13 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
           shiftHours: Number(prev.shiftHours || 5),
           campaignDays: Number(prev.campaignDurationDays || prev.campaignDays || 3),
           budgetInr: initialBudget,
-          city: prev.locations?.[0]?.city || 'Chennai'
+          city: prev.locations?.[0]?.city || 'Chennai',
+          startDate: prev.startDate || '2026-10-15',
+          endDate: prev.endDate || '2026-10-17',
+          dailyStartTime: prev.dailyStartTime || '16:00',
+          dailyEndTime: prev.dailyEndTime || '21:00',
+          timezone: prev.timezone || 'Asia/Kolkata',
+          schedule: prev.schedule || null
         });
         return {
           ...prev,
@@ -170,7 +181,13 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
                             (patch.estimatedBudget !== undefined && patch.estimatedBudget !== prev.estimatedBudget);
       const scheduleChanged = (patch.campaignDurationDays !== undefined && patch.campaignDurationDays !== prev.campaignDurationDays) ||
                               (patch.campaignDays !== undefined && patch.campaignDays !== prev.campaignDays) ||
-                              (patch.shiftHours !== undefined && patch.shiftHours !== prev.shiftHours);
+                              (patch.shiftHours !== undefined && patch.shiftHours !== prev.shiftHours) ||
+                              (patch.startDate !== undefined && patch.startDate !== prev.startDate) ||
+                              (patch.endDate !== undefined && patch.endDate !== prev.endDate) ||
+                              (patch.dailyStartTime !== undefined && patch.dailyStartTime !== prev.dailyStartTime) ||
+                              (patch.dailyEndTime !== undefined && patch.dailyEndTime !== prev.dailyEndTime) ||
+                              (patch.timezone !== undefined && patch.timezone !== prev.timezone) ||
+                              (patch.schedule !== undefined && patch.schedule !== prev.schedule);
       const audienceChanged = (patch.ageRange !== undefined && JSON.stringify(patch.ageRange) !== JSON.stringify(prev.ageRange)) ||
                               (patch.gender !== undefined && patch.gender !== prev.gender) ||
                               (patch.selectedInterests !== undefined && JSON.stringify(patch.selectedInterests) !== JSON.stringify(prev.selectedInterests));
@@ -213,11 +230,24 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
             shiftHours: currentHours,
             campaignDays: currentDays,
             budgetInr: currentBudget,
-            city: next.locations?.[0]?.city || 'Chennai'
+            city: next.locations?.[0]?.city || 'Chennai',
+            startDate: next.startDate,
+            endDate: next.endDate,
+            dailyStartTime: next.dailyStartTime,
+            dailyEndTime: next.dailyEndTime,
+            timezone: next.timezone,
+            schedule: next.schedule
           });
 
           if (liveForecast) {
             next.forecast = liveForecast;
+            if (liveForecast.schedule?.campaignDays && patch.campaignDays === undefined && patch.campaignDurationDays === undefined) {
+              next.campaignDays = liveForecast.schedule.campaignDays;
+              next.campaignDurationDays = liveForecast.schedule.campaignDays;
+            }
+            if (liveForecast.schedule?.hoursPerDay && patch.shiftHours === undefined) {
+              next.shiftHours = liveForecast.schedule.hoursPerDay;
+            }
             // Update staffing recommendation if not explicitly locked in this patch
             if (patch.promoterCount === undefined && liveForecast.capacity?.promoterCount !== undefined) {
               next.promoterCount = liveForecast.capacity.promoterCount;

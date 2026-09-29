@@ -175,39 +175,53 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Header */}
-      <div>
-        <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
+      {/* Step Header */}
+      <div className="border-b border-espresso/10 pb-5">
+        <span className="text-[11px] font-mono font-bold text-gold uppercase tracking-wider block">
           Step 5 • Location & Geography Targeting
         </span>
-        <h2 className="text-xl md:text-2xl font-black text-espresso tracking-tight font-serif mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-black text-espresso tracking-tight font-serif mt-1">
           Where should it happen?
         </h2>
-        <p className="text-xs text-muted mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Ziggers ranks environment types specifically matched to your audience ({audienceName}), then searches and scores real-world Google Places.
         </p>
       </div>
 
-      {/* Geography Filters */}
-      <div className="bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+      {/* Section 01: Geography Filters */}
+      <div className="bg-white border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              01
+            </span>
+            <h3 className="text-xs font-black text-espresso uppercase tracking-wider">
+              Geographic Scope & Geofence Radius
+            </h3>
+          </div>
+          <p className="text-xs text-muted mt-1 ml-7">
+            Select metropolitan center and pinpoint target localities with defined GPS geofence zones.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
           
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="font-bold text-espresso block">Country</label>
             <input
               type="text"
               disabled
               value="India 🇮🇳"
-              className="w-full bg-linen/30 border border-espresso/10 rounded-xl px-3 py-2 text-xs font-bold text-espresso"
+              className="w-full h-11 bg-linen/30 border border-espresso/10 rounded-xl px-4 text-xs sm:text-sm font-bold text-espresso cursor-not-allowed"
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="font-bold text-espresso block">Target City</label>
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs font-bold text-espresso focus:outline-none focus:border-gold cursor-pointer"
+              className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl px-3 text-xs sm:text-sm font-bold text-espresso focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold cursor-pointer transition-all"
             >
               <option value="Chennai">Chennai, Tamil Nadu</option>
               <option value="Bengaluru">Bengaluru, Karnataka</option>
@@ -218,23 +232,23 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="font-bold text-espresso block">Target Area / Locality (Example Location)</label>
+          <div className="space-y-1.5">
+            <label className="font-bold text-espresso block">Target Area / Locality</label>
             <input
               type="text"
               value={searchAreaInput}
               onChange={(e) => setSearchAreaInput(e.target.value)}
               placeholder="e.g. T Nagar, Anna Nagar"
-              className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs font-bold text-espresso focus:outline-none focus:border-gold"
+              className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl px-4 text-xs sm:text-sm font-bold text-espresso focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="font-bold text-espresso block">Geofence Radius</label>
             <select
               value={searchRadiusKm}
               onChange={(e) => setSearchRadiusKm(Number(e.target.value))}
-              className="w-full bg-linen/20 border border-espresso/15 rounded-xl px-3 py-2 text-xs font-bold text-espresso focus:outline-none focus:border-gold cursor-pointer"
+              className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl px-3 text-xs sm:text-sm font-bold text-espresso focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold cursor-pointer transition-all"
             >
               <option value={1.0}>1.0 km (Hyperlocal Cluster)</option>
               <option value={3.0}>3.0 km (Standard Hub)</option>
@@ -245,17 +259,22 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
         </div>
       </div>
 
-      {/* Recommended Environments (with Match Scores) */}
-      <div className="space-y-3">
+      {/* Section 02: Recommended Environments (with Match Scores) */}
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles size={14} className="text-gold" />
-            <span>Recommended Environment Types for {brand}</span>
-          </label>
-          <span className="text-[10px] font-mono text-muted">Click environment to search places</span>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              02
+            </span>
+            <label className="block text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles size={14} className="text-gold" />
+              <span>Recommended Physical Environments for {brand}</span>
+            </label>
+          </div>
+          <span className="text-[11px] font-mono text-muted">Click environment to search places</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {activeEnvironments.map((env, idx) => {
             const isSelected = selectedEnvironmentIndex === idx;
             return (
@@ -265,14 +284,14 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
                   setSelectedEnvironmentIndex(idx);
                   handleDiscoverPlaces(env);
                 }}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                className={`p-5 rounded-2xl border cursor-pointer transition-all space-y-2.5 ${
                   isSelected
-                    ? 'bg-espresso text-white border-espresso shadow-md ring-2 ring-gold/40'
-                    : 'bg-white border-espresso/10 hover:border-espresso/30 text-espresso'
+                    ? 'bg-espresso text-white border-espresso shadow-lg ring-2 ring-gold/50'
+                    : 'bg-white border-espresso/10 hover:border-espresso/30 text-espresso shadow-2xs hover:shadow-xs'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
                     isSelected ? 'bg-gold text-espresso' : 'bg-green-50 text-green-800 border border-green-200'
                   }`}>
                     {env.relevanceScore || 90}% Match
@@ -282,11 +301,11 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
                   </span>
                 </div>
 
-                <strong className="text-xs font-black block font-serif leading-snug">
+                <strong className="text-xs sm:text-sm font-black block font-serif leading-snug">
                   {env.environment || env.type}
                 </strong>
 
-                <p className={`text-[10px] leading-relaxed line-clamp-2 ${isSelected ? 'text-linen/75' : 'text-muted'}`}>
+                <p className={`text-[11px] leading-relaxed line-clamp-2 ${isSelected ? 'text-linen/75' : 'text-muted'}`}>
                   {env.whyExists}
                 </p>
               </div>

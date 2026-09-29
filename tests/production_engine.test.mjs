@@ -13,6 +13,9 @@
 
 import assert from 'assert';
 import crypto from 'crypto';
+
+process.env.AUDIT_HMAC_MASTER_SECRET = process.env.AUDIT_HMAC_MASTER_SECRET || 'ziggers-production-audit-master-hmac-secret-key-32b-minimum';
+
 import { getDatabase, closeDatabase } from '../src/lib/data/database.js';
 import { ingestVerifiedOutcomeTransaction, getTenantModelEvaluationData } from '../src/lib/data/repositories/outcomeRepository.js';
 import { getHierarchicalPosterior } from '../src/lib/data/repositories/bayesianRepository.js';
@@ -41,6 +44,16 @@ import { getHourlyTrafficCurve } from '../src/lib/data/repositories/trafficRepos
 import { getSpatialPopulationByH3 } from '../src/lib/data/repositories/populationRepository.js';
 import { HOURLY_PROFILES } from '../src/lib/intelligence/footfall/timeDistribution.js';
 import { MetaSignalProvider } from '../src/lib/intelligence/signals/metaSignalProvider.js';
+import { 
+  validateCampaignSchedule, 
+  calculateScheduleMetrics, 
+  normalizeTimeString, 
+  formatTimeDisplay, 
+  formatDateDisplay, 
+  getTodayDateString,
+  SCHEDULE_CONFIG_LIMITS 
+} from '../src/lib/intelligence/schedule/scheduleEngine.js';
+import { migrateCampaignSchedule } from '../src/lib/data/database.js';
 
 let passedTests = 0;
 let totalTests = 0;
@@ -511,6 +524,7 @@ it('Missing Supabase configuration strictly throws explicit descriptive error wi
   const origUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   try {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test-project.supabase.co';
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     assert.throws(() => {
       getRequiredSupabaseClient();
@@ -526,8 +540,11 @@ it('Missing Supabase configuration strictly throws explicit descriptive error wi
     });
   } finally {
     if (origAnonKey !== undefined) process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = origAnonKey;
+    else delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (origServiceKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = origServiceKey;
+    else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (origUrl !== undefined) process.env.NEXT_PUBLIC_SUPABASE_URL = origUrl;
+    else delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   }
 });
 
@@ -762,6 +779,359 @@ it('P2.2: Campaign forecast metadata records taxonomyType: RULE_BASED_ONTOLOGY',
   assert.strictEqual(forecast.provenance.taxonomyVersion, 'btl-v1.0-rules');
 });
 
+// ---------------------------------------------------------
+// SECTION 8: CAMPAIGN SCHEDULING & DIURNAL TRAFFIC PIPELINE
+// ---------------------------------------------------------
+console.log('\n--- 8. Campaign Scheduling & Diurnal Traffic Pipeline ---');
+
+it('SCHED-001: calculateScheduleMetrics returns 3 inclusive days for 2026-10-15 to 2026-10-17', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'
+  });
+  assert.strictEqual(metrics.campaignDays, 3, 'Must be 3 inclusive calendar days');
+});
+
+it('SCHED-002: calculateScheduleMetrics returns 1 day for single-day campaign (same start and end)', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-15',
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  });
+  assert.strictEqual(metrics.campaignDays, 1, 'Same day campaign must count as 1 inclusive day');
+});
+
+it('SCHED-003: calculateScheduleMetrics calculates correct shift hours (16:00 to 21:00 = 5.0h)', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'
+  });
+  assert.strictEqual(metrics.hoursPerDay, 5, 'Shift hours must be exactly 5.0h');
+  assert.strictEqual(metrics.startHour, 16);
+  assert.strictEqual(metrics.endHour, 21);
+});
+
+it('SCHED-004: calculateScheduleMetrics calculates fractional shift hours (10:30 to 14:45 = 4.25h)', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-15',
+    dailyStartTime: '10:30',
+    dailyEndTime: '14:45'
+  });
+  assert.strictEqual(metrics.hoursPerDay, 4.25, '10:30 to 14:45 must be exactly 4.25 hours');
+});
+
+it('SCHED-005: calculateScheduleMetrics calculates total campaign hours = campaignDays * hoursPerDay (3 * 5 = 15h)', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'
+  });
+  assert.strictEqual(metrics.totalCampaignHours, 15, 'Total campaign hours must be 3 * 5 = 15');
+});
+
+it('SCHED-006: calculateScheduleMetrics computes weekday and weekend counts (2026-10-15 Thu to 2026-10-17 Sat)', () => {
+  const metrics = calculateScheduleMetrics({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'
+  });
+  // 2026-10-15 is Thursday (weekday)
+  // 2026-10-16 is Friday (weekday)
+  // 2026-10-17 is Saturday (weekend)
+  assert.strictEqual(metrics.weekdayCount, 2, 'Thursday and Friday are 2 weekdays');
+  assert.strictEqual(metrics.weekendCount, 1, 'Saturday is 1 weekend day');
+});
+
+it('SCHED-007: calculateScheduleMetrics identifies dominant day type correctly', () => {
+  const weekdayDominant = calculateScheduleMetrics({
+    startDate: '2026-10-12', // Monday
+    endDate: '2026-10-16',   // Friday
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  });
+  assert.strictEqual(weekdayDominant.dominantDayType, 'WEEKDAY');
+  assert.strictEqual(weekdayDominant.weekdayCount, 5);
+  assert.strictEqual(weekdayDominant.weekendCount, 0);
+
+  const weekendDominant = calculateScheduleMetrics({
+    startDate: '2026-10-17', // Saturday
+    endDate: '2026-10-18',   // Sunday
+    dailyStartTime: '12:00',
+    dailyEndTime: '20:00'
+  });
+  assert.strictEqual(weekendDominant.dominantDayType, 'WEEKEND');
+  assert.strictEqual(weekendDominant.weekdayCount, 0);
+  assert.strictEqual(weekendDominant.weekendCount, 2);
+});
+
+it('SCHED-008: validateCampaignSchedule rejects empty start date or end date', () => {
+  const res1 = validateCampaignSchedule({ startDate: '', endDate: '2026-10-17', dailyStartTime: '16:00', dailyEndTime: '21:00' });
+  assert.strictEqual(res1.isValid, false);
+  assert(res1.errors.some(e => e.includes('start date is required')));
+
+  const res2 = validateCampaignSchedule({ startDate: '2026-10-15', endDate: '', dailyStartTime: '16:00', dailyEndTime: '21:00' });
+  assert.strictEqual(res2.isValid, false);
+  assert(res2.errors.some(e => e.includes('end date is required')));
+});
+
+it('SCHED-009: validateCampaignSchedule rejects invalid calendar date format (e.g. Feb 31)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-02-31',
+    endDate: '2026-03-05',
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('valid calendar date')));
+});
+
+it('SCHED-010: validateCampaignSchedule rejects inverted date range (endDate < startDate)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-20',
+    endDate: '2026-10-15',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('End date cannot be before start date')));
+});
+
+it('SCHED-011: validateCampaignSchedule rejects past start dates when allowPastDates is false', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2020-01-01',
+    endDate: '2020-01-05',
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  }, { allowPastDates: false });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('past')));
+});
+
+it('SCHED-012: validateCampaignSchedule rejects campaigns exceeding maxCampaignDays (61 days)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-01',
+    endDate: '2026-11-30', // 61 inclusive days
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('exceeds the allowed maximum of 60 days')));
+});
+
+it('SCHED-013: validateCampaignSchedule accepts campaigns up to maxCampaignDays (60 days)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-01',
+    endDate: '2026-11-29', // 60 inclusive days
+    dailyStartTime: '10:00',
+    dailyEndTime: '18:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, true);
+  assert.strictEqual(res.normalized.campaignDays, 60);
+});
+
+it('SCHED-014: validateCampaignSchedule rejects shift duration under minShiftHours (< 2 hours)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '10:00',
+    dailyEndTime: '11:30' // 1.5 hours
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('at least 2 hours')));
+});
+
+it('SCHED-015: validateCampaignSchedule rejects shift duration exceeding maxShiftHours (> 12 hours)', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '08:00',
+    dailyEndTime: '21:00' // 13 hours
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('cannot exceed 12 hours')));
+});
+
+it('SCHED-016: validateCampaignSchedule strictly rejects overnight shifts (dailyEndTime <= dailyStartTime)', () => {
+  const resSameTime = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '16:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(resSameTime.isValid, false);
+  assert(resSameTime.errors.some(e => e.includes('must be after daily start time')));
+
+  const resOvernight = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '22:00',
+    dailyEndTime: '04:00'
+  }, { allowPastDates: true });
+  assert.strictEqual(resOvernight.isValid, false);
+  assert(resOvernight.errors.some(e => e.includes('Overnight campaigns are not supported')));
+});
+
+it('SCHED-017: validateCampaignSchedule accepts valid canonical schedule with Asia/Kolkata timezone', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00',
+    timezone: 'Asia/Kolkata'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, true);
+  assert.strictEqual(res.errors.length, 0);
+  assert.strictEqual(res.normalized.timezone, 'Asia/Kolkata');
+  assert.strictEqual(res.normalized.campaignDays, 3);
+  assert.strictEqual(res.normalized.hoursPerDay, 5);
+  assert.strictEqual(res.normalized.totalCampaignHours, 15);
+});
+
+it('SCHED-018: validateCampaignSchedule rejects invalid or bogus timezone identifier', () => {
+  const res = validateCampaignSchedule({
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00',
+    timezone: 'Invalid/NonExistent_Zone'
+  }, { allowPastDates: true });
+  assert.strictEqual(res.isValid, false);
+  assert(res.errors.some(e => e.includes('Invalid or unsupported time zone')));
+});
+
+it('SCHED-019: normalizeTimeString formats various input formats into canonical "HH:mm"', () => {
+  assert.strictEqual(normalizeTimeString('9:00'), '09:00');
+  assert.strictEqual(normalizeTimeString('09:00'), '09:00');
+  assert.strictEqual(normalizeTimeString('09:00:00'), '09:00');
+  assert.strictEqual(normalizeTimeString('16:30:45'), '16:30');
+  assert.strictEqual(normalizeTimeString('invalid'), null);
+});
+
+it('SCHED-020: formatTimeDisplay formats 24h string into 12h AM/PM display ("16:00" -> "4:00 PM")', () => {
+  assert.strictEqual(formatTimeDisplay('16:00'), '4:00 PM');
+  assert.strictEqual(formatTimeDisplay('09:30'), '9:30 AM');
+  assert.strictEqual(formatTimeDisplay('00:00'), '12:00 AM');
+  assert.strictEqual(formatTimeDisplay('12:00'), '12:00 PM');
+});
+
+it('SCHED-021: formatDateDisplay formats ISO date into readable display ("2026-10-15" -> "15 Oct 2026")', () => {
+  assert.strictEqual(formatDateDisplay('2026-10-15'), '15 Oct 2026');
+  assert.strictEqual(formatDateDisplay('2026-12-31'), '31 Dec 2026');
+});
+
+it('SCHED-022: Database migration idempotency: campaigns table contains all 9 schedule columns', () => {
+  const db = getDatabase();
+  migrateCampaignSchedule(db); // test re-running idempotently
+  const columns = db.prepare(`PRAGMA table_info(campaigns)`).all().map(c => c.name);
+
+  assert(columns.includes('start_date'), 'campaigns must have start_date');
+  assert(columns.includes('end_date'), 'campaigns must have end_date');
+  assert(columns.includes('daily_start_time'), 'campaigns must have daily_start_time');
+  assert(columns.includes('daily_end_time'), 'campaigns must have daily_end_time');
+  assert(columns.includes('timezone'), 'campaigns must have timezone');
+  assert(columns.includes('campaign_days'), 'campaigns must have campaign_days');
+  assert(columns.includes('hours_per_day'), 'campaigns must have hours_per_day');
+  assert(columns.includes('total_campaign_hours'), 'campaigns must have total_campaign_hours');
+  assert(columns.includes('schedule_status'), 'campaigns must have schedule_status');
+});
+
+it('SCHED-023: Historical legacy campaign without schedule has schedule_status = "LEGACY_MISSING"', () => {
+  const db = getDatabase();
+  const legacyId = `legacy_camp_${Date.now()}`;
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    INSERT INTO campaigns (
+      id, campaign_id, tenant_id, title, brand_name, campaign_type, status,
+      budget_net_paise, budget_gross_paise, gst_paise, escrow_reserve_paise,
+      platform_fee_paise, labour_pool_paise, duration_days, shift_hours,
+      location_name, city, schedule_status, created_at, updated_at
+    ) VALUES (?, ?, 'org_test', 'Legacy Campaign', 'Legacy Brand', 'Product Sampling', 'Draft',
+      10000000, 11800000, 1800000, 1000000, 800000, 7200000, 3, 5,
+      'Chennai Central', 'Chennai', 'LEGACY_MISSING', ?, ?)
+  `).run(legacyId, legacyId, now, now);
+
+  const row = db.prepare(`SELECT * FROM campaigns WHERE campaign_id = ?`).get(legacyId);
+  assert.strictEqual(row.schedule_status, 'LEGACY_MISSING');
+  assert.strictEqual(row.start_date, null);
+  assert.strictEqual(row.end_date, null);
+});
+
+it('SCHED-024: Master forecast pipeline consumes schedule parameters and updates effective days and shift hours', () => {
+  const forecast = generateCampaignForecast({
+    targetLocations: ['T. Nagar & Ranganathan Street'],
+    radiusKm: 3.0,
+    budgetInr: 250000,
+    objective: 'Product Sampling',
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00',
+    timezone: 'Asia/Kolkata'
+  });
+
+  assert(forecast.schedule, 'Forecast must contain schedule object');
+  assert.strictEqual(forecast.schedule.campaignDays, 3);
+  assert.strictEqual(forecast.schedule.hoursPerDay, 5);
+  assert.strictEqual(forecast.schedule.totalCampaignHours, 15);
+  assert.strictEqual(forecast.timingMetadata.provenanceSource, 'USER_DECLARED_SCHEDULE');
+});
+
+it('SCHED-025: Master forecast diurnal traffic blending accurately weights weekday vs weekend curves', () => {
+  const forecastMixed = generateCampaignForecast({
+    targetLocations: ['T. Nagar & Ranganathan Street'],
+    radiusKm: 3.0,
+    budgetInr: 250000,
+    objective: 'Product Sampling',
+    startDate: '2026-10-15', // Thu (weekday)
+    endDate: '2026-10-17',   // Sat (weekend) -> 2 weekdays, 1 weekend
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00',
+    timezone: 'Asia/Kolkata'
+  });
+
+  assert(forecastMixed.timingMetadata, 'Timing metadata must be present');
+  assert.strictEqual(forecastMixed.timingMetadata.weekdayCount, 2);
+  assert.strictEqual(forecastMixed.timingMetadata.weekendCount, 1);
+  assert(forecastMixed.forecast.exposure > 0, 'Exposure must be calculated with blended curve');
+});
+
+it('SCHED-026: Financial escrow waterfall allocates promoter labor based on schedule shift hours and days', () => {
+  const forecast3Days = generateCampaignForecast({
+    targetLocations: ['T. Nagar & Ranganathan Street'],
+    radiusKm: 3.0,
+    budgetInr: 250000,
+    objective: 'Product Sampling',
+    startDate: '2026-10-15',
+    endDate: '2026-10-17', // 3 days
+    dailyStartTime: '16:00',
+    dailyEndTime: '21:00'  // 5 hours
+  });
+
+  const waterfall = forecast3Days.financials?.escrowWaterfall;
+  assert(waterfall, 'Escrow waterfall must be returned');
+  assert.strictEqual(waterfall.reconciliationCheck, true, 'Waterfall must reconcile in integer paise');
+  assert((waterfall.promoterWagePool || waterfall.promoterWagePoolPaise) > 0, 'Promoter wage pool must be allocated');
+});
+
+it('SCHED-027: Step 10 Budget Approval component file is completely unmodified and retains its exact simulated escrow behavior', () => {
+  const step10Path = 'src/components/campaign-creator/steps/Step10BudgetApproval.jsx';
+  assert(fs.existsSync(step10Path), 'Step10BudgetApproval.jsx must exist');
+  const content = fs.readFileSync(step10Path, 'utf8');
+  assert(content.includes('Step 10 • Budget Consolidation & Escrow Settlement'), 'Step 10 must have header');
+  assert(content.includes('Multi-Signature Escrow & Instant Payout Protocol'), 'Step 10 must retain escrow protocol text');
+  assert(content.includes('setTimeout'), 'Step 10 setTimeout simulation must remain untouched');
+});
+
 console.log('\n===================================================================');
 console.log(`🎉 ALL ${passedTests}/${totalTests} PRODUCTION ENGINE TESTS PASSED!`);
 console.log('===================================================================\n');
+

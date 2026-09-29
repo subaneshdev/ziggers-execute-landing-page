@@ -24,79 +24,90 @@ export default function Step9ExecutionPlan({ draft, onJumpToStep }) {
     activationRequirements = []
   } = draft;
 
-  const totalDays = campaignDurationDays || campaignDays || 3;
+  const totalDays = draft.campaignDays || campaignDurationDays || campaignDays || 3;
   const targetCity = locations[0]?.city || 'Chennai';
+  const startDate = draft.startDate || '2026-10-15';
+  const endDate = draft.endDate || '2026-10-17';
+  const dailyTime = `${draft.dailyStartTime || '16:00'}–${draft.dailyEndTime || '21:00'}`;
 
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Header */}
-      <div>
-        <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
+      {/* Step Header */}
+      <div className="border-b border-espresso/10 pb-5">
+        <span className="text-[11px] font-mono font-bold text-gold uppercase tracking-wider block">
           Step 9 • Campaign Execution Plan
         </span>
-        <h2 className="text-xl md:text-2xl font-black text-espresso tracking-tight font-serif mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-black text-espresso tracking-tight font-serif mt-1">
           Unified Master Execution Plan
         </h2>
-        <p className="text-xs text-muted mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Everything comes together into a transparent operational matrix showing owners, current status, deadlines, and dependencies.
         </p>
       </div>
 
       {/* Top Campaign Summary Card */}
-      <div className="bg-espresso text-linen p-5 sm:p-6 rounded-3xl space-y-4 shadow-md border border-gold/30">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-linen/15 pb-4">
+      <div className="bg-espresso text-linen p-6 sm:p-7 rounded-3xl space-y-5 shadow-xl border border-gold/30">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-linen/15 pb-4">
           <div>
             <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
               Execution Master Blueprint
             </span>
-            <h3 className="text-base sm:text-lg font-black text-white font-serif">
+            <h3 className="text-lg sm:text-xl font-black text-white font-serif mt-0.5">
               {name || `${brand} ${objective} Campaign`}
             </h3>
-            <span className="text-xs text-linen/75 mt-0.5 block">
-              Activation: <strong className="text-white">{activationPlan?.activationName || btlFormat || 'Product Sampling'}</strong>
+            <span className="text-xs text-linen/75 mt-1 block">
+              Activation Strategy: <strong className="text-white">{activationPlan?.activationName || btlFormat || 'Product Sampling'}</strong>
             </span>
           </div>
 
-          <div className="p-2.5 bg-linen/10 rounded-xl text-left sm:text-right shrink-0">
-            <span className="text-[9px] font-bold text-gold uppercase block">Timeline & Sizing</span>
-            <strong className="text-xs font-black text-white">
+          <div className="p-3 bg-linen/10 rounded-2xl text-left sm:text-right shrink-0 border border-linen/10">
+            <span className="text-[9px] font-mono font-bold text-gold uppercase block">Timeline & Sizing</span>
+            <strong className="text-xs sm:text-sm font-black text-white block mt-0.5">
               {totalDays} Days • {promoterCount} Promoters • {locations.length || 1} Hubs
             </strong>
+            <span className="text-[10px] text-linen/70 block mt-0.5 font-mono">
+              {startDate} to {endDate} ({dailyTime})
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="space-y-0.5">
-            <span className="text-[9px] text-gold uppercase font-bold">Target Audience:</span>
-            <strong className="text-white block text-[11px] truncate">{audienceName} ({ageRange[0]}–{ageRange[1]} yrs)</strong>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="space-y-1">
+            <span className="text-[9px] text-gold uppercase font-bold tracking-wider block">Target Audience:</span>
+            <strong className="text-white block text-xs truncate">{audienceName} ({ageRange[0]}–{ageRange[1]} yrs)</strong>
           </div>
-          <div className="space-y-0.5">
-            <span className="text-[9px] text-gold uppercase font-bold">City & Hubs:</span>
-            <strong className="text-white block text-[11px] truncate">{targetCity} ({locations.length || 1} Locations)</strong>
+          <div className="space-y-1">
+            <span className="text-[9px] text-gold uppercase font-bold tracking-wider block">City & Hubs:</span>
+            <strong className="text-white block text-xs truncate">{targetCity} ({locations.length || 1} Locations)</strong>
           </div>
-          <div className="space-y-0.5">
-            <span className="text-[9px] text-gold uppercase font-bold">Field Staffing:</span>
-            <strong className="text-white block text-[11px] truncate">{promoterCount} Promoters, {supervisorCount} Team Leader</strong>
+          <div className="space-y-1">
+            <span className="text-[9px] text-gold uppercase font-bold tracking-wider block">Field Staffing:</span>
+            <strong className="text-white block text-xs truncate">{promoterCount} Promoters, {supervisorCount} Team Leader</strong>
           </div>
-          <div className="space-y-0.5">
-            <span className="text-[9px] text-gold uppercase font-bold">Telemetry:</span>
-            <strong className="text-green-300 block text-[11px] truncate">GPS Geofenced Verification</strong>
+          <div className="space-y-1">
+            <span className="text-[9px] text-gold uppercase font-bold tracking-wider block">Telemetry:</span>
+            <strong className="text-green-300 block text-xs truncate">GPS Geofenced Verification</strong>
           </div>
         </div>
       </div>
 
       {/* Structured Execution Component Matrix */}
-      <div className="bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs space-y-4">
+      <div className="bg-white border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
         <div className="flex items-center justify-between">
-          <strong className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-2">
-            <Layers size={14} className="text-gold" />
-            <span>Operational Component Matrix ({activationRequirements.length})</span>
-          </strong>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              01
+            </span>
+            <strong className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-2">
+              <Layers size={14} className="text-gold" />
+              <span>Operational Component Matrix ({activationRequirements.length})</span>
+            </strong>
+          </div>
           <span className="text-[10px] font-mono text-muted">Owner • Status • Deadline • Dependency</span>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {activationRequirements.map((req, idx) => {
             const mode = req.fulfillmentMode || req.suggestedFulfillment || FULFILLMENT_MODES.CLIENT_HANDLES;
 
@@ -140,7 +151,7 @@ export default function Step9ExecutionPlan({ draft, onJumpToStep }) {
             return (
               <div
                 key={req.id || idx}
-                className="p-4 bg-linen/15 rounded-2xl border border-espresso/10 space-y-2.5 text-xs"
+                className="p-5 bg-linen/15 rounded-2xl border border-espresso/10 space-y-3 text-xs hover:border-espresso/25 transition-all"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="space-y-0.5">

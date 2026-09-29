@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateCampaignForecast } from '@/lib/intelligence/index';
 import { getDatabase } from '@/lib/data/database';
+import { 
+  validateCampaignSchedule, 
+  calculateScheduleMetrics, 
+  formatDateDisplay, 
+  formatTimeDisplay 
+} from '@/lib/intelligence/schedule/scheduleEngine';
 
 /**
  * Normalizes raw campaigns table row to standard application schema
@@ -15,8 +21,12 @@ function normalizeCampaignRow(row) {
   const isLive = row.status === 'PUBLISHED' || row.status === 'Live' || row.status === 'ACTIVE' || row.status === true;
 
   const dateSchedule = row.start_date && row.end_date 
-    ? `${row.start_date} – ${row.end_date}` 
+    ? `${formatDateDisplay(row.start_date)} – ${formatDateDisplay(row.end_date)}` 
     : (row.created_at ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Active Shift');
+
+  const timingSchedule = row.daily_start_time && row.daily_end_time
+    ? `${formatTimeDisplay(row.daily_start_time)} – ${formatTimeDisplay(row.daily_end_time)}`
+    : `${row.shift_hours || 5}h / day`;
 
   return {
     id: row.campaign_id || row.id,
@@ -59,8 +69,17 @@ function normalizeCampaignRow(row) {
     targetLeads: row.targetLeads || (row.forecast?.leads) || 0,
 
     schedule: dateSchedule,
-    start_date: row.start_date,
-    end_date: row.end_date,
+    scheduleDisplay: dateSchedule,
+    dailyTimingDisplay: timingSchedule,
+    start_date: row.start_date || null,
+    end_date: row.end_date || null,
+    daily_start_time: row.daily_start_time || null,
+    daily_end_time: row.daily_end_time || null,
+    timezone: row.timezone || 'Asia/Kolkata',
+    campaign_days: row.campaign_days || row.duration_days || null,
+    hours_per_day: row.hours_per_day || row.shift_hours || null,
+    total_campaign_hours: row.total_campaign_hours || (row.duration_days && row.shift_hours ? row.duration_days * row.shift_hours : null),
+    schedule_status: row.schedule_status || (row.start_date ? 'CONFIRMED' : 'LEGACY_MISSING'),
     supervisor_name: row.supervisor_name || 'Field Operations Lead',
     supervisor_phone: row.supervisor_phone || 'Assigned via Operations Desk',
     supervisor_email: row.supervisor_email,
@@ -146,8 +165,55 @@ export async function POST(request) {
       ? parseInt(String(rawBudget).replace(/[^0-9]/g, ''), 10)
       : 75000;
     const budgetNumeric = isNaN(parsedBudget) ? 75000 : parsedBudget;
-    const durationDays = parseInt(body.durationDays || body.campaignDays || body.campaignDurationDays, 10) || 7;
-    const shiftHours = parseInt(body.shiftHours, 10) || 5;
+    // Extract and validate schedule fields
+    const rawStartDate = body.startDate || body.start_date;
+    const rawEndDate = body.endDate || body.end_date;
+    const rawDailyStartTime = body.dailyStartTime || body.daily_start_time;
+    const rawDailyEndTime = body.dailyEndTime || body.daily_end_time;
+    const rawTimezone = body.timezone || 'Asia/Kolkata';
+
+    let scheduleMetrics = null;
+    let durationDays = parseInt(body.durationDays || body.campaignDays || body.campaignDurationDays, 10) || 7;
+    let shiftHours = parseInt(body.shiftHours, 10) || 5;
+    let scheduleStatus = 'LEGACY_MISSING';
+    let startDate = null;
+    let endDate = null;
+    let dailyStartTime = null;
+    let dailyEndTime = null;
+    let timezone = 'Asia/Kolkata';
+    let totalCampaignHours = null;
+
+    if (rawStartDate || rawEndDate || rawDailyStartTime || rawDailyEndTime) {
+      const scheduleValidation = validateCampaignSchedule({
+        startDate: rawStartDate,
+        endDate: rawEndDate,
+        dailyStartTime: rawDailyStartTime || '16:00',
+        dailyEndTime: rawDailyEndTime || '21:00',
+        timezone: rawTimezone
+      }, {
+        allowPastDates: Boolean(body.allowPastDates)
+      });
+
+      if (!scheduleValidation.isValid) {
+        return NextResponse.json({
+          success: false,
+          error: scheduleValidation.errors[0],
+          errors: scheduleValidation.errors
+        }, { status: 400 });
+      }
+
+      scheduleMetrics = scheduleValidation.normalized;
+      startDate = scheduleMetrics.startDate;
+      endDate = scheduleMetrics.endDate;
+      dailyStartTime = scheduleMetrics.dailyStartTime;
+      dailyEndTime = scheduleMetrics.dailyEndTime;
+      timezone = scheduleMetrics.timezone;
+      durationDays = scheduleMetrics.campaignDays;
+      shiftHours = scheduleMetrics.hoursPerDay;
+      totalCampaignHours = scheduleMetrics.totalCampaignHours;
+      scheduleStatus = 'CONFIRMED';
+    }
+
     const targetCity = body.city || (body.locations?.[0]?.city) || 'Chennai';
     const targetLocation = body.location || (body.locations?.[0]?.name) || `${targetCity} Central Hub`;
     const now = new Date().toISOString();
@@ -165,7 +231,13 @@ export async function POST(request) {
       shiftHours,
       campaignDays: durationDays,
       budgetInr: budgetNumeric,
-      isGstInclusive: true
+      isGstInclusive: true,
+      startDate,
+      endDate,
+      dailyStartTime,
+      dailyEndTime,
+      timezone,
+      schedule: scheduleMetrics
     });
 
     const recommendedPromoters = forecastResult.capacity?.promoterCount || 10;
@@ -188,14 +260,18 @@ export async function POST(request) {
         campaign_type, status, budget_net_paise, budget_gross_paise, gst_paise,
         escrow_reserve_paise, platform_fee_paise, labour_pool_paise,
         duration_days, shift_hours, location_name, city, primary_h3_cell,
+        start_date, end_date, daily_start_time, daily_end_time, timezone,
+        campaign_days, hours_per_day, total_campaign_hours, schedule_status,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       campaignId, campaignId, tenantId, campaignName, body.brand || 'Enterprise Brand',
       body.product || null, campaignObjective, body.stage || 'Live',
       netPaise, grossPaise, gstPaise, reservePaise, platformPaise, labourPaise,
       durationDays, shiftHours, targetLocation, targetCity,
       forecastResult.h3Analysis?.centerH3Index || null,
+      startDate, endDate, dailyStartTime, dailyEndTime, timezone,
+      durationDays, shiftHours, totalCampaignHours, scheduleStatus,
       now, now
     );
 
@@ -244,6 +320,18 @@ export async function POST(request) {
       budget: budgetNumeric,
       spend: budgetNumeric,
       status: body.stage || 'Live',
+      start_date: startDate,
+      end_date: endDate,
+      daily_start_time: dailyStartTime,
+      daily_end_time: dailyEndTime,
+      timezone,
+      campaign_days: durationDays,
+      hours_per_day: shiftHours,
+      total_campaign_hours: totalCampaignHours,
+      schedule_status: scheduleStatus,
+      schedule: scheduleMetrics?.scheduleDisplay || (startDate && endDate ? `${formatDateDisplay(startDate)} – ${formatDateDisplay(endDate)}` : `${durationDays} Days`),
+      scheduleDisplay: scheduleMetrics?.scheduleDisplay || (startDate && endDate ? `${formatDateDisplay(startDate)} – ${formatDateDisplay(endDate)}` : `${durationDays} Days`),
+      dailyTimingDisplay: scheduleMetrics?.dailyTimingDisplay || `${shiftHours}h / day`,
       created_at: now
     };
 

@@ -60,34 +60,36 @@ export default function Step7PartnerCoordination({ draft, onUpdate, onJumpToStep
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Header */}
-      <div>
-        <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
+      {/* Step Header */}
+      <div className="border-b border-espresso/10 pb-5">
+        <span className="text-[11px] font-mono font-bold text-gold uppercase tracking-wider block">
           Step 7 • Partner & Vendor Coordination
         </span>
-        <h2 className="text-xl md:text-2xl font-black text-espresso tracking-tight font-serif mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-black text-espresso tracking-tight font-serif mt-1">
           Verified BTL Partner Network Matching
         </h2>
-        <p className="text-xs text-muted mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Review requirements requiring specialized vendors in <strong className="text-espresso">{targetCity}</strong>. Compare verified partners, view turnaround SLAs, and assign deliverables.
         </p>
       </div>
 
       {partnerReqs.length === 0 ? (
-        <div className="bg-white border border-espresso/15 rounded-3xl p-8 text-center space-y-3 font-sans">
-          <div className="w-12 h-12 rounded-full bg-linen/40 text-espresso flex items-center justify-center mx-auto">
-            <CheckCircle2 size={24} className="text-gold" />
+        <div className="bg-white border border-espresso/15 rounded-3xl p-10 text-center space-y-4 font-sans shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-linen/40 text-espresso flex items-center justify-center mx-auto">
+            <CheckCircle2 size={28} className="text-gold" />
           </div>
-          <strong className="text-sm font-black text-espresso block font-serif">
-            No External Partner Requirements Selected
-          </strong>
-          <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
-            All campaign requirements are currently handled internally by your team or directly through Ziggers Execute.
-          </p>
+          <div className="space-y-1">
+            <strong className="text-base font-black text-espresso block font-serif">
+              No External Partner Requirements Selected
+            </strong>
+            <p className="text-xs sm:text-sm text-muted max-w-md mx-auto leading-relaxed">
+              All campaign requirements are currently handled internally by your team or directly through Ziggers Execute.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => onJumpToStep(6)}
-            className="px-5 py-2 rounded-xl bg-linen/30 border border-espresso/15 text-xs font-bold text-espresso hover:bg-linen/60 cursor-pointer"
+            className="h-11 px-6 rounded-xl bg-espresso hover:bg-muted text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
           >
             Review Step 6 Requirements
           </button>
@@ -101,7 +103,7 @@ export default function Step7PartnerCoordination({ draft, onUpdate, onJumpToStep
             <span className="text-[10px] font-mono text-muted">Target City: {targetCity}</span>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-4">
             {partnerReqs.map((req) => {
               const matchedDirectory = VERIFIED_PARTNER_DIRECTORY.filter(p => 
                 p.category === req.category && 
@@ -113,7 +115,7 @@ export default function Step7PartnerCoordination({ draft, onUpdate, onJumpToStep
               return (
                 <div
                   key={req.id}
-                  className="bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs space-y-4"
+                  className="bg-white border border-espresso/15 rounded-3xl p-6 shadow-xs space-y-5 hover:shadow-sm transition-all"
                 >
                   {/* Top Line */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -121,10 +123,10 @@ export default function Step7PartnerCoordination({ draft, onUpdate, onJumpToStep
                       <span className="text-[10px] font-mono font-bold text-muted uppercase tracking-wider block">
                         {req.reqCategory}
                       </span>
-                      <h4 className="text-sm font-black text-espresso font-serif">
+                      <h4 className="text-base font-black text-espresso font-serif">
                         {req.title}
                       </h4>
-                      <p className="text-xs text-muted leading-relaxed">
+                      <p className="text-xs sm:text-sm text-muted leading-relaxed">
                         Scope: {req.desc}
                       </p>
                     </div>
@@ -132,7 +134,7 @@ export default function Step7PartnerCoordination({ draft, onUpdate, onJumpToStep
                     <button
                       type="button"
                       onClick={() => handleSwitchToClientHandle(req.id)}
-                      className="text-[11px] font-bold text-muted hover:text-espresso underline cursor-pointer shrink-0 self-start"
+                      className="text-xs font-bold text-muted hover:text-espresso underline cursor-pointer shrink-0 self-start"
                     >
                       Change to &quot;We Will Handle&quot;
                     </button>

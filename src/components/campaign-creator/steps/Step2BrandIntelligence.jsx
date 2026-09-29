@@ -96,24 +96,36 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Header */}
-      <div>
-        <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider block">
+      {/* Step Header */}
+      <div className="border-b border-espresso/10 pb-5">
+        <span className="text-[11px] font-mono font-bold text-gold uppercase tracking-wider block">
           Step 2 • Brand & Product Intelligence
         </span>
-        <h2 className="text-xl md:text-2xl font-black text-espresso tracking-tight font-serif mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-black text-espresso tracking-tight font-serif mt-1">
           What are you promoting?
         </h2>
-        <p className="text-xs text-muted mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Ziggers analyses your brand, product taxonomy, and price positioning to automatically infer audience blueprints and high-fit physical environments.
         </p>
       </div>
 
-      {/* Input Form */}
-      <div className="bg-white border border-espresso/15 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-        
+      {/* Section 01: Brand Identity & Digital Presence */}
+      <div className="bg-white border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              01
+            </span>
+            <h3 className="text-xs font-black text-espresso uppercase tracking-wider">
+              Brand Identity & Digital Presence
+            </h3>
+          </div>
+          <p className="text-xs text-muted mt-1 ml-7">
+            Identify the brand entity and website domain for automated catalog scraping.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-espresso">
               Brand / Company Name <span className="text-red-500">*</span>
@@ -123,26 +135,45 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               value={brand}
               onChange={(e) => onUpdate({ brand: e.target.value })}
               placeholder="e.g. Nike, Starbucks, Zoho, Apple"
-              className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
+              className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl px-4 text-xs sm:text-sm text-espresso font-semibold focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-espresso">
-              Website URL <span className="text-muted font-normal">(for deep scraping)</span>
+              Website URL <span className="text-muted font-normal text-[11px]">(for deep scraping)</span>
             </label>
             <div className="relative">
-              <Globe size={14} className="absolute left-3.5 top-3 text-muted pointer-events-none" />
+              <Globe size={15} className="absolute left-3.5 top-3.5 text-muted pointer-events-none" />
               <input
                 type="url"
                 value={websiteUrl}
                 onChange={(e) => onUpdate({ websiteUrl: e.target.value })}
                 placeholder="https://www.yourbrand.com"
-                className="w-full bg-linen/20 border border-espresso/15 rounded-2xl pl-9 pr-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
+                className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl pl-10 pr-4 text-xs sm:text-sm text-espresso font-semibold focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
               />
             </div>
           </div>
+        </div>
+      </div>
 
+      {/* Section 02: Product Offering & Price Positioning */}
+      <div className="bg-white border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              02
+            </span>
+            <h3 className="text-xs font-black text-espresso uppercase tracking-wider">
+              Product Definition & Price Positioning
+            </h3>
+          </div>
+          <p className="text-xs text-muted mt-1 ml-7">
+            Specify the product offering and target price tier to determine demographic buying capacity.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-espresso">
               Specific Product Being Promoted
@@ -152,7 +183,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               value={productOrService}
               onChange={(e) => onUpdate({ productOrService: e.target.value, brandProductLine: e.target.value })}
               placeholder="e.g. Running Shoes, Cold Brew Coffee, Cloud CRM Suite"
-              className="w-full bg-linen/20 border border-espresso/15 rounded-2xl px-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
+              className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl px-4 text-xs sm:text-sm text-espresso font-semibold focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
             />
           </div>
 
@@ -167,7 +198,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
             </div>
             
             <div className="relative">
-              <span className="absolute left-3.5 top-2.5 font-bold text-espresso text-xs select-none pointer-events-none">
+              <span className="absolute left-3.5 top-3 font-bold text-espresso text-xs select-none pointer-events-none">
                 ₹
               </span>
               <input
@@ -179,12 +210,12 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
                   onUpdate({ priceRange: formatted, brandPricePositioning: formatted });
                 }}
                 placeholder="2,999 (Mid-to-Premium) or 150 (Affordable QSR)"
-                className="w-full bg-linen/20 border border-espresso/15 rounded-2xl pl-8 pr-4 py-2.5 text-xs text-espresso font-semibold focus:outline-none focus:border-gold"
+                className="w-full h-11 bg-linen/10 border border-espresso/15 rounded-xl pl-9 pr-4 text-xs sm:text-sm text-espresso font-semibold focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
               />
             </div>
 
             {/* Quick Price Tier Pills */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
               <span className="text-[10px] text-muted font-medium">Quick Tiers:</span>
               {[
                 { label: 'Under ₹100', tier: 'Under ₹100 (Mass Market / FMCG)' },
@@ -199,10 +230,10 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
                     key={pill.label}
                     type="button"
                     onClick={() => onUpdate({ priceRange: pill.tier, brandPricePositioning: pill.tier })}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-espresso text-gold border-espresso shadow-2xs'
-                        : 'bg-linen/40 text-espresso/80 border-espresso/10 hover:bg-linen/80'
+                        ? 'bg-espresso text-gold border-espresso shadow-2xs ring-1 ring-gold/40'
+                        : 'bg-linen/30 text-espresso/80 border-espresso/10 hover:bg-linen/60'
                     }`}
                   >
                     {pill.label}
@@ -211,51 +242,52 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               })}
             </div>
           </div>
-
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-espresso">
-            Product Description / Key USPs
-          </label>
-          <textarea
-            rows={2}
-            value={productDescription}
-            onChange={(e) => onUpdate({ productDescription: e.target.value })}
-            placeholder="e.g. Revitalizes body and mind, contains high quality ingredients like caffeine, taurine, B-group vitamins..."
-            className="w-full bg-linen/20 border border-espresso/15 rounded-2xl p-3 text-xs text-espresso focus:outline-none focus:border-gold font-medium"
-          />
-        </div>
+        <div className="space-y-4 pt-2 border-t border-espresso/10">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-espresso">
+              Product Description / Key USPs
+            </label>
+            <textarea
+              rows={2}
+              value={productDescription}
+              onChange={(e) => onUpdate({ productDescription: e.target.value })}
+              placeholder="e.g. Revitalizes body and mind, contains high quality ingredients like caffeine, taurine, B-group vitamins..."
+              className="w-full bg-linen/10 border border-espresso/15 rounded-xl p-3.5 text-xs text-espresso focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold font-medium leading-relaxed transition-all"
+            />
+          </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-espresso">
-            Existing Campaign Brief / Context <span className="text-muted font-normal">(Optional)</span>
-          </label>
-          <textarea
-            rows={2}
-            value={existingBrief}
-            onChange={(e) => onUpdate({ existingBrief: e.target.value })}
-            placeholder="Paste any existing client brief notes, guidelines, or requirements..."
-            className="w-full bg-linen/20 border border-espresso/15 rounded-2xl p-3 text-xs text-espresso focus:outline-none focus:border-gold font-medium"
-          />
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-espresso">
+              Existing Campaign Brief / Context <span className="text-muted font-normal text-[11px]">(Optional)</span>
+            </label>
+            <textarea
+              rows={2}
+              value={existingBrief}
+              onChange={(e) => onUpdate({ existingBrief: e.target.value })}
+              placeholder="Paste any existing client brief notes, guidelines, or requirements..."
+              className="w-full bg-linen/10 border border-espresso/15 rounded-xl p-3.5 text-xs text-espresso focus:bg-white focus:ring-2 focus:ring-gold/30 focus:border-gold font-medium leading-relaxed transition-all"
+            />
+          </div>
         </div>
 
         {analysisError && (
-          <p className="text-xs text-red-600 font-bold bg-red-50 p-3 rounded-xl border border-red-200">
+          <p className="text-xs text-red-600 font-bold bg-red-50 p-3.5 rounded-xl border border-red-200">
             {analysisError}
           </p>
         )}
 
         {/* Action Button */}
-        <div className="pt-2 flex items-center justify-between">
-          <span className="text-[11px] text-muted">
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-espresso/10">
+          <span className="text-[11px] text-muted font-medium">
             {blueprintActive ? '✓ Brand Blueprint Active & Synchronized' : 'Ready to analyze brand taxonomy'}
           </span>
           <button
             type="button"
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="px-6 py-2.5 rounded-xl bg-espresso hover:bg-muted text-white text-xs font-black flex items-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            className="h-11 px-6 rounded-xl bg-espresso hover:bg-muted text-white text-xs font-black flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
             {isAnalyzing ? (
               <>
@@ -270,12 +302,11 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
             )}
           </button>
         </div>
-
       </div>
 
       {/* Reviewable Output Card */}
       {blueprintActive && (
-        <div className="bg-espresso text-linen p-5 sm:p-6 rounded-3xl space-y-4 shadow-md border border-gold/30">
+        <div className="bg-espresso text-linen p-6 sm:p-7 rounded-3xl space-y-4 shadow-md border border-gold/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider">
@@ -297,7 +328,7 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1 border-t border-linen/15">
-            <div className="p-3 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
+            <div className="p-3.5 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
               <span className="text-[9px] font-bold text-gold uppercase block">Brand Category</span>
               <strong className="text-white block font-serif text-sm">
                 {brandCategory || brandIndustry || 'FMCG'} 
@@ -305,14 +336,14 @@ export default function Step2BrandIntelligence({ draft, onUpdate }) {
               </strong>
             </div>
 
-            <div className="p-3 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
+            <div className="p-3.5 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
               <span className="text-[9px] font-bold text-gold uppercase block">Product Line</span>
               <strong className="text-white block font-serif text-sm">
                 {brandProductLine || productOrService || `${brand} Mainline`}
               </strong>
             </div>
 
-            <div className="p-3 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
+            <div className="p-3.5 bg-linen/10 rounded-2xl border border-linen/10 space-y-1">
               <span className="text-[9px] font-bold text-gold uppercase block">Positioning</span>
               <strong className="text-white block font-serif text-sm">
                 {brandPricePositioning || priceRange || 'Premium Segment'}

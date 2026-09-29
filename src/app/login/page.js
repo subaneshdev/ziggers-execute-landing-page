@@ -153,7 +153,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="block w-full pl-9 pr-3 py-2.5 text-xs bg-[#faf9f6] border border-espresso/15 rounded-xl text-espresso placeholder:text-muted/60 focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                  className="h-11 block w-full pl-9 pr-3 text-xs bg-[#faf9f6] border border-espresso/15 rounded-xl text-espresso placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
                 />
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="block w-full pl-9 pr-9 py-2.5 text-xs bg-[#faf9f6] border border-espresso/15 rounded-xl text-espresso placeholder:text-muted/60 focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                    className="h-11 block w-full pl-9 pr-9 text-xs bg-[#faf9f6] border border-espresso/15 rounded-xl text-espresso placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
                   />
                   <button
                     type="button"
@@ -194,7 +194,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 bg-espresso hover:bg-muted text-white font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="h-12 w-full mt-2 bg-espresso hover:bg-muted text-white font-extrabold px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -226,7 +226,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => handleOAuthLogin('google')}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-espresso/15 rounded-xl bg-white text-xs font-bold text-espresso hover:bg-linen/40 transition-colors shadow-2xs cursor-pointer"
+                className="h-11 w-full flex items-center justify-center gap-2 px-4 border border-espresso/15 rounded-xl bg-white text-xs font-bold text-espresso hover:bg-linen/40 transition-colors shadow-2xs cursor-pointer"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

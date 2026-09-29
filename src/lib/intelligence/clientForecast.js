@@ -20,6 +20,7 @@
  */
 
 import { getH3CellsForRadius, getRecommendedResolution } from './geo/h3Engine.js';
+import { calculateScheduleMetrics } from './schedule/scheduleEngine.js';
 import { calculateAgeEligibility, calculateGenderAvailability } from './audience/demographicMatcher.js';
 import { calculateInterestAffinity } from './audience/interestAffinityEngine.js';
 import { estimateFootfallAndAudience } from './footfall/footfallEstimator.js';
@@ -70,8 +71,23 @@ export function generateCampaignForecast(params = {}) {
     campaignDays = 7,
     budgetInr = 250000,
     isGstInclusive = true,
-    city = 'Chennai'
+    city = 'Chennai',
+    startDate = null,
+    endDate = null,
+    dailyStartTime = null,
+    dailyEndTime = null,
+    timezone = null,
+    schedule = null
   } = params;
+
+  const inputSchedule = schedule || (startDate && endDate ? { startDate, endDate, dailyStartTime, dailyEndTime, timezone } : null);
+  let scheduleMetrics = null;
+  if (inputSchedule && inputSchedule.startDate && inputSchedule.endDate) {
+    scheduleMetrics = calculateScheduleMetrics(inputSchedule);
+  }
+
+  const effectiveCampaignDays = (scheduleMetrics && scheduleMetrics.campaignDays > 0) ? scheduleMetrics.campaignDays : campaignDays;
+  const effectiveShiftHours = (scheduleMetrics && scheduleMetrics.hoursPerDay > 0) ? scheduleMetrics.hoursPerDay : shiftHours;
 
   const resolution = getRecommendedResolution(radiusKm, 'dense_urban');
   const h3Cells = getH3CellsForRadius(13.0827, 80.2707, radiusKm, resolution);
@@ -89,7 +105,8 @@ export function generateCampaignForecast(params = {}) {
   const footfallData = estimateFootfallAndAudience({
     basePopulation: totalAggregatedPopulation,
     locationType: 'commercial_high_street',
-    shiftHours,
+    shiftHours: effectiveShiftHours,
+    campaignDays: effectiveCampaignDays,
     city
   });
 
@@ -97,8 +114,8 @@ export function generateCampaignForecast(params = {}) {
     budgetInr,
     isGstInclusive,
     objective,
-    shiftHours,
-    campaignDays,
+    shiftHours: effectiveShiftHours,
+    campaignDays: effectiveCampaignDays,
     reachableAudience: footfallData.availableAudienceBase
   });
 
@@ -110,7 +127,7 @@ export function generateCampaignForecast(params = {}) {
     shiftFootfallExposure: footfallData.shiftFootfallExposure,
     totalCampaignExposure: footfallData.totalCampaignExposure,
     physicalCapacity: staffingData.capacity?.expectedInteractions || 1000,
-    campaignDays
+    campaignDays: effectiveCampaignDays
   });
 
   const conversionData = forecastConversions({
@@ -159,6 +176,16 @@ export function generateCampaignForecast(params = {}) {
     staffing: {
       promoters: staffingData.recommendedPromoters,
       supervisors: staffingData.supervisorCount
+    },
+    schedule: scheduleMetrics || {
+      startDate: null,
+      endDate: null,
+      dailyStartTime: null,
+      dailyEndTime: null,
+      timezone: 'Asia/Kolkata',
+      campaignDays: effectiveCampaignDays,
+      hoursPerDay: effectiveShiftHours,
+      totalCampaignHours: effectiveCampaignDays * effectiveShiftHours
     },
     provenance: {
       modelType: 'BAYESIAN_STATISTICAL_ESTIMATE',

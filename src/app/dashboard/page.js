@@ -218,7 +218,11 @@ export default function DashboardPage() {
               }}
               className="text-[10px] font-bold text-espresso bg-linen/50 hover:bg-linen px-3 py-1.5 rounded-xl border border-espresso/10 hover:border-gold cursor-pointer transition-colors"
             >
-              {isClientPortal ? '👁️ Brand View Active' : 'Switch Brand View'}
+              {isClientPortal ? (
+                <span className="inline-flex items-center gap-1.5"><Eye size={12} className="text-gold" /> Brand View Active</span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5"><Eye size={12} className="text-muted" /> Switch Brand View</span>
+              )}
             </button>
 
             <div className="h-4 w-[1px] bg-espresso/10"></div>
