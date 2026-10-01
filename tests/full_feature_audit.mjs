@@ -288,9 +288,10 @@ describe('Ziggers Execute - Complete Feature Matrix Audit', () => {
     assert.ok(payout.performanceIncentive > 0);
   });
 
-  // --- 10. Live HTTP API Endpoints on Port 3001 ---
-  it('FEATURE-10: Live HTTP API Endpoints on Port 3001 respond with HTTP 200 OK', async () => {
-    const baseUrl = 'http://127.0.0.1:3001';
+  // --- 10. Live HTTP API Endpoints ---
+  it('FEATURE-10: Live HTTP API Endpoints respond with HTTP 200 OK', async () => {
+    const port = process.env.PORT || 3000;
+    const baseUrl = `http://127.0.0.1:${port}`;
 
     // 1. Data Library Summary
     const summaryRes = await fetch(`${baseUrl}/api/data-library?action=summary`);

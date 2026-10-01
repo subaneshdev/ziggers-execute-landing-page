@@ -1,0 +1,17 @@
+{
+  "package_name": "ziggers-campaign-playbook-v2",
+  "package_version": "2.0-draft",
+  "title": "Ziggers Execute — Campaign Decision Playbook",
+  "prepared_on": "2026-10-01",
+  "publication_status": "EDITORIAL_DRAFT_FOR_OPERATIONS_REVIEW",
+  "configured_directory": "data/source_packages/playbook-v2",
+  "primary_file": "ziggers-playbook-v2.json",
+  "reference_sqlite_file": "ziggers-playbook-v2.sqlite",
+  "reference_markdown_file": "Ziggers-Campaign-Playbook-v2.md",
+  "sha256_checksum": "4eb2af4fb6b1feb951b2583355c70194b276d262e37da702f3e065e898653d2a",
+  "total_playbooks": 41,
+  "total_sources": 13,
+  "evidence_policy": "All activity recommendations and venue-fit rationales are authored planning hypotheses. External references support only the explicitly stated practice or data use. They do not validate conversion rates, location performance or the playbook as a whole.",
+  "original_external_location": "C:\\Users\\HP\\Documents\\Codex\\2026-10-01\\ana\\outputs",
+  "staged_at": "2026-10-01T11:11:40.311Z"
+}

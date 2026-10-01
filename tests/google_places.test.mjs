@@ -26,7 +26,7 @@ function loadEnv() {
 
 const env = loadEnv();
 const API_KEY = env.GOOGLE_MAPS_API_KEY || env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
-const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:3001';
+const BASE_URL = process.env.BASE_URL || (process.env.PORT ? `http://127.0.0.1:${process.env.PORT}` : 'http://127.0.0.1:3000');
 
 let passed = 0;
 let failed = 0;

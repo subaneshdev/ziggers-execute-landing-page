@@ -341,10 +341,11 @@ export function generateTopObjectiveActivationPlans({
   environments = [],
   city = 'Chennai'
 }) {
-  const isAuto = brandCategory.toLowerCase().includes('auto') || brandCategory.toLowerCase().includes('motorcycle');
-  const isTech = brandCategory.toLowerCase().includes('tech') || brandCategory.toLowerCase().includes('saas') || brandCategory.toLowerCase().includes('software');
-  const isFood = brandCategory.toLowerCase().includes('food') || brandCategory.toLowerCase().includes('beverage') || brandCategory.toLowerCase().includes('qsr') || brandCategory.toLowerCase().includes('fmcg') || brandCategory.toLowerCase().includes('coffee');
-  const isFashion = brandCategory.toLowerCase().includes('fashion') || brandCategory.toLowerCase().includes('apparel') || brandCategory.toLowerCase().includes('lifestyle');
+  const allContext = `${brandCategory} ${productLine} ${brandName}`.toLowerCase();
+  const isAuto = allContext.includes('auto') || allContext.includes('motorcycle') || allContext.includes('bike') || allContext.includes('scooter') || allContext.includes('car') || allContext.includes('vehicle');
+  const isTech = allContext.includes('tech') || allContext.includes('saas') || allContext.includes('software') || allContext.includes('app') || allContext.includes('cloud') || allContext.includes('crm');
+  const isFood = allContext.includes('food') || allContext.includes('beverage') || allContext.includes('qsr') || allContext.includes('fmcg') || allContext.includes('coffee') || allContext.includes('snack') || allContext.includes('tea');
+  const isFashion = allContext.includes('fashion') || allContext.includes('apparel') || allContext.includes('lifestyle') || allContext.includes('saree') || allContext.includes('clothing') || allContext.includes('shoe');
 
   const objLower = (objective || '').toLowerCase();
   const envSlice = (environments || []).slice(0, 3).map(e => e.environment || e.type || e).join(' • ') || 'Commercial Hubs • Shopping Malls • Tech Parks';

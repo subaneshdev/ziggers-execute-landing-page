@@ -12,11 +12,17 @@ import {
   generateActivationRequirements 
 } from '@/lib/ecosystem/btlTaxonomy';
 
+// Client-side in-memory cache to guarantee instant 0ms transitions and prevent refetch lag
+const clientPlaybookCache = new Map();
+
 export default function Step3ActivationIdea({ draft, onUpdate }) {
   const {
     brand = 'Brand',
     brandIndustry = 'Retail',
+    brandSubcategory = '',
+    productOrService = '',
     brandProductLine = 'Product',
+    priceRange = '',
     objective = 'Product Sampling',
     locations = [],
     selectedInterests = [],
@@ -28,14 +34,16 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
     activationPlan = null
   } = draft;
 
-  // Generate top 3 activation blueprints tailored to brand, objective & audience
-  const computeTop3 = () => {
+  const cacheKey = `${brand}_${productOrService || brandProductLine}_${brandIndustry}_${objective}`.toLowerCase();
+
+  // Compute baseline plans from BTL taxonomy as immediate initial state
+  const computeBaselinePlans = () => {
     return generateTopObjectiveActivationPlans({
       objective,
       btlFormat,
       brandName: brand || 'Brand',
       brandCategory: brandIndustry || 'Retail',
-      productLine: brandProductLine || 'Consumer Product',
+      productLine: productOrService || brandProductLine || 'Consumer Product',
       audienceName: draft.audienceName || `${brand || 'Target'} Audience`,
       ageRange,
       environments: suggestedEnvironments,
@@ -43,34 +51,93 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
     });
   };
 
-  const [topPlans, setTopPlans] = useState(() => computeTop3());
+  const [topPlans, setTopPlans] = useState(() => {
+    if (clientPlaybookCache.has(cacheKey)) {
+      return clientPlaybookCache.get(cacheKey);
+    }
+    return computeBaselinePlans();
+  });
+
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
 
   // Determine current active plan
   const [currentPlan, setCurrentPlan] = useState(() => {
     if (activationPlan && activationPlan.activationName) {
       return activationPlan;
     }
-    const plans = computeTop3();
+    if (clientPlaybookCache.has(cacheKey)) {
+      return clientPlaybookCache.get(cacheKey)[0];
+    }
+    const plans = computeBaselinePlans();
     return plans[0];
   });
 
-  // Re-generate top 3 when brand, objective, or product line updates
+  // Fetch database-backed recommendations asynchronously from server API
   useEffect(() => {
-    const plans = computeTop3();
-    setTopPlans(plans);
+    let isMounted = true;
+    async function fetchPlaybookRecommendations() {
+      try {
+        const res = await fetch('/api/playbook/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            brand: brand || 'Brand',
+            productOrService: productOrService || brandProductLine,
+            subcategory: brandSubcategory || productOrService || brandIndustry,
+            brandIndustry,
+            objective,
+            city: locations[0]?.city || 'Chennai',
+            useAi: false
+          })
+        });
 
-    if (activationPlan && activationPlan.activationName) {
-      setCurrentPlan(activationPlan);
-    } else {
-      setCurrentPlan(plans[0]);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.success && Array.isArray(data.options) && data.options.length > 0) {
+            const mappedPlans = data.options.map((opt, idx) => ({
+              id: opt.optionId,
+              activationName: opt.activityName,
+              badge: opt.tierName || `Blueprint #${idx + 1}`,
+              playbookId: data.playbookId,
+              playbookName: data.playbookName,
+              playbookVersion: data.playbookVersion,
+              tierName: opt.tierName,
+              format: opt.format,
+              objective: data.objective,
+              strategicFocus: `${opt.format} • ${opt.primarySuccessMeasure}`,
+              whyThisActivationFits: opt.whyThisActivationFits,
+              expectedImpact: `${opt.primarySuccessMeasure} (${opt.requiredCapabilities?.mainCapacityConstraint || 'Direct Trial'})`,
+              targetAudienceSummary: `${draft.audienceName || 'Target Consumers'} (${ageRange[0]}–${ageRange[1]} yrs)`,
+              recommendedLocations: opt.venueRecommendation?.actualCandidateVenue || opt.venueRecommendation?.venueType || 'Premier High-Street & Commercial Nodes',
+              executionFlow: opt.executionSequence,
+              requiredCapabilities: opt.requiredCapabilities,
+              followUpOwnership: opt.followUpOwnership,
+              evidenceAndAssumptions: opt.evidenceAndAssumptions,
+              tradeoffs: opt.tradeoffsVersusAlternatives,
+              isPlaybookV2: true
+            }));
+
+            clientPlaybookCache.set(cacheKey, mappedPlans);
+            setTopPlans(mappedPlans);
+            if (!activationPlan || !activationPlan.isPlaybookV2) {
+              setCurrentPlan(mappedPlans[0]);
+            }
+          }
+        }
+      } catch (err) {
+        // Graceful fallback to baseline
+      }
     }
-  }, [brand, brandIndustry, brandProductLine, objective]);
+
+    fetchPlaybookRecommendations();
+    return () => { isMounted = false; };
+  }, [brand, brandIndustry, brandSubcategory, productOrService, brandProductLine, objective]);
 
   const [formatSearch, setFormatSearch] = useState('');
   const [showFormatPicker, setShowFormatPicker] = useState(false);
   const [isEditingPlan, setIsEditingPlan] = useState(false);
-  const [editTitle, setEditTitle] = useState(currentPlan.activationName);
-  const [editRationale, setEditRationale] = useState(currentPlan.whyThisActivationFits);
+  const [editTitle, setEditTitle] = useState(currentPlan?.activationName || '');
+  const [editRationale, setEditRationale] = useState(currentPlan?.whyThisActivationFits || '');
 
   const handleSelectPlan = (plan) => {
     setCurrentPlan(plan);
@@ -87,7 +154,9 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
     onUpdate({
       btlFormat: plan.activationName,
       activationPlan: plan,
-      activationRequirements: newRequirements
+      activationRequirements: newRequirements,
+      playbookId: plan.playbookId || null,
+      playbookVersion: plan.playbookVersion || null
     });
   };
 
@@ -134,10 +203,11 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
   };
 
   const handleSaveInlineEdit = () => {
+    if (!currentPlan) return;
     const updated = {
       ...currentPlan,
-      activationName: editTitle,
-      whyThisActivationFits: editRationale
+      activationName: editTitle || currentPlan.activationName,
+      whyThisActivationFits: editRationale || currentPlan.whyThisActivationFits
     };
     handleSelectPlan(updated);
     setIsEditingPlan(false);
@@ -357,7 +427,7 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
                   type="button"
                   onClick={() => handleSelectFromLibrary(fmt.name)}
                   className={`p-2.5 rounded-xl text-left text-xs transition-all border cursor-pointer ${
-                    (btlFormat || currentPlan.activationName) === fmt.name
+                    (btlFormat || currentPlan?.activationName) === fmt.name
                       ? 'bg-espresso text-gold border-espresso font-bold shadow-xs'
                       : 'bg-white border-espresso/10 text-espresso hover:bg-linen/50'
                   }`}
@@ -371,93 +441,150 @@ export default function Step3ActivationIdea({ draft, onUpdate }) {
         )}
       </div>
 
-      {/* Selected Activation Plan Detailed Execution Blueprint Card */}
-      <div className="bg-espresso text-linen p-6 sm:p-7 rounded-3xl space-y-6 shadow-xl border border-gold/30">
-        
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-linen/15 pb-5">
-          <div className="space-y-1.5 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider bg-linen/10 px-2.5 py-0.5 rounded-full">
-                Selected Execution Blueprint
-              </span>
-              <span className="text-[10px] font-mono font-bold text-green-300 bg-green-950/60 px-2.5 py-0.5 rounded-full border border-green-800 flex items-center gap-1">
-                <ShieldCheck size={11} />
-                <span>Objective-Aligned</span>
-              </span>
+      {/* Section 03: Selected Activation Plan Detailed Execution Blueprint Card */}
+      {currentPlan && (
+        <div className="bg-espresso text-linen p-6 sm:p-7 rounded-3xl space-y-6 shadow-xl border border-gold/30">
+          
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-linen/15 pb-5">
+            <div className="space-y-1.5 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider bg-linen/10 px-2.5 py-0.5 rounded-full">
+                  Selected Execution Blueprint
+                </span>
+                <span className="text-[10px] font-mono font-bold text-green-300 bg-green-950/60 px-2.5 py-0.5 rounded-full border border-green-800 flex items-center gap-1">
+                  <ShieldCheck size={11} />
+                  <span>Objective-Aligned</span>
+                </span>
+              </div>
+
+              {isEditingPlan ? (
+                <div className="space-y-2 pt-2">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full bg-white/10 border border-linen/30 rounded-xl px-3 py-2 text-sm text-white font-bold"
+                  />
+                  <textarea
+                    rows={2}
+                    value={editRationale}
+                    onChange={(e) => setEditRationale(e.target.value)}
+                    className="w-full bg-white/10 border border-linen/30 rounded-xl p-3 text-xs text-white"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveInlineEdit}
+                      className="px-4 py-1.5 bg-gold text-espresso font-black text-xs rounded-xl cursor-pointer"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingPlan(false)}
+                      className="px-3 py-1.5 bg-white/10 text-white font-medium text-xs rounded-xl cursor-pointer hover:bg-white/20"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-lg sm:text-xl font-black text-white font-serif tracking-tight">
+                    {currentPlan.activationName}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-linen/80 flex-wrap pt-0.5">
+                    <span>Goal: <strong className="text-gold">{objective}</strong></span>
+                    <span>•</span>
+                    <span>Focus: <strong className="text-white">{currentPlan.strategicFocus}</strong></span>
+                  </div>
+                </>
+              )}
             </div>
 
-            {isEditingPlan ? (
-              <div className="space-y-2 pt-2">
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full bg-white/10 border border-linen/30 rounded-xl px-3 py-2 text-sm text-white font-bold"
-                />
-                <textarea
-                  rows={2}
-                  value={editRationale}
-                  onChange={(e) => setEditRationale(e.target.value)}
-                  className="w-full bg-white/10 border border-linen/30 rounded-xl p-3 text-xs text-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveInlineEdit}
-                  className="px-4 py-1.5 bg-gold text-espresso font-black text-xs rounded-xl cursor-pointer"
-                >
-                  Save Changes
-                </button>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-lg sm:text-xl font-black text-white font-serif tracking-tight">
-                  {currentPlan.activationName}
-                </h3>
-                <div className="flex items-center gap-2 text-xs text-linen/80 flex-wrap pt-0.5">
-                  <span>Goal: <strong className="text-gold">{objective}</strong></span>
-                  <span>•</span>
-                  <span>Focus: <strong className="text-white">{currentPlan.strategicFocus}</strong></span>
-                </div>
-              </>
+            {!isEditingPlan && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditTitle(currentPlan.activationName);
+                  setEditRationale(currentPlan.whyThisActivationFits);
+                  setIsEditingPlan(true);
+                }}
+                className="text-xs font-bold text-gold hover:text-white flex items-center gap-1 cursor-pointer transition-colors self-start"
+              >
+                <Edit3 size={13} />
+                <span>Edit Details</span>
+              </button>
             )}
           </div>
 
-          {!isEditingPlan && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditTitle(currentPlan.activationName);
-                setEditRationale(currentPlan.whyThisActivationFits);
-                setIsEditingPlan(true);
-              }}
-              className="text-xs font-bold text-gold hover:text-white flex items-center gap-1 cursor-pointer transition-colors self-start"
-            >
-              <Edit3 size={13} />
-              <span>Edit Details</span>
-            </button>
+          {/* Rationale */}
+          {currentPlan.whyThisActivationFits && (
+            <div className="bg-linen/10 rounded-2xl p-4 border border-linen/10 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold block">
+                Strategic Rationale
+              </span>
+              <p className="text-xs text-linen/90 leading-relaxed font-medium">
+                {currentPlan.whyThisActivationFits}
+              </p>
+            </div>
           )}
-        </div>
 
-        {/* How It Works: 8-Stage On-Ground Sequence */}
-        <div className="space-y-3">
-          <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <ListOrdered size={14} className="text-gold" />
-            <span>How It Works (8-Stage On-Ground Execution Flow)</span>
-          </span>
+          {/* How It Works: On-Ground Execution Sequence */}
+          {Array.isArray(currentPlan.executionFlow) && currentPlan.executionFlow.length > 0 && (
+            <div className="space-y-3">
+              <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <ListOrdered size={14} className="text-gold" />
+                <span>How It Works (On-Ground Execution Flow)</span>
+              </span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-            {(currentPlan.executionFlow || []).map((step, idx) => (
-              <div key={idx} className="p-2.5 bg-linen/10 rounded-xl border border-linen/10 flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                  0{idx + 1}
-                </span>
-                <span className="text-linen/90 font-medium text-[11px] leading-snug">{step.replace(/^\d+\.\s*/, '')}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                {currentPlan.executionFlow.map((step, idx) => (
+                  <div key={idx} className="p-3 bg-linen/10 rounded-xl border border-linen/10 flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                      0{idx + 1}
+                    </span>
+                    <span className="text-linen/90 font-medium text-[11px] leading-snug">
+                      {step.replace(/^\d+\.\s*/, '')}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
 
-      </div>
+          {/* Operational Parameters & Target Venues */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-linen/15">
+            <div className="p-3 bg-linen/5 rounded-xl border border-linen/10 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-linen/60 font-bold block">
+                Target Catchment
+              </span>
+              <p className="text-xs font-semibold text-linen/90 line-clamp-2">
+                {currentPlan.recommendedLocations || 'High-Footfall Retail & Commercial Nodes'}
+              </p>
+            </div>
+
+            <div className="p-3 bg-linen/5 rounded-xl border border-linen/10 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-linen/60 font-bold block">
+                Success Measure
+              </span>
+              <p className="text-xs font-semibold text-green-300 line-clamp-2">
+                {currentPlan.expectedImpact || 'Audience Trial & Verified Outcomes'}
+              </p>
+            </div>
+
+            <div className="p-3 bg-linen/5 rounded-xl border border-linen/10 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-linen/60 font-bold block">
+                Execution Ownership
+              </span>
+              <p className="text-xs font-semibold text-gold line-clamp-2">
+                {currentPlan.followUpOwnership || 'Ziggers Verified Supervisors & Field Promoters'}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
