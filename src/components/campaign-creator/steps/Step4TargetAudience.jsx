@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Plus, X, Sparkles, Check, ChevronDown, 
-  ChevronUp, ShieldCheck, Activity, Target, Zap, Filter 
+  ChevronUp, ShieldCheck, Activity, Target, Zap, Filter,
+  TrendingUp, Info, Building2, ExternalLink
 } from 'lucide-react';
 import { resolveIndustryKey, INDUSTRY_METRIC_PROFILES } from '@/lib/intelligence/brandAdaptation';
 
@@ -52,6 +53,26 @@ export default function Step4TargetAudience({ draft, onUpdate }) {
 
   const [newInterestInput, setNewInterestInput] = useState('');
   const [newBehaviourInput, setNewBehaviourInput] = useState('');
+  const [marketContext, setMarketContext] = useState(null);
+  const [marketLoading, setMarketLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loc = draft.city || draft.targetCity || 'Tamil Nadu';
+    setMarketLoading(true);
+    fetch(`/api/data-library?action=market&location=${encodeURIComponent(loc)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data.success && data.data) {
+          setMarketContext(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setMarketLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, [draft.city, draft.targetCity]);
 
   // Get interests for chosen category tab
   const getTabProfile = (tabId) => {
@@ -348,6 +369,81 @@ export default function Step4TargetAudience({ draft, onUpdate }) {
             Add Trigger
           </button>
         </form>
+      </div>
+
+      {/* Section 04: Sourced Macro Consumption Context (MoSPI HCES 2022-23 / Table 1) */}
+      <div className="bg-linen/25 border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-espresso/10 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              04
+            </span>
+            <div>
+              <h3 className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-2">
+                <span>Macro Market Spending Context</span>
+                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                  MoSPI Sourced
+                </span>
+              </h3>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-muted">
+            Aug 2023 – Jul 2024 Survey
+          </span>
+        </div>
+
+        {marketLoading ? (
+          <div className="py-4 text-center text-xs text-muted">
+            Loading official state consumption survey records...
+          </div>
+        ) : marketContext ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-white border border-espresso/10 p-3.5 rounded-2xl shadow-xs">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                  {marketContext.areaName} Urban MPCE
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-lg font-black text-espresso font-mono">
+                    {marketContext.urban ? `₹${marketContext.urban.value.toLocaleString('en-IN')}` : 'Not available'}
+                  </span>
+                  <span className="text-[10px] text-muted">per person / month</span>
+                </div>
+                <span className="text-[9px] text-muted mt-1 block">
+                  MoSPI HCES 2022-23 Table 1 Urban
+                </span>
+              </div>
+
+              <div className="bg-white border border-espresso/10 p-3.5 rounded-2xl shadow-xs">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                  {marketContext.areaName} Rural MPCE
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-lg font-black text-espresso font-mono">
+                    {marketContext.rural ? `₹${marketContext.rural.value.toLocaleString('en-IN')}` : 'Not available'}
+                  </span>
+                  <span className="text-[10px] text-muted">per person / month</span>
+                </div>
+                <span className="text-[9px] text-muted mt-1 block">
+                  MoSPI HCES 2022-23 Table 1 Rural
+                </span>
+              </div>
+            </div>
+
+            {/* Strict Non-Substitution Notice */}
+            <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 flex items-start gap-2.5 text-[11px] text-amber-900 leading-relaxed">
+              <Info size={15} className="text-amber-700 shrink-0 mt-0.5" />
+              <div>
+                <strong className="font-bold">Contextual Benchmark Only: </strong>
+                State spending statistics measure broad household consumption. In accordance with system policy, these values provide geographic economic context only and are <em>never</em> substituted into individual audience reach, footfall, or conversion calculations.
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-muted bg-white p-3 rounded-xl border border-espresso/10">
+            National benchmark: All-India Urban MPCE ₹6,996 / mo (MoSPI HCES 2022-23).
+          </div>
+        )}
       </div>
 
     </div>

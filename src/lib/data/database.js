@@ -398,6 +398,7 @@ function initSchema(db) {
   // Ensure default configuration, 18 metro nodes, and 4 diurnal curves are seeded
   seedDefaults(db);
   migrateCampaignSchedule(db);
+  migrateExternalDataSources(db);
 }
 
 export function migrateCampaignSchedule(db) {
@@ -424,6 +425,224 @@ export function migrateCampaignSchedule(db) {
     db.exec(`UPDATE campaigns SET schedule_status = 'LEGACY_MISSING' WHERE schedule_status IS NULL;`);
   } catch (err) {
     console.warn('Database campaign schedule migration notice:', err.message);
+  }
+}
+
+export function migrateExternalDataSources(db) {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS data_sources (
+        source_id TEXT PRIMARY KEY,
+        publisher TEXT NOT NULL,
+        url TEXT NOT NULL,
+        licence_url TEXT,
+        api_docs TEXT,
+        data_period TEXT NOT NULL,
+        published_on TEXT,
+        status TEXT NOT NULL,
+        is_connected INTEGER NOT NULL DEFAULT 0,
+        kind TEXT NOT NULL,
+        allowed_use TEXT NOT NULL,
+        restriction TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS dataset_versions (
+        id TEXT PRIMARY KEY,
+        source_id TEXT NOT NULL REFERENCES data_sources(source_id),
+        version_tag TEXT NOT NULL,
+        package_version TEXT NOT NULL DEFAULT '1.0',
+        checked_on TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'APPROVED',
+        checksum_sha256 TEXT NOT NULL,
+        raw_file_uri TEXT NOT NULL,
+        records_count INTEGER NOT NULL DEFAULT 0,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        UNIQUE(source_id, version_tag)
+      );
+
+      CREATE TABLE IF NOT EXISTS import_batches (
+        id TEXT PRIMARY KEY,
+        dataset_version_id TEXT REFERENCES dataset_versions(id),
+        source_id TEXT NOT NULL REFERENCES data_sources(source_id),
+        batch_number INTEGER NOT NULL,
+        records_processed INTEGER NOT NULL DEFAULT 0,
+        records_accepted INTEGER NOT NULL DEFAULT 0,
+        records_rejected INTEGER NOT NULL DEFAULT 0,
+        records_unchanged INTEGER NOT NULL DEFAULT 0,
+        review_status TEXT NOT NULL DEFAULT 'APPROVED',
+        rejection_log_json TEXT DEFAULT '[]',
+        imported_by TEXT NOT NULL DEFAULT 'system_importer',
+        created_at TEXT NOT NULL,
+        approved_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS market_context (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT REFERENCES import_batches(id),
+        dataset_version_id TEXT REFERENCES dataset_versions(id),
+        source_id TEXT NOT NULL REFERENCES data_sources(source_id),
+        area_name TEXT NOT NULL,
+        area_level TEXT NOT NULL,
+        sector TEXT NOT NULL CHECK(sector IN ('Rural', 'Urban', 'All')),
+        metric TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL,
+        period TEXT NOT NULL,
+        evidence_type TEXT NOT NULL DEFAULT 'SURVEY_ESTIMATE',
+        allowed_use TEXT NOT NULL DEFAULT 'MARKET_CONTEXT_ONLY',
+        quality_note TEXT,
+        review_status TEXT NOT NULL DEFAULT 'APPROVED',
+        created_at TEXT NOT NULL,
+        UNIQUE(area_name, sector, metric, period, source_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS transit_context (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT REFERENCES import_batches(id),
+        dataset_version_id TEXT REFERENCES dataset_versions(id),
+        source_id TEXT NOT NULL REFERENCES data_sources(source_id),
+        city TEXT NOT NULL,
+        geographic_scope TEXT NOT NULL,
+        month TEXT NOT NULL,
+        value INTEGER NOT NULL,
+        metric TEXT NOT NULL,
+        unit TEXT NOT NULL DEFAULT 'passenger_flow_count',
+        evidence_type TEXT NOT NULL DEFAULT 'OPERATOR_REPORTED',
+        allowed_use TEXT NOT NULL DEFAULT 'NETWORK_CONTEXT_ONLY',
+        review_status TEXT NOT NULL DEFAULT 'APPROVED',
+        created_at TEXT NOT NULL,
+        UNIQUE(city, month, metric, source_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS venue_directory (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT REFERENCES import_batches(id),
+        dataset_version_id TEXT REFERENCES dataset_versions(id),
+        source_id TEXT NOT NULL REFERENCES data_sources(source_id),
+        source_institution_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        permission_status TEXT NOT NULL DEFAULT 'NOT_CONFIRMED',
+        footfall REAL DEFAULT NULL,
+        student_count INTEGER DEFAULT NULL,
+        evidence_type TEXT NOT NULL DEFAULT 'PUBLISHED_DIRECTORY',
+        review_status TEXT NOT NULL DEFAULT 'APPROVED',
+        created_at TEXT NOT NULL,
+        UNIQUE(source_id, source_institution_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS footfall_observations (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT REFERENCES import_batches(id),
+        source_id TEXT REFERENCES data_sources(source_id),
+        location_name TEXT NOT NULL,
+        h3_cell TEXT,
+        observation_date TEXT NOT NULL,
+        time_window_start TEXT NOT NULL,
+        time_window_end TEXT NOT NULL,
+        interval_minutes INTEGER NOT NULL DEFAULT 60,
+        visitor_count INTEGER NOT NULL,
+        measurement_method TEXT NOT NULL,
+        evidence_type TEXT NOT NULL DEFAULT 'OBSERVED_MEASUREMENT',
+        review_status TEXT NOT NULL DEFAULT 'PENDING_REVIEW',
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS weather_forecasts (
+        id TEXT PRIMARY KEY,
+        source_id TEXT REFERENCES data_sources(source_id),
+        city TEXT NOT NULL,
+        forecast_date TEXT NOT NULL,
+        issue_time TEXT NOT NULL,
+        expiry_time TEXT NOT NULL,
+        weather_condition TEXT NOT NULL,
+        rain_probability REAL,
+        temp_celsius REAL,
+        advisory_note TEXT,
+        connection_status TEXT NOT NULL DEFAULT 'SOURCE_IDENTIFIED_NOT_CONNECTED',
+        review_status TEXT NOT NULL DEFAULT 'PENDING_REVIEW',
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS vendor_quotes (
+        id TEXT PRIMARY KEY,
+        vendor_id TEXT NOT NULL,
+        vendor_name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        service_category TEXT NOT NULL,
+        unit_rate_paise INTEGER NOT NULL,
+        unit_type TEXT NOT NULL,
+        terms TEXT,
+        validity_start_date TEXT NOT NULL,
+        validity_end_date TEXT NOT NULL,
+        review_status TEXT NOT NULL DEFAULT 'APPROVED',
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS data_import_rejections (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        raw_record_json TEXT NOT NULL,
+        rejection_reason TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+    `);
+
+    // Flag existing seed tables as UNVERIFIED_SEED
+    const spatialCols = db.prepare("PRAGMA table_info(spatial_population_h3)").all().map(c => c.name);
+    if (!spatialCols.includes('evidence_status')) {
+      db.exec("ALTER TABLE spatial_population_h3 ADD COLUMN evidence_status TEXT DEFAULT 'UNVERIFIED_SEED';");
+    }
+    if (!spatialCols.includes('source_citation')) {
+      db.exec("ALTER TABLE spatial_population_h3 ADD COLUMN source_citation TEXT DEFAULT 'UNVERIFIED_HISTORICAL_SEED';");
+    }
+    if (!spatialCols.includes('data_quality_tier')) {
+      db.exec("ALTER TABLE spatial_population_h3 ADD COLUMN data_quality_tier TEXT DEFAULT 'UNVERIFIED_ASSUMPTION';");
+    }
+
+    const demoCols = db.prepare("PRAGMA table_info(demographic_profiles)").all().map(c => c.name);
+    if (!demoCols.includes('evidence_status')) {
+      db.exec("ALTER TABLE demographic_profiles ADD COLUMN evidence_status TEXT DEFAULT 'UNVERIFIED_SEED';");
+    }
+
+    const trafficCols = db.prepare("PRAGMA table_info(hourly_traffic_profiles)").all().map(c => c.name);
+    if (!trafficCols.includes('evidence_status')) {
+      db.exec("ALTER TABLE hourly_traffic_profiles ADD COLUMN evidence_status TEXT DEFAULT 'MODELLED_SYNTHETIC_CURVE';");
+    }
+
+    const priorCols = db.prepare("PRAGMA table_info(conversion_priors)").all().map(c => c.name);
+    if (!priorCols.includes('evidence_status')) {
+      db.exec("ALTER TABLE conversion_priors ADD COLUMN evidence_status TEXT DEFAULT 'UNVERIFIED_HEURISTIC_PRIOR';");
+    }
+
+    // Explicitly update all legacy rows
+    db.exec(`
+      UPDATE spatial_population_h3 
+      SET evidence_status = 'UNVERIFIED_SEED',
+          source_citation = 'UNVERIFIED_HISTORICAL_SEED',
+          data_quality_tier = 'UNVERIFIED_ASSUMPTION'
+      WHERE evidence_status IS NULL OR evidence_status = 'UNVERIFIED_SEED';
+
+      UPDATE demographic_profiles 
+      SET evidence_status = 'UNVERIFIED_SEED' 
+      WHERE evidence_status IS NULL;
+
+      UPDATE hourly_traffic_profiles 
+      SET evidence_status = 'MODELLED_SYNTHETIC_CURVE' 
+      WHERE evidence_status IS NULL;
+
+      UPDATE conversion_priors 
+      SET evidence_status = 'UNVERIFIED_HEURISTIC_PRIOR' 
+      WHERE evidence_status IS NULL;
+    `);
+  } catch (err) {
+    console.warn('Database external data sources migration notice:', err.message);
   }
 }
 

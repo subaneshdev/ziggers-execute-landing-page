@@ -1,0 +1,28 @@
+{
+  "package_version": "1.0",
+  "acquisition_date": "2026-10-01",
+  "status": "STAGED_READY_FOR_IMPORT",
+  "configured_directory": "data/source_packages/2026-10-01",
+  "original_external_location": "C:\\\\Users\\\\HP\\\\Documents\\\\Codex\\\\2026-10-01\\\\ana\\\\outputs",
+  "files": {
+    "json": {
+      "relative_path": "data/source_packages/2026-10-01/ziggers-india-data.json",
+      "filename": "ziggers-india-data.json",
+      "sha256": "1b33d37ab2dfc4e6bb80c2cf4068b5e8493b95706ef962333403e6d55334168f",
+      "size_bytes": 10240
+    },
+    "sqlite": {
+      "relative_path": "data/source_packages/2026-10-01/ziggers-india-reference.sqlite",
+      "filename": "ziggers-india-reference.sqlite",
+      "sha256": "5d9988f47fd51944a74e9e29e7df565593d32995123e0955633e625247262ed8",
+      "size_bytes": 86016
+    },
+    "guide": {
+      "relative_path": "data/source_packages/2026-10-01/Ziggers-India-Data-Guide.md",
+      "filename": "Ziggers-India-Data-Guide.md",
+      "sha256": "b4138324a3ec8321b833ca0c3f3bb010ffbc5692f487f5f89535deeae86a550a",
+      "size_bytes": 11769
+    }
+  },
+  "environment_override_variable": "ZIGGERS_DATA_PACKAGE_DIR"
+}

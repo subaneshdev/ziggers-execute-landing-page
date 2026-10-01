@@ -43,7 +43,11 @@ export function getSpatialPopulationByH3(h3Index) {
     provenance: {
       source: 'DATABASE_SPATIAL_POPULATION_H3',
       layer: 'CENSUS_2011_PROJECTED_WORLDPOP',
-      confidenceTier: 'HIGH',
+      confidenceTier: 'UNVERIFIED_SEED',
+      evidenceStatus: spatialRow.evidence_status || 'UNVERIFIED_SEED',
+      sourceCitation: spatialRow.source_citation || 'UNVERIFIED_HISTORICAL_SEED',
+      dataQualityTier: spatialRow.data_quality_tier || 'UNVERIFIED_ASSUMPTION',
+      notice: 'Historical metropolitan seed node; raw Census/WorldPop raster row unverified.',
       retrievedAt: new Date().toISOString()
     }
   };

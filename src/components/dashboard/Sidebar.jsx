@@ -3,7 +3,7 @@ import React from 'react';
 import { 
   Layers, MapPin, Users, ShieldCheck, Camera, UserCheck, 
   MessageSquare, Target, Wallet, FileText, Eye, FileCheck, 
-  Cpu, Activity, Zap, Compass, BarChart2, ChevronRight, Settings, LogOut, Radio
+  Cpu, Activity, Zap, Compass, BarChart2, ChevronRight, Settings, LogOut, Radio, Database
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -38,6 +38,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         { id: 'agency', name: 'Brand Client Portal', icon: <Eye size={15} /> },
         { id: 'reports', name: 'Automated Reports (PDF)', icon: <FileCheck size={15} /> },
         { id: 'aiPlanner', name: 'AI Campaign Simulator', icon: <Cpu size={15} /> },
+        { id: 'dataLibrary', name: 'External Data Library', icon: <Database size={15} /> },
         { id: 'modelEvaluation', name: 'Model Validation & Moat', icon: <BarChart2 size={15} /> },
       ]
     }

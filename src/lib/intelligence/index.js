@@ -54,6 +54,7 @@ import { getHierarchicalPosterior, upsertBayesianPosterior } from '../data/repos
 import { ingestVerifiedOutcomeTransaction } from '../data/repositories/outcomeRepository.js';
 import { appendAuditEvent, verifyAuditChain } from '../data/repositories/auditRepository.js';
 import { recordShiftCheckin, authorizeWorkerPayout, createWorkerAssignment } from '../data/repositories/verificationRepository.js';
+import { getComprehensiveEvidenceContext } from '../data/repositories/dataLibraryRepository.js';
 import { getDatabase } from '../data/database.js';
 
 // Core Data Provider Singletons
@@ -573,7 +574,12 @@ export function generateCampaignForecast(params = {}) {
     qualitySubScores: aqsObj.subScores,
     confidencePercent: Math.round((locationNode.confidenceScore || 0.90) * 100),
     confidenceRangeStr: interactionsRange.rangeStr,
-    recommendations: [`Promoter team capacity planned for ${finalInteractions} physical interactions.`]
+    recommendations: [`Promoter team capacity planned for ${finalInteractions} physical interactions.`],
+    evidenceContext: getComprehensiveEvidenceContext({
+      city: targetCity,
+      locationName: primaryLocationName,
+      objective
+    })
   };
 }
 

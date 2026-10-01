@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Search, Sparkles, Trash2, CheckCircle2, 
   AlertCircle, Info, Loader2, ArrowRight, Layers, Navigation, RefreshCw, Star, Plus, 
-  Target, ShieldCheck, Zap, Compass, Check
+  Target, ShieldCheck, Zap, Compass, Check, Train, GraduationCap, Building2
 } from 'lucide-react';
 import LocationRecommendationCard from '../ui/LocationRecommendationCard';
 import GooglePlacesMap from '../ui/GooglePlacesMap';
@@ -48,6 +48,20 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
   const [activeCenter, setActiveCenter] = useState({ lat: 13.0827, lng: 80.2707, name: 'Chennai, Tamil Nadu' });
   const [selectedMapPlace, setSelectedMapPlace] = useState(null);
   const [searchRadiusKm, setSearchRadiusKm] = useState(5.0);
+  const [evidenceContext, setEvidenceContext] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(`/api/data-library?action=evidence&city=${encodeURIComponent(selectedCity)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data.success && data.data) {
+          setEvidenceContext(data.data);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, [selectedCity]);
 
   const generateDynamicQuery = (env, city) => {
     const envName = (env?.environment || env?.type || '').toLowerCase();
@@ -380,6 +394,111 @@ export default function Step5LocationGeography({ draft, onUpdate }) {
           )}
         </div>
 
+      </div>
+
+      {/* Sourced Urban Transit & Institutional Reference Directory */}
+      <div className="bg-linen/25 border border-espresso/15 rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-espresso/10 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-gold/20 text-gold font-mono font-bold text-[10px] flex items-center justify-center">
+              *
+            </span>
+            <div>
+              <h3 className="text-xs font-black text-espresso uppercase tracking-wider flex items-center gap-2">
+                <span>Verified External Reference Data ({selectedCity})</span>
+                <span className="text-[9px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full border border-blue-300">
+                  External Data Library
+                </span>
+              </h3>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-muted">
+            Read-only external contextual records
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Transit Context Card */}
+          <div className="bg-white border border-espresso/10 p-4 rounded-2xl shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-espresso flex items-center gap-1.5">
+                <Train size={14} className="text-gold" />
+                <span>Transit Passenger Flow</span>
+              </span>
+              <span className="text-[9px] font-mono text-muted">
+                {evidenceContext?.transitContext?.publisher || 'CMRL'}
+              </span>
+            </div>
+
+            {evidenceContext?.transitContext?.status === 'DATA_UNAVAILABLE' ? (
+              <p className="text-[11px] text-muted italic">
+                {evidenceContext.transitContext.notice}
+              </p>
+            ) : evidenceContext?.transitContext?.latestValue ? (
+              <div>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-lg font-black text-espresso font-mono">
+                    {Number(evidenceContext.transitContext.latestValue).toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[10px] text-muted">{evidenceContext.transitContext.unit}</span>
+                </div>
+                <span className="text-[10px] text-muted block mt-0.5">
+                  Latest: {evidenceContext.transitContext.latestMonth} ({evidenceContext.transitContext.geographicScope})
+                </span>
+                <p className="text-[10px] text-muted mt-2 leading-relaxed border-t border-espresso/5 pt-2">
+                  {evidenceContext.transitContext.disclaimer}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted">
+                Connecting to transit data registry...
+              </p>
+            )}
+          </div>
+
+          {/* Institutional Directory Card */}
+          <div className="bg-white border border-espresso/10 p-4 rounded-2xl shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-espresso flex items-center gap-1.5">
+                <GraduationCap size={14} className="text-gold" />
+                <span>Verified Campus Directory</span>
+              </span>
+              <span className="text-[9px] font-mono text-muted">NIRF 2024</span>
+            </div>
+
+            {evidenceContext?.venueContext && evidenceContext.venueContext.length > 0 ? (
+              <div className="space-y-2">
+                {evidenceContext.venueContext.map((venue, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] bg-linen/20 p-2 rounded-xl">
+                    <span className="font-semibold text-espresso truncate max-w-[200px]">{venue.name}</span>
+                    <div className="flex items-center gap-2 text-[10px] text-muted font-mono shrink-0">
+                      <span>{venue.studentCount ? `${venue.studentCount.toLocaleString('en-IN')} students` : '—'}</span>
+                      <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded text-[9px] border border-amber-200">
+                        Permit: {venue.permissionStatus}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[10px] text-muted mt-1 leading-relaxed">
+                  Footfall is explicitly unmeasured (NULL). NIRF directory provides accredited student population; entry permits require independent administrative clearance.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted">
+                No institutional directory records in starter package for {selectedCity}.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Anti-Substitution Warning */}
+        <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 flex items-start gap-2.5 text-[11px] text-amber-900 leading-relaxed">
+          <Info size={15} className="text-amber-700 shrink-0 mt-0.5" />
+          <div>
+            <strong className="font-bold">Separation of Data Types Guarantee: </strong>
+            Transit network passenger volume is NOT station or booth footfall. College directory listings do NOT equal daily attendance or secured venue permissions. These verified figures are provided for macro situational awareness only and are never fed directly into reach, conversion, staffing, or cost calculations.
+          </div>
+        </div>
       </div>
 
     </div>

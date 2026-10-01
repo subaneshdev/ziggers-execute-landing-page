@@ -25,12 +25,13 @@ import CalendarAndTemplates from '../../components/dashboard/CalendarAndTemplate
 import TrainingManager from '../../components/dashboard/TrainingManager';
 import IntegrationsAndAudit from '../../components/dashboard/IntegrationsAndAudit';
 import SignalSyncDashboard from '../../components/dashboard/SignalSyncDashboard';
+import DataLibraryDashboard from '../../components/dashboard/DataLibraryDashboard';
 
 import { 
   Layers, Activity, ShieldCheck, MapPin, Users, Cpu, 
   Calendar as CalendarIcon, Key, Plus, RefreshCw, Eye, Camera,
   UserCheck, MessageSquare, Target, Wallet, FileText, FileCheck, Compass,
-  LogOut, User, Sparkles, Building, Loader2, Radio
+  LogOut, User, Sparkles, Building, Loader2, Radio, Database
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -179,7 +180,8 @@ export default function DashboardPage() {
             {activeTab === 'agency' && <Eye className="text-gold" size={18} />}
             {activeTab === 'reports' && <FileCheck className="text-gold" size={18} />}
             {activeTab === 'aiPlanner' && <Cpu className="text-gold" size={18} />}
-            {activeTab === 'modelEval' && <ShieldCheck className="text-gold" size={18} />}
+            {activeTab === 'dataLibrary' && <Database className="text-gold" size={18} />}
+            {(activeTab === 'modelEval' || activeTab === 'modelEvaluation') && <ShieldCheck className="text-gold" size={18} />}
             {activeTab === 'analytics' && <Compass className="text-gold" size={18} />}
             {activeTab === 'calendar' && <CalendarIcon className="text-gold" size={18} />}
             {activeTab === 'training' && <BookOpenIcon size={18} className="text-gold" />}
@@ -376,7 +378,11 @@ export default function DashboardPage() {
               />
             )}
 
-            {activeTab === 'modelEval' && (
+            {activeTab === 'dataLibrary' && (
+              <DataLibraryDashboard />
+            )}
+
+            {(activeTab === 'modelEval' || activeTab === 'modelEvaluation') && (
               <ModelEvaluationDashboard />
             )}
 
