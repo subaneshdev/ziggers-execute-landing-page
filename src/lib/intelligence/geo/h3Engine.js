@@ -97,7 +97,32 @@ export function h3CellToTurfPolygon(cellIndex) {
  * @param {number} resolution 
  * @returns {Array<{h3Index: string, centerLat: number, centerLng: number, distanceMeters: number, overlapWeight: number, intersectionAreaSqMeters: number}>}
  */
+const geometryCache = new Map();
+const MAX_GEOMETRY_CACHE_ENTRIES = 24;
+
 export function getH3CellsForRadius(centerLat, centerLng, radiusKm = 3.0, resolution = 9) {
+  // Only geometry is cached: no population, tenant data, forecasts or database writes.
+  // Non-numeric inputs retain the previous uncached behavior.
+  const inputs = [centerLat, centerLng, radiusKm, resolution];
+  if (!inputs.every(value => typeof value === 'number' && Number.isFinite(value))) {
+    return calculateH3CellsForRadius(centerLat, centerLng, radiusKm, resolution);
+  }
+  const key = JSON.stringify(inputs);
+  let cells = geometryCache.get(key);
+  if (cells) {
+    geometryCache.delete(key);
+  } else {
+    cells = calculateH3CellsForRadius(centerLat, centerLng, radiusKm, resolution);
+    if (geometryCache.size >= MAX_GEOMETRY_CACHE_ENTRIES) {
+      geometryCache.delete(geometryCache.keys().next().value);
+    }
+  }
+  geometryCache.set(key, cells);
+  // Consumers can sort/mutate their result without poisoning later forecasts.
+  return cells.map(cell => ({ ...cell }));
+}
+
+function calculateH3CellsForRadius(centerLat, centerLng, radiusKm = 3.0, resolution = 9) {
   const centerCell = latLngToH3Index(centerLat, centerLng, resolution);
   const metrics = H3_RESOLUTION_METRICS[resolution] || H3_RESOLUTION_METRICS[9];
   

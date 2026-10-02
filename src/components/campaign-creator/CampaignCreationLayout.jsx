@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Save, CheckCircle2, Sparkles, Loader2 } from 'lucide-react';
@@ -8,15 +9,17 @@ import CampaignSummaryPanel from './CampaignSummaryPanel';
 import DraftSaveIndicator from './DraftSaveIndicator';
 
 import Step1BasicDetails from './steps/Step1BasicDetails';
-import Step2BrandIntelligence from './steps/Step2BrandIntelligence';
-import Step3ActivationIdea from './steps/Step3ActivationIdea';
-import Step4TargetAudience from './steps/Step4TargetAudience';
-import Step5LocationGeography from './steps/Step5LocationGeography';
-import Step6ActivationRequirements from './steps/Step6ActivationRequirements';
-import Step7PartnerCoordination from './steps/Step7PartnerCoordination';
-import Step8WorkforcePlanning from './steps/Step8WorkforcePlanning';
-import Step9ExecutionPlan from './steps/Step9ExecutionPlan';
-import Step10BudgetApproval from './steps/Step10BudgetApproval';
+const StepLoading = () => <p role="status" className="p-8 text-sm text-muted">Loading campaign details…</p>;
+const Step2BrandIntelligence = dynamic(() => import('./steps/Step2BrandIntelligence'), { loading: StepLoading });
+const Step3ActivationIdea = dynamic(() => import('./steps/Step3ActivationIdea'), { loading: StepLoading });
+const Step4TargetAudience = dynamic(() => import('./steps/Step4TargetAudience'), { loading: StepLoading });
+const Step5LocationGeography = dynamic(() => import('./steps/Step5LocationGeography'), { loading: StepLoading });
+const Step6ActivationRequirements = dynamic(() => import('./steps/Step6ActivationRequirements'), { loading: StepLoading });
+const Step7PartnerCoordination = dynamic(() => import('./steps/Step7PartnerCoordination'), { loading: StepLoading });
+const Step8WorkforcePlanning = dynamic(() => import('./steps/Step8WorkforcePlanning'), { loading: StepLoading });
+const Step9ExecutionPlan = dynamic(() => import('./steps/Step9ExecutionPlan'), { loading: StepLoading });
+const Step10BudgetApproval = dynamic(() => import('./steps/Step10BudgetApproval'), { loading: StepLoading });
+import { validateCampaignSchedule } from '@/lib/intelligence/schedule/scheduleEngine';
 import { adaptCampaignProfile } from '@/lib/intelligence/brandAdaptation';
 import { generateCampaignForecast } from '@/lib/intelligence/clientForecast';
 import { generateActivationRequirements, generateTopObjectiveActivationPlans } from '@/lib/ecosystem/btlTaxonomy';
@@ -106,9 +109,40 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdCampaign, setCreatedCampaign] = useState(null);
+  const [formError, setFormError] = useState('');
+  const stepContent = useRef(null);
+  const draftChanged = useRef(false);
+  const latestDraft = useRef(draft);
 
-  // Autosave to LocalStorage with cache sanity check
+  const navigateToStep = (step) => {
+    if (step > currentStep && currentStep === 1 && !validateBasics()) return;
+    setFormError('');
+    setCurrentStep(step);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestAnimationFrame(() => stepContent.current?.focus({ preventScroll: true }));
+  };
+
+  const validateBasics = () => {
+    const missing = [['name', 'campaign name'], ['brand', 'brand name'], ['productOrService', 'product or service']]
+      .filter(([key]) => !draft[key]?.trim()).map(([, label]) => label);
+    const schedule = validateCampaignSchedule(draft);
+    const message = missing.length ? `Please add your ${missing.join(', ')}.`
+      : !schedule.isValid ? schedule.errors.join(' ')
+      : !Number.isFinite(Number(draft.budgetInr ?? draft.estimatedBudget)) || Number(draft.budgetInr ?? draft.estimatedBudget) <= 0
+        ? 'Enter a campaign budget greater than ₹0.' : '';
+    if (message) {
+      setFormError(message);
+      setCurrentStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      requestAnimationFrame(() => stepContent.current?.focus({ preventScroll: true }));
+      return false;
+    }
+    return true;
+  };
+
+  // Restore browser storage after the initial paint.
   useEffect(() => {
+    const timer = setTimeout(() => {
     try {
       const saved = localStorage.getItem('ziggers_campaign_draft');
       if (saved && !initialDraft) {
@@ -126,11 +160,13 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
     } catch (e) {
       console.warn('Autosave notice:', e.message);
     }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialDraft]);
 
   // Ensure forecast is populated on mount
   useEffect(() => {
-    setDraft(prev => {
+    const timer = setTimeout(() => setDraft(prev => {
       if (prev.forecast && prev.forecast.capacity?.status) return prev;
       try {
         const rawBudget = prev.budgetInr ?? prev.estimatedBudget;
@@ -165,10 +201,42 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
       } catch (e) {
         return prev;
       }
-    });
+    }), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    latestDraft.current = draft;
+    if (!draftChanged.current || isSuccess) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem('ziggers_campaign_draft', JSON.stringify(draft));
+        setLastSaved(new Date());
+      } catch {
+        setFormError('Your draft could not be saved on this device. Keep this page open to avoid losing your work.');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [draft, isSuccess]);
+
+  useEffect(() => {
+    const flushDraft = () => {
+      if (!draftChanged.current) return;
+      try {
+        localStorage.setItem('ziggers_campaign_draft', JSON.stringify(latestDraft.current));
+      } catch (error) {
+        console.warn('Draft could not be saved before leaving:', error.message);
+      }
+    };
+    window.addEventListener('pagehide', flushDraft);
+    return () => {
+      window.removeEventListener('pagehide', flushDraft);
+      flushDraft();
+    };
   }, []);
 
   const updateDraft = (patch) => {
+    draftChanged.current = true;
     setDraft(prev => {
       let next = { ...prev, ...patch };
 
@@ -281,12 +349,6 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
         }
       }
 
-      try {
-        localStorage.setItem('ziggers_campaign_draft', JSON.stringify(next));
-        setLastSaved(new Date());
-      } catch (e) {
-        // ignore quota
-      }
       return next;
     });
   };
@@ -296,6 +358,8 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
     try {
       localStorage.setItem('ziggers_campaign_draft', JSON.stringify(draft));
       setLastSaved(new Date());
+    } catch {
+      setFormError('Could not save your draft on this device. Keep this page open to avoid losing your work.');
     } finally {
       setTimeout(() => setIsSaving(false), 400);
     }
@@ -303,19 +367,18 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
-      setCurrentStep(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateToStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateToStep(currentStep - 1);
     }
   };
 
   const handlePublish = async () => {
+    if (isPublishing || !validateBasics()) return;
     setIsPublishing(true);
     try {
       const rawBudget = draft.budgetInr ?? draft.estimatedBudget;
@@ -340,6 +403,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
       });
       const data = await res.json();
       if (data.success) {
+        draftChanged.current = false;
         setCreatedCampaign(data.campaign);
         setIsSuccess(true);
         try {
@@ -349,18 +413,18 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
         }
       } else {
         console.error('Publish error:', data.error);
-        alert(data.error || 'Failed to deploy campaign');
+        setFormError(data.error || 'Could not save your campaign. Please try again.');
       }
     } catch (err) {
       console.error('Publish error:', err);
-      alert('Error deploying campaign: ' + err.message);
+      setFormError('Could not save your campaign. Check your connection and try again.');
     } finally {
       setIsPublishing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-linen/15 flex flex-col font-sans text-espresso selection:bg-gold/30">
+    <div className="campaign-builder min-h-screen bg-linen/30 flex flex-col font-sans text-espresso selection:bg-gold/30">
       
       {/* Top Creation Header */}
       <header className="bg-white border-b border-espresso/10 sticky top-0 z-30 shadow-2xs">
@@ -368,14 +432,15 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
           <div className="flex items-center gap-3">
             <Link 
               href="/dashboard"
+              aria-label="Back to dashboard"
               className="p-2 rounded-xl text-muted hover:text-espresso hover:bg-linen/40 transition-colors"
             >
               <ArrowLeft size={18} />
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold text-gold bg-espresso px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Campaign Engine
+                <span className="whitespace-nowrap text-[10px] font-mono font-bold text-gold bg-espresso px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Create campaign
                 </span>
                 <DraftSaveIndicator lastSaved={lastSaved} isSaving={isSaving} />
               </div>
@@ -385,7 +450,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <button
               type="button"
               onClick={handleManualSave}
@@ -425,31 +490,32 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
           <CampaignStepper 
             currentStep={currentStep} 
             steps={STEPS} 
-            onStepClick={(stepNum) => setCurrentStep(stepNum)} 
+            onStepClick={navigateToStep}
           />
         </div>
       </div>
 
       {/* Main Campaign Builder Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
           
           {/* Active Step Content */}
-          <div className="flex-1 w-full bg-white border border-espresso/15 rounded-3xl p-6 sm:p-8 shadow-xs">
+          <div ref={stepContent} tabIndex={-1} aria-label={STEPS[currentStep - 1].name} className="campaign-step min-w-0 w-full bg-white border border-espresso/15 rounded-3xl p-4 sm:p-8 shadow-xs">
+            {formError && <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{formError}</div>}
             {currentStep === 1 && <Step1BasicDetails draft={draft} onUpdate={updateDraft} />}
             {currentStep === 2 && <Step2BrandIntelligence draft={draft} onUpdate={updateDraft} />}
             {currentStep === 3 && <Step3ActivationIdea draft={draft} onUpdate={updateDraft} />}
             {currentStep === 4 && <Step4TargetAudience draft={draft} onUpdate={updateDraft} />}
             {currentStep === 5 && <Step5LocationGeography draft={draft} onUpdate={updateDraft} />}
             {currentStep === 6 && <Step6ActivationRequirements draft={draft} onUpdate={updateDraft} />}
-            {currentStep === 7 && <Step7PartnerCoordination draft={draft} onUpdate={updateDraft} onJumpToStep={(s) => setCurrentStep(s)} />}
+            {currentStep === 7 && <Step7PartnerCoordination draft={draft} onUpdate={updateDraft} onJumpToStep={navigateToStep} />}
             {currentStep === 8 && <Step8WorkforcePlanning draft={draft} onUpdate={updateDraft} />}
-            {currentStep === 9 && <Step9ExecutionPlan draft={draft} onJumpToStep={(s) => setCurrentStep(s)} />}
+            {currentStep === 9 && <Step9ExecutionPlan draft={draft} onJumpToStep={navigateToStep} />}
             {currentStep === 10 && (
               <Step10BudgetApproval 
                 draft={draft} 
                 onUpdate={updateDraft}
-                onJumpToStep={(s) => setCurrentStep(s)}
+                onJumpToStep={navigateToStep}
                 isPublishing={isPublishing}
                 isSuccess={isSuccess}
                 createdCampaign={createdCampaign}
@@ -463,7 +529,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
           {!isSuccess && (
             <CampaignSummaryPanel 
               draft={draft} 
-              onJumpToStep={(s) => setCurrentStep(s)} 
+              onJumpToStep={navigateToStep}
             />
           )}
 
@@ -472,7 +538,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
 
       {/* Fixed Sticky Footer Navigation */}
       {!isSuccess && (
-        <footer className="bg-white border-t border-espresso/10 py-4 px-6 sticky bottom-0 z-30 shadow-md">
+        <footer className="bg-white border-t border-espresso/10 py-3 px-4 sm:px-6 sticky bottom-0 z-30 shadow-md">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             
             <button
@@ -481,7 +547,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
               className="text-xs font-bold text-muted hover:text-espresso flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Save size={14} />
-              <span>Save Progress</span>
+              <span className="hidden sm:inline">Save Progress</span><span className="sm:hidden">Save</span>
             </button>
 
             <div className="flex items-center gap-3">
@@ -501,7 +567,7 @@ export default function CampaignCreationLayout({ initialDraft = null }) {
                   onClick={handleNext}
                   className="px-6 py-2.5 rounded-xl bg-espresso hover:bg-muted text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all cursor-pointer"
                 >
-                  <span>Continue</span>
+                  <span>Next: {STEPS[currentStep].name.replace(/^\d+\. /, '')}</span>
                   <ArrowRight size={14} className="text-gold" />
                 </button>
               ) : (

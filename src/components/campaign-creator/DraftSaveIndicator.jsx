@@ -13,9 +13,10 @@ export default function DraftSaveIndicator({ isSaving, lastSaved }) {
       ) : (
         <>
           <Check size={12} className="text-green-600" />
-          <span>
-            {lastSaved ? `Draft saved ${new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Draft autosaved'}
+          <span className="hidden sm:inline">
+            {lastSaved ? `Saved on this device at ${new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Not saved yet'}
           </span>
+          <span className="sm:hidden whitespace-nowrap">{lastSaved ? 'Saved locally' : 'Not saved yet'}</span>
         </>
       )}
     </div>

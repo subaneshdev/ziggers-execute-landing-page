@@ -7,7 +7,7 @@ import {
 import { formatDateDisplay, formatTimeDisplay } from '@/lib/intelligence/schedule/scheduleEngine';
 
 export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
-  const [isCollapsedMobile, setIsCollapsedMobile] = useState(false);
+  const [isCollapsedMobile, setIsCollapsedMobile] = useState(true);
 
   const {
     name,
@@ -51,7 +51,7 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
   const scheduleDailyTimingStr = schedule?.dailyTimingDisplay || (dailyStartTime && dailyEndTime ? `${formatTimeDisplay(dailyStartTime)} – ${formatTimeDisplay(dailyEndTime)} (${currentShiftHours}h / day)` : `${currentShiftHours}h / day`);
 
   return (
-    <aside className="w-full lg:w-80 bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs flex flex-col justify-between font-sans">
+    <aside aria-label="Campaign summary" className="w-full min-w-0 xl:sticky xl:top-20 xl:max-h-[calc(100vh-11rem)] xl:overflow-y-auto bg-white border border-espresso/15 rounded-3xl p-5 shadow-xs flex flex-col justify-between font-sans">
       <div>
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-espresso/10">
@@ -62,13 +62,15 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
           <button 
             type="button"
             onClick={() => setIsCollapsedMobile(!isCollapsedMobile)}
-            className="lg:hidden p-1.5 text-muted hover:text-espresso rounded-lg hover:bg-linen/30 transition-colors"
+            aria-label={isCollapsedMobile ? 'Expand campaign summary' : 'Collapse campaign summary'}
+            aria-expanded={!isCollapsedMobile}
+            className="xl:hidden p-3 text-muted hover:text-espresso rounded-lg hover:bg-linen/30 transition-colors"
           >
             {isCollapsedMobile ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
           </button>
         </div>
 
-        <div className={`space-y-4 pt-4 text-xs ${isCollapsedMobile ? 'hidden lg:block' : 'block'}`}>
+        <div className={`space-y-4 pt-4 text-xs ${isCollapsedMobile ? 'hidden xl:block' : 'block'}`}>
           
           {/* 1. Basic Details */}
           <div className="space-y-1.5">
@@ -334,10 +336,10 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
           <div className="p-3 bg-linen/40 border border-espresso/10 rounded-2xl text-[11px] text-muted space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-espresso">
               <Sparkles size={12} className="text-gold" />
-              <span>Forecast Timing Notice</span>
+              <span>Planning estimate</span>
             </div>
             <p className="leading-relaxed">
-              Forecast calibrated for {totalDays} days ({currentShiftHours}h/day, {totalHours} total activation hours) in {timezone || 'Asia/Kolkata'}.
+              Based on {totalDays} days and {currentShiftHours} hours per day. Estimates use general planning assumptions. Confirm local footfall and costs before committing.
             </p>
           </div>
 
@@ -347,7 +349,7 @@ export default function CampaignSummaryPanel({ draft, onJumpToStep }) {
       {/* Safety & Escrow Badge */}
       <div className="mt-6 pt-3.5 border-t border-espresso/10 text-xs text-stone-700 flex items-center gap-2">
         <CheckCircle2 size={15} className="text-green-600 shrink-0" />
-        <span className="font-medium text-[11px]">100% Escrow Protected & GST Separated</span>
+        <span className="font-medium text-[11px]">Budget includes GST. Final costs need confirmation.</span>
       </div>
     </aside>
   );

@@ -78,7 +78,7 @@ export default function DeploymentBoard({ campaigns = [], onLogAction }) {
           <span className="text-xl font-extrabold text-green-700 font-mono mt-1 block">
             {roster.filter(r => r.briefingAcknowledged || understoodWorkers.has(r.id)).length} / {roster.length}
           </span>
-          <span className="text-[10px] text-muted mt-0.5 block">"I Understand" Confirmed</span>
+          <span className="text-[10px] text-muted mt-0.5 block">&quot;I Understand&quot; Confirmed</span>
         </div>
 
         <div className="bg-white border border-espresso/10 p-4 rounded-2xl shadow-xs">

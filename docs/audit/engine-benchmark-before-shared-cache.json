@@ -1,0 +1,54 @@
+{
+  "node": "v24.14.1",
+  "notes": "Local synchronous calls; isolated fresh SQLite database; no network or concurrency. Server calls include forecast inserts. Measurements are not production latency.",
+  "results": [
+    {
+      "name": "preview",
+      "radiusKm": 0.5,
+      "firstCallMs": 214.69,
+      "medianMs": 0.17,
+      "p95Ms": 0.29,
+      "iterations": 20
+    },
+    {
+      "name": "preview",
+      "radiusKm": 3,
+      "firstCallMs": 488.69,
+      "medianMs": 0.21,
+      "p95Ms": 0.31,
+      "iterations": 20
+    },
+    {
+      "name": "preview",
+      "radiusKm": 8,
+      "firstCallMs": 429.38,
+      "medianMs": 0.32,
+      "p95Ms": 0.47,
+      "iterations": 20
+    },
+    {
+      "name": "server",
+      "radiusKm": 0.5,
+      "firstCallMs": 151.02,
+      "medianMs": 63.95,
+      "p95Ms": 91.48,
+      "iterations": 20
+    },
+    {
+      "name": "server",
+      "radiusKm": 3,
+      "firstCallMs": 308.85,
+      "medianMs": 343.87,
+      "p95Ms": 395.47,
+      "iterations": 20
+    },
+    {
+      "name": "server",
+      "radiusKm": 8,
+      "firstCallMs": 425.46,
+      "medianMs": 461.4,
+      "p95Ms": 562.96,
+      "iterations": 20
+    }
+  ]
+}

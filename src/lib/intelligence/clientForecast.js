@@ -58,6 +58,20 @@ export {
 /**
  * Client-Side Instant Campaign Forecast Preview
  */
+// Geometry depends on the radius, not on each budget, brand, or audience keystroke.
+// Cache only the scalar aggregate, bounded to avoid retaining large cell arrays.
+const populationPreviewCache = new Map();
+function getPreviewPopulation(radiusKm) {
+  const resolution = getRecommendedResolution(radiusKm, 'dense_urban');
+  const key = `${radiusKm}:${resolution}`;
+  if (populationPreviewCache.has(key)) return populationPreviewCache.get(key);
+  const cells = getH3CellsForRadius(13.0827, 80.2707, radiusKm, resolution);
+  const population = cells.reduce((sum, cell) => sum + Math.round(18500 * cell.overlapWeight), 0) || 100000;
+  if (populationPreviewCache.size >= 24) populationPreviewCache.delete(populationPreviewCache.keys().next().value);
+  populationPreviewCache.set(key, population);
+  return population;
+}
+
 export function generateCampaignForecast(params = {}) {
   const {
     targetLocations = ['Chennai Central Commercial Hub'],
@@ -89,22 +103,17 @@ export function generateCampaignForecast(params = {}) {
   const effectiveCampaignDays = (scheduleMetrics && scheduleMetrics.campaignDays > 0) ? scheduleMetrics.campaignDays : campaignDays;
   const effectiveShiftHours = (scheduleMetrics && scheduleMetrics.hoursPerDay > 0) ? scheduleMetrics.hoursPerDay : shiftHours;
 
-  const resolution = getRecommendedResolution(radiusKm, 'dense_urban');
-  const h3Cells = getH3CellsForRadius(13.0827, 80.2707, radiusKm, resolution);
-  
-  let totalAggregatedPopulation = 0;
-  h3Cells.forEach(cell => {
-    totalAggregatedPopulation += Math.round(18500 * cell.overlapWeight);
-  });
-  if (totalAggregatedPopulation === 0) totalAggregatedPopulation = 100000;
+  const totalAggregatedPopulation = getPreviewPopulation(radiusKm);
 
   const ageEligibility = calculateAgeEligibility(ageMin, ageMax, { '18-24': 0.25, '25-34': 0.35, '35-44': 0.20 });
   const genderAvailability = calculateGenderAvailability(gender, { male: 0.51, female: 0.49 });
   const interestAffinity = calculateInterestAffinity(selectedInterests, {}, {});
 
   const footfallData = estimateFootfallAndAudience({
-    basePopulation: totalAggregatedPopulation,
-    locationType: 'commercial_high_street',
+    totalPopulation: totalAggregatedPopulation,
+    locationNode: { locationType: 'commercial_high_street' },
+    objective,
+    startHour: scheduleMetrics?.startHour ?? 16,
     shiftHours: effectiveShiftHours,
     campaignDays: effectiveCampaignDays,
     city
@@ -126,7 +135,7 @@ export function generateCampaignForecast(params = {}) {
     weightedInterestAffinity: interestAffinity.weightedAffinityScore,
     shiftFootfallExposure: footfallData.shiftFootfallExposure,
     totalCampaignExposure: footfallData.totalCampaignExposure,
-    physicalCapacity: staffingData.capacity?.expectedInteractions || 1000,
+    physicalCapacity: staffingData.capacity?.expectedInteractions ?? 0,
     campaignDays: effectiveCampaignDays
   });
 
@@ -188,10 +197,11 @@ export function generateCampaignForecast(params = {}) {
       totalCampaignHours: effectiveCampaignDays * effectiveShiftHours
     },
     provenance: {
-      modelType: 'BAYESIAN_STATISTICAL_ESTIMATE',
-      modelVersion: 'bayes-v2.0',
-      maturityLevel: 2,
-      confidenceTier: 'MODERATE'
+      modelType: 'HEURISTIC_PREVIEW',
+      modelVersion: 'preview-v1.1',
+      maturityLevel: 1,
+      confidenceTier: 'LOW',
+      dataSource: 'DEFAULT_PLANNING_ASSUMPTIONS'
     }
   };
 }

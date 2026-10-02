@@ -1,6 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
 
+/* Consistent, readable controls across all ten campaign steps. */
+.campaign-builder :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #92702b;
+  outline-offset: 3px;
+}
+.campaign-step :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  font-size: 1rem;
+  min-height: 44px;
+  max-width: 100%;
+}
+.campaign-step :is(h2, h3, p, label) { overflow-wrap: anywhere; }
+.campaign-step label { font-size: 0.875rem; }
+.campaign-step { scroll-margin-top: 5rem; }
+
 :root {
   --background: #FFFFFF;
   --foreground: #111111;

@@ -1,0 +1,112 @@
+{
+  "sourceFiles": 177,
+  "nextEntries": 55,
+  "reachableFiles": 168,
+  "candidateCount": 9,
+  "unusedByAppTestsAndScripts": [],
+  "candidates": [
+    {
+      "file": "src/domain/audience.ts",
+      "referencesOutsideApp": []
+    },
+    {
+      "file": "src/domain/brand.ts",
+      "referencesOutsideApp": [
+        "tests/domain.test.ts",
+        "tests/state.test.ts"
+      ]
+    },
+    {
+      "file": "src/domain/campaign.ts",
+      "referencesOutsideApp": [
+        "tests/domain.test.ts",
+        "tests/state.test.ts"
+      ]
+    },
+    {
+      "file": "src/domain/location.ts",
+      "referencesOutsideApp": []
+    },
+    {
+      "file": "src/lib/marketplace/logisticsEngine.js",
+      "referencesOutsideApp": [
+        "test/marketplaceEngine.test.mjs"
+      ]
+    },
+    {
+      "file": "src/lib/marketplace/manpowerEngine.js",
+      "referencesOutsideApp": [
+        "test/marketplaceEngine.test.mjs"
+      ]
+    },
+    {
+      "file": "src/lib/marketplace/settlementEngine.js",
+      "referencesOutsideApp": [
+        "test/marketplaceEngine.test.mjs"
+      ]
+    },
+    {
+      "file": "src/services/campaignService.ts",
+      "referencesOutsideApp": [
+        "tests/services.test.ts"
+      ]
+    },
+    {
+      "file": "src/state/appStore.ts",
+      "referencesOutsideApp": [
+        "tests/state.test.ts"
+      ]
+    }
+  ],
+  "largestFiles": [
+    {
+      "file": "src/components/dashboard/SignalSyncDashboard.jsx",
+      "lines": 1429
+    },
+    {
+      "file": "src/lib/ecosystem/btlTaxonomy.js",
+      "lines": 1241
+    },
+    {
+      "file": "src/components/dashboard/DataLibraryDashboard.jsx",
+      "lines": 1214
+    },
+    {
+      "file": "src/components/dashboard/CampaignCreator.jsx",
+      "lines": 947
+    },
+    {
+      "file": "src/lib/data/database.js",
+      "lines": 934
+    },
+    {
+      "file": "src/lib/intelligence/brandTaxonomy.js",
+      "lines": 843
+    },
+    {
+      "file": "src/lib/intelligence/playbook/playbookDecisionEngine.js",
+      "lines": 829
+    },
+    {
+      "file": "src/app/page.js",
+      "lines": 731
+    },
+    {
+      "file": "src/lib/intelligence/index.js",
+      "lines": 682
+    },
+    {
+      "file": "src/lib/intelligence/signals/metaSignalProvider.js",
+      "lines": 679
+    },
+    {
+      "file": "src/lib/intelligence/providers/populationProvider.js",
+      "lines": 641
+    },
+    {
+      "file": "src/components/campaign-creator/steps/Step10BudgetApproval.jsx",
+      "lines": 620
+    }
+  ],
+  "method": "Static local import graph rooted at Next.js convention entrypoints; candidates require review, not automatic deletion. External references are direct static imports in tests/scripts; indirect test dependencies are not listed."
+}

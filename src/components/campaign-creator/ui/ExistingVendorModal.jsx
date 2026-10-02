@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { X, Building2, User, Phone, Mail, FileText, Check, ArrowRight } from 'lucide-react';
 
 export default function ExistingVendorModal({ isOpen, onClose, requirement, onSaveVendor }) {
-  if (!isOpen || !requirement) return null;
-
   const [vendorName, setVendorName] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
+  if (!isOpen || !requirement) return null;
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -27,7 +26,7 @@ export default function ExistingVendorModal({ isOpen, onClose, requirement, onSa
   };
 
   return (
-    <div className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 font-sans animate-in fade-in duration-150">
+    <div role="dialog" aria-modal="true" aria-label="Existing vendor details" className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 font-sans animate-in fade-in duration-150">
       <div className="bg-white border border-espresso/15 rounded-3xl max-w-lg w-full shadow-2xl p-5 sm:p-7 space-y-5">
         
         {/* Header */}
@@ -47,7 +46,7 @@ export default function ExistingVendorModal({ isOpen, onClose, requirement, onSa
           </div>
           <button 
             type="button" 
-            onClick={onClose} 
+            onClick={onClose} aria-label="Close dialog"
             className="p-1.5 rounded-xl text-muted hover:text-espresso hover:bg-linen/60 transition-colors cursor-pointer"
           >
             <X size={18} />

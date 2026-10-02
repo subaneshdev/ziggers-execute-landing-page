@@ -28,6 +28,8 @@ import { generateCampaignForecast } from '../src/lib/intelligence/index.js';
 
 test('Ziggers Campaign Decision Playbook v2 Engine Comprehensive Tests', async (t) => {
   const db = getDatabase();
+  // Establish fixtures explicitly so this suite also passes on a fresh database.
+  importPlaybookPackage();
 
   await t.test('PB-001: Package Ingestion Completeness (41 Playbooks, 15 Families, 13 Sources)', () => {
     const summary = getPlaybookLibrarySummary();

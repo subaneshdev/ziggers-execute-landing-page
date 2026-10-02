@@ -7,6 +7,7 @@ import { useAuth } from '../lib/AuthContext';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -49,8 +50,6 @@ export default function Navigation() {
       ]
     }
   };
-
-  const { user, profile, signOut } = useAuth();
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-250 ${scrolled ? 'bg-white/90 backdrop-blur-md border-b border-espresso/5 shadow-soft py-4' : 'bg-transparent py-6'}`}>

@@ -63,7 +63,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm text-linen/70 leading-relaxed max-w-xs mb-6">
-              India's definitive On-Ground Marketing Execution Platform. We build the physical and digital infrastructure for offline campaigns.
+              India&apos;s definitive On-Ground Marketing Execution Platform. We build the physical and digital infrastructure for offline campaigns.
             </p>
             <p className="text-xs text-linen/50">
               An <a href="https://www.unfounded.in/" target="_blank" rel="noopener noreferrer" className="text-gold font-semibold hover:underline">Unfounded</a> Company

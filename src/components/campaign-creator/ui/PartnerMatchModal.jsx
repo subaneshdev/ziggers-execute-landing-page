@@ -13,6 +13,8 @@ export default function PartnerMatchModal({
   city = 'Chennai', 
   onSelectPartner 
 }) {
+  const [selectedPartnerId, setSelectedPartnerId] = useState(null);
+  const [customBrief, setCustomBrief] = useState('');
   if (!isOpen || !requirement) return null;
 
   const category = PARTNER_CATEGORIES[requirement.category] || {
@@ -26,11 +28,11 @@ export default function PartnerMatchModal({
     (p.city === city || (p.supportedCities && p.supportedCities.includes(city)))
   );
 
-  const [selectedPartnerId, setSelectedPartnerId] = useState(matchedPartners[0]?.id || null);
-  const [customBrief, setCustomBrief] = useState('');
+  const effectivePartnerId = matchedPartners.some(partner => partner.id === selectedPartnerId)
+    ? selectedPartnerId : matchedPartners[0]?.id || null;
 
   const handleConfirm = () => {
-    const chosen = matchedPartners.find(p => p.id === selectedPartnerId) || matchedPartners[0] || {
+    const chosen = matchedPartners.find(p => p.id === effectivePartnerId) || matchedPartners[0] || {
       id: 'CUSTOM_MATCH_REQUEST',
       name: `Ziggers Verified ${category.title} Partner`,
       rating: 4.9,
@@ -50,7 +52,7 @@ export default function PartnerMatchModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 font-sans animate-in fade-in duration-150">
+    <div role="dialog" aria-modal="true" aria-label="Choose a partner" className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 font-sans animate-in fade-in duration-150">
       <div className="bg-white border border-espresso/15 rounded-3xl max-w-2xl w-full shadow-2xl p-5 sm:p-7 space-y-6 max-h-[92vh] overflow-y-auto">
         
         {/* Header */}
@@ -76,7 +78,7 @@ export default function PartnerMatchModal({
           </div>
           <button 
             type="button" 
-            onClick={onClose} 
+            onClick={onClose} aria-label="Close dialog"
             className="p-1.5 rounded-xl text-muted hover:text-espresso hover:bg-linen/60 transition-colors cursor-pointer"
           >
             <X size={18} />
@@ -131,7 +133,7 @@ export default function PartnerMatchModal({
           ) : (
             <div className="space-y-2.5">
               {matchedPartners.map((partner) => {
-                const isSelected = selectedPartnerId === partner.id;
+                const isSelected = effectivePartnerId === partner.id;
                 return (
                   <div
                     key={partner.id}

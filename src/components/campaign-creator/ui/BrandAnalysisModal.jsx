@@ -6,9 +6,8 @@ import {
 } from 'lucide-react';
 
 export default function BrandAnalysisModal({ isOpen, onClose, brandData, onApply }) {
-  if (!isOpen || !brandData) return null;
-
   const [activeTab, setActiveTab] = useState('primary');
+  if (!isOpen || !brandData) return null;
   
   const classification = brandData.brandClassification || {
     industry: brandData.category || 'Automotive',
@@ -95,7 +94,7 @@ export default function BrandAnalysisModal({ isOpen, onClose, brandData, onApply
   };
 
   return (
-    <div className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+    <div role="dialog" aria-modal="true" aria-label="Brand analysis" className="fixed inset-0 bg-espresso/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white border border-espresso/15 rounded-3xl max-w-4xl w-full shadow-2xl p-5 sm:p-7 space-y-6 max-h-[92vh] overflow-y-auto font-sans animate-in fade-in duration-150">
         
         {/* Header with Specificity Badge */}
@@ -121,7 +120,7 @@ export default function BrandAnalysisModal({ isOpen, onClose, brandData, onApply
           </div>
           <button 
             type="button" 
-            onClick={onClose} 
+            onClick={onClose} aria-label="Close dialog"
             className="p-1.5 rounded-xl text-muted hover:text-espresso hover:bg-linen/60 transition-colors cursor-pointer"
           >
             <X size={18} />

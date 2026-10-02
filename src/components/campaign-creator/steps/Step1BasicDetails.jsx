@@ -128,10 +128,10 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
           <span className="text-xs text-muted font-medium">Foundation & Ground Parameters</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-espresso tracking-tight font-serif">
-          Campaign Blueprint & Setup
+          Start with the essentials
         </h2>
         <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed max-w-2xl font-medium">
-          Define core brand details, strategic objectives, and precise activation timing to power our spatial intelligence forecast.
+          Tell us what you are promoting, what you want to achieve, and when. You can review everything before saving your campaign.
         </p>
       </div>
 
@@ -151,10 +151,10 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
           
           {/* Campaign Name */}
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="block text-xs font-bold text-espresso">
+            <label htmlFor="campaign-name" className="block text-xs font-bold text-espresso">
               Campaign Name <span className="text-red-500">*</span>
             </label>
-            <input
+            <input id="campaign-name"
               type="text"
               required
               value={name}
@@ -166,10 +166,10 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
 
           {/* Brand / Business */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-espresso">
+            <label htmlFor="campaign-brand" className="block text-xs font-bold text-espresso">
               Brand / Business Name <span className="text-red-500">*</span>
             </label>
-            <input
+            <input id="campaign-brand"
               type="text"
               required
               value={brand}
@@ -181,10 +181,10 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
 
           {/* Product or Service */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-espresso">
+            <label htmlFor="campaign-product" className="block text-xs font-bold text-espresso">
               Product or Service Being Promoted <span className="text-red-500">*</span>
             </label>
-            <input
+            <input id="campaign-product"
               type="text"
               required
               value={productOrService}
@@ -212,15 +212,17 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {CAMPAIGN_OBJECTIVES.map((obj) => {
             const isSelected = selectedObjectives.includes(obj.id);
             const ObjectiveIcon = obj.Icon;
             return (
-              <div
+              <button
                 key={obj.id}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => toggleObjective(obj.id)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${
+                className={`text-left p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${
                   isSelected
                     ? 'bg-espresso text-white border-espresso shadow-md ring-2 ring-gold/40'
                     : 'bg-white border-espresso/15 hover:border-gold/60 hover:bg-linen/10 text-espresso shadow-2xs'
@@ -233,7 +235,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
                 </div>
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <strong className="text-xs font-black truncate leading-tight">{obj.title}</strong>
+                    <strong className="text-sm font-bold leading-tight">{obj.title}</strong>
                     {isSelected && (
                       <span className="w-4 h-4 rounded-full bg-gold text-espresso flex items-center justify-center shrink-0">
                         <Check size={11} strokeWidth={3} />
@@ -244,7 +246,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
                     {obj.desc}
                   </p>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -307,12 +309,12 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
               
               {/* Campaign Start Date */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-espresso flex items-center gap-1.5">
+                <label htmlFor="campaign-start" className="block text-xs font-bold text-espresso flex items-center gap-1.5">
                   <CalendarDays size={13} className="text-gold" />
                   <span>Start Date</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="campaign-start"
                   type="date"
                   required
                   value={startDate}
@@ -323,12 +325,12 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
 
               {/* Campaign End Date */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-espresso flex items-center gap-1.5">
+                <label htmlFor="campaign-end" className="block text-xs font-bold text-espresso flex items-center gap-1.5">
                   <CalendarDays size={13} className="text-gold" />
                   <span>End Date</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="campaign-end"
                   type="date"
                   required
                   value={endDate}
@@ -340,12 +342,12 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
 
               {/* Time Zone */}
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-                <label className="block text-xs font-bold text-espresso flex items-center gap-1.5">
+                <label htmlFor="campaign-timezone" className="block text-xs font-bold text-espresso flex items-center gap-1.5">
                   <Globe size={13} className="text-gold" />
                   <span>Time Zone</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <select
+                <select id="campaign-timezone"
                   value={timezone}
                   onChange={(e) => handleScheduleChange('timezone', e.target.value)}
                   className="w-full h-11 bg-white border border-espresso/15 rounded-xl px-3 text-xs text-espresso font-semibold focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold shadow-2xs transition-all"
@@ -363,12 +365,12 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
               
               {/* Daily Start Time */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-espresso flex items-center gap-1.5">
+                <label htmlFor="campaign-time-start" className="block text-xs font-bold text-espresso flex items-center gap-1.5">
                   <Clock size={13} className="text-gold" />
                   <span>Daily Shift Start</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="campaign-time-start"
                   type="time"
                   required
                   value={dailyStartTime}
@@ -379,12 +381,12 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
 
               {/* Daily End Time */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-espresso flex items-center gap-1.5">
+                <label htmlFor="campaign-time-end" className="block text-xs font-bold text-espresso flex items-center gap-1.5">
                   <Clock size={13} className="text-gold" />
                   <span>Daily Shift End</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="campaign-time-end"
                   type="time"
                   required
                   value={dailyEndTime}
@@ -491,14 +493,14 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
             <span>Starting Campaign Budget</span>
           </h3>
           <span className="text-[10px] font-mono font-semibold text-muted bg-linen/50 border border-espresso/10 px-2 py-0.5 rounded-md">
-            100% Escrow Protected
+            Planning estimate
           </span>
         </div>
 
         <div className="p-5 sm:p-6 bg-white border border-espresso/15 rounded-3xl space-y-4 shadow-2xs">
           
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-espresso">
+            <label htmlFor="campaign-budget" className="block text-xs font-bold text-espresso">
               Estimated Total Budget (INR, GST Inclusive) <span className="text-red-500">*</span>
             </label>
             
@@ -508,6 +510,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
                   ₹
                 </span>
                 <input
+                  id="campaign-budget"
                   type="number"
                   step={5000}
                   value={estimatedBudget || ''}
@@ -537,7 +540,7 @@ export default function Step1BasicDetails({ draft, onUpdate }) {
             </div>
 
             <p className="text-[11px] text-muted font-medium">
-              Integer paise escrow waterfall automatically allocates promoter wage pool, supervisor lead fees, statutory reserve, and 18% GST.
+              Your budget covers field staff, supervision, campaign costs, reserves, and GST. Review the full breakdown in the final step.
             </p>
           </div>
 

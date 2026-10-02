@@ -26,16 +26,9 @@ export default function LocationHiring({ campaigns = [], onLogAction, onCreateCl
   const [bulkTargetWorkers, setBulkTargetWorkers] = useState(100);
   const [bulkDispatched, setBulkDispatched] = useState(false);
 
-  const [workersPool, setWorkersPool] = useState([]);
-
-  // Load verified candidate pool for the active campaign's city
-  React.useEffect(() => {
-    if (!activeCampaign) {
-      setWorkersPool([]);
-      return;
-    }
-    // Set pool from real assigned/candidate records or empty state
-    const pool = (activeCampaign.assignedStaff || []).map((staff, idx) => ({
+  // This pool is derived from props; keeping a second state copy caused an
+  // extra render and briefly displayed the previous campaign's workers.
+  const workersPool = (activeCampaign?.assignedStaff || []).map((staff, idx) => ({
       id: staff.id || `w_${idx + 1}`,
       name: staff.name || `Certified Promoter ${idx + 1}`,
       avatar: '👨🏽',
@@ -50,8 +43,6 @@ export default function LocationHiring({ campaigns = [], onLogAction, onCreateCl
       availableToday: true,
       lastCheckin: `${activeCampaign.city || 'Metro'} Geofence Hub`
     }));
-    setWorkersPool(pool);
-  }, [activeCampaign]);
 
   const filteredWorkers = workersPool.filter(w => {
     if (filterKycOnly && !w.kyc) return false;

@@ -232,7 +232,7 @@ export default function AiCampaignPlanner({ onDeployDraft }) {
                 <div className="flex items-center gap-2 border-b border-espresso/10 pb-3">
                   <Activity className="text-gold" size={18} />
                   <h4 className="text-sm font-extrabold text-espresso tracking-tight">
-                    Transparent Algorithmic Rationale ("Why this blueprint?")
+                    Transparent Algorithmic Rationale (&quot;Why this blueprint?&quot;)
                   </h4>
                 </div>
 

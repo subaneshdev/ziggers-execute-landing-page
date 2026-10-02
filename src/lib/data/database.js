@@ -2,8 +2,8 @@
  * Ziggers Production Engine - Unified Data & Persistence Layer
  * File: src/lib/data/database.js
  * 
- * Provides durable database persistence using PostgreSQL (via Supabase)
- * or durable disk-backed SQLite (via Node.js native node:sqlite).
+ * Provides disk-backed SQLite persistence through Node.js native node:sqlite.
+ * Supabase integrations are managed separately by their callers.
  * 
  * Non-negotiable Guarantees:
  * 1. NEVER silently falls back to in-memory volatile Maps.

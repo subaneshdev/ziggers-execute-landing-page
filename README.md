@@ -20,7 +20,16 @@ You can start editing the page by modifying `app/page.js`. The page auto-updates
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Local verification
+
+- `npm test` runs the intelligence, marketplace, production, playbook, preview, and geometry suites.
+- `npm run test:production` and `npm run test:playbook` run individual suites.
+- These commands create a separate SQLite database under `data/test-runs/`; they do not write test fixtures into the application's database. Run folders are ignored by Git and retained for inspection.
+- The playbook suite requires the existing playbook source package configured by `config/playbook_manifest.json` or `ZIGGERS_PLAYBOOK_DIR`.
+- `node scripts/audit-codebase.mjs` refreshes the source dependency report in `docs/audit/`.
+- `npm run build` checks the production build. The configured Google fonts require network access during the build.
+
+## Next.js resources
 
 To learn more about Next.js, take a look at the following resources:
 

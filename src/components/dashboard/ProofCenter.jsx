@@ -206,7 +206,7 @@ export default function ProofCenter({ campaigns = [], onLogAction }) {
             {/* Card Details & Audit Controls */}
             <div className="p-4 space-y-3">
               <p className="text-xs text-espresso font-medium leading-relaxed line-clamp-2">
-                "{item.caption}"
+                &quot;{item.caption}&quot;
               </p>
 
               <div className="flex items-center justify-between pt-2 border-t border-espresso/10 text-xs">
